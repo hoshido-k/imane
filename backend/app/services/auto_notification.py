@@ -12,39 +12,13 @@ from typing import List
 
 from app.config import settings
 from app.core.firebase import get_firestore_client
-from app.schemas.location import Coordinates
-from app.schemas.notification import NotificationType
+from app.schemas.common import Coordinates
+from app.schemas.notification import NotificationHistoryInDB, NotificationType
 from app.schemas.schedule import LocationScheduleInDB
 from app.services.notifications import NotificationService
 from app.services.users import UserService
 
 logger = logging.getLogger(__name__)
-
-
-class NotificationHistoryInDB:
-    """通知履歴（24時間TTL付き）"""
-
-    def __init__(
-        self,
-        id: str,
-        from_user_id: str,
-        to_user_id: str,
-        schedule_id: str,
-        notification_type: str,
-        message: str,
-        map_link: str,
-        sent_at: datetime,
-        auto_delete_at: datetime,
-    ):
-        self.id = id
-        self.from_user_id = from_user_id
-        self.to_user_id = to_user_id
-        self.schedule_id = schedule_id
-        self.notification_type = notification_type
-        self.message = message
-        self.map_link = map_link
-        self.sent_at = sent_at
-        self.auto_delete_at = auto_delete_at
 
 
 class AutoNotificationService:

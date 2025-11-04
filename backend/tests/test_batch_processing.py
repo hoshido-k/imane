@@ -8,7 +8,7 @@ import pytest
 from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from app.schemas.location import Coordinates
+from app.schemas.common import Coordinates
 from app.schemas.schedule import LocationScheduleInDB, ScheduleStatus
 from app.services.auto_notification import AutoNotificationService
 from app.services.cleanup import CleanupService

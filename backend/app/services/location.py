@@ -7,8 +7,8 @@ from datetime import UTC, datetime, timedelta
 from typing import List, Optional
 
 from app.core.firebase import get_firestore_client
+from app.schemas.common import Coordinates
 from app.schemas.location import (
-    Coordinates,
     LocationHistoryInDB,
     LocationUpdateRequest,
     ScheduleStatusInfo,

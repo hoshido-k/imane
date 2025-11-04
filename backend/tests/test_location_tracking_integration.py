@@ -9,7 +9,8 @@ import pytest
 from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, patch
 
-from app.schemas.location import Coordinates, LocationUpdateRequest
+from app.schemas.common import Coordinates
+from app.schemas.location import LocationUpdateRequest
 from app.schemas.schedule import (
     LocationScheduleCreate,
     LocationScheduleInDB,

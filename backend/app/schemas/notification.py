@@ -116,3 +116,19 @@ class PushNotificationRequest(BaseModel):
     title: str = Field(..., max_length=100, description="通知タイトル")
     body: str = Field(..., max_length=500, description="通知本文")
     data: dict[str, Any] = Field(default_factory=dict, description="追加データ")
+
+
+class NotificationHistoryInDB(BaseModel):
+    """通知履歴（imane用 - 24時間TTL）"""
+
+    id: str = Field(..., description="通知履歴ID")
+    from_user_id: str = Field(..., description="送信元ユーザーID")
+    to_user_id: str = Field(..., description="送信先ユーザーID")
+    schedule_id: str = Field(..., description="関連するスケジュールID")
+    type: str = Field(..., description="通知タイプ (arrival/stay/departure)")
+    message: str = Field(..., description="通知メッセージ")
+    map_link: str = Field(..., description="地図リンク")
+    sent_at: datetime = Field(default_factory=datetime.utcnow, description="送信日時")
+    auto_delete_at: datetime = Field(..., description="自動削除日時（24時間後）")
+
+    model_config = ConfigDict(from_attributes=True)

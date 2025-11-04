@@ -10,7 +10,7 @@ from typing import List, Optional, Tuple
 
 from app.config import settings
 from app.core.firebase import get_firestore_client
-from app.schemas.location import Coordinates
+from app.schemas.common import Coordinates
 from app.schemas.schedule import LocationScheduleInDB, ScheduleStatus
 from app.services.schedules import ScheduleService
 
