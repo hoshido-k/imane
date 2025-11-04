@@ -153,27 +153,38 @@ Firestore Database > インデックス タブ
      - `end_time` (昇順)
    - クエリスコープ: コレクション
 
-3. **位置情報履歴TTL用インデックス**
-   - コレクション: `location_history`
-   - フィールド:
-     - `user_id` (昇順)
-     - `auto_delete_at` (昇順)
-   - クエリスコープ: コレクション
-
-4. **通知履歴取得用インデックス**
+3. **通知履歴取得用インデックス**
    - コレクション: `notification_history`
    - フィールド:
      - `to_user_id` (昇順)
      - `sent_at` (降順)
    - クエリスコープ: コレクション
 
-5. **通知履歴TTL用インデックス**
-   - コレクション: `notification_history`
-   - フィールド:
-     - `auto_delete_at` (昇順)
-   - クエリスコープ: コレクション
-
 **注意**: インデックスは実際にクエリを実行してエラーが出た際に、Firebaseが提供するリンクから自動作成することも可能です。
+
+### 3.4 TTL（Time To Live）ポリシーの設定
+
+24時間後の自動削除を実現するため、FirestoreのTTLポリシーを設定します。
+
+Firestore Database > Time-to-live タブ > 「ポリシーを作成」
+
+以下のTTLポリシーを作成:
+
+1. **位置情報履歴の自動削除**
+   - Collection group: `location_history`
+   - Timestamp field: `auto_delete_at`
+   - 「作成」をクリック
+
+2. **通知履歴の自動削除**
+   - Collection group: `notification_history`
+   - Timestamp field: `auto_delete_at`
+   - 「作成」をクリック
+
+**TTLポリシーの仕組み**:
+- `auto_delete_at`フィールドに設定された日時を過ぎると、Firestoreが自動的にドキュメントを削除
+- バックエンドで`auto_delete_at = now + 24時間`を設定すれば、24時間後に自動削除される
+- Cloud Functionsを使った手動クリーンアップは不要
+- 削除処理は通常72時間以内に完了（即座ではない点に注意）
 
 ## 4. サービスアカウントキーの生成
 
@@ -309,59 +320,18 @@ Firebase Console > Cloud Messaging
 2. サーバーキー（レガシーAPI用）は必要に応じてメモ
    - バックエンドからプッシュ通知を送信する際に使用
 
-## 7. Cloud Functionsの設定
+**注意**: TTLポリシーを使用するため、Cloud Functionsでの自動削除機能は不要です。
 
-### 7.1 Firebase CLIのインストール
+## 7. 動作確認
 
-```bash
-npm install -g firebase-tools
-```
-
-### 7.2 Firebaseへログイン
-
-```bash
-firebase login
-```
-
-### 7.3 プロジェクトの初期化
-
-```bash
-cd /path/to/imane
-firebase init functions
-```
-
-プロンプトで選択:
-- 既存のプロジェクトを使用: `imane-dev`
-- 言語: Python
-- 依存関係のインストール: Yes
-- 既存のファイルを上書き: No
-
-### 7.4 Cloud Scheduler有効化
-
-Cloud Functionsのスケジュール実行にはCloud Schedulerが必要:
-
-1. [Google Cloud Console](https://console.cloud.google.com/)にアクセス
-2. プロジェクトを選択
-3. 「Cloud Scheduler API」を検索して有効化
-4. 料金プランを確認（無料枠あり）
-
-### 7.5 Cloud Functionsのデプロイ
-
-```bash
-cd functions
-firebase deploy --only functions
-```
-
-## 8. 動作確認
-
-### 8.1 バックエンドの起動
+### 7.1 バックエンドの起動
 
 ```bash
 cd backend
 uv run uvicorn app.main:app --reload
 ```
 
-### 8.2 API動作確認
+### 7.2 API動作確認
 
 ```bash
 # ヘルスチェック
@@ -371,20 +341,20 @@ curl http://localhost:8000/health
 open http://localhost:8000/docs
 ```
 
-### 8.3 Firestore接続確認
+### 7.3 Firestore接続確認
 
 FastAPI Docsから:
 1. `/api/v1/auth/signup` でユーザー登録
 2. Firebase Console > Authentication でユーザーが作成されたか確認
 3. Firebase Console > Firestore Databaseでドキュメントが作成されたか確認
 
-## 9. 本番環境への移行
+## 8. 本番環境への移行
 
-### 9.1 セキュリティルールの厳格化
+### 8.1 セキュリティルールの厳格化
 
 Firestoreルールを見直し、本番環境用に調整。
 
-### 9.2 環境変数の更新
+### 8.2 環境変数の更新
 
 ```bash
 # 本番用の環境変数
@@ -393,7 +363,7 @@ SECRET_KEY=<強力なランダムキー>
 ENCRYPTION_KEY=<強力なランダムキー>
 ```
 
-### 9.3 CORSの制限
+### 8.3 CORSの制限
 
 `backend/app/main.py`でCORS設定を更新:
 
@@ -422,23 +392,9 @@ origins = [
 1. `serviceAccountKey.json`のパスを確認
 2. `.env`の`FIREBASE_CREDENTIALS_PATH`を確認
 
-### Cloud Functionsがデプロイできない
-
-**原因**: Firebase CLIが古い、または認証エラー
-
-**解決策**:
-```bash
-# Firebase CLIを更新
-npm update -g firebase-tools
-
-# 再ログイン
-firebase logout
-firebase login
-```
-
 ## 参考リンク
 
 - [Firebase Documentation](https://firebase.google.com/docs)
 - [Firestore Security Rules](https://firebase.google.com/docs/firestore/security/get-started)
-- [Cloud Functions for Firebase](https://firebase.google.com/docs/functions)
+- [Firestore TTL Policy](https://firebase.google.com/docs/firestore/ttl)
 - [Firebase Admin Python SDK](https://firebase.google.com/docs/reference/admin/python)

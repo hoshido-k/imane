@@ -74,64 +74,70 @@
 
 #### Week 1: Day 1-3 - クリーンアップ
 **タスク:**
-- [ ] 不要ファイル削除
+- [x] 不要ファイル削除
   - `backend/app/api/v1/pops.py`
   - `backend/app/api/v1/reactions.py`
   - `backend/app/schemas/pop.py`
   - `backend/app/schemas/reaction.py`
   - `backend/app/services/pops.py`
   - `backend/app/services/reactions.py`
-- [ ] `main.py` から pops, reactions ルーター削除
-- [ ] ドキュメント更新（README, CLAUDE.md）
+- [x] `main.py` から pops, reactions ルーター削除
+- [x] ドキュメント更新（README, CLAUDE.md）
 
 **成果物:**
-- クリーンなコードベース
-- imane用に更新されたドキュメント
+- ✅ クリーンなコードベース
+- ✅ imane用に更新されたドキュメント
 
 ---
 
 #### Week 1: Day 4-5 - スケジュール管理API
 **タスク:**
-- [ ] `backend/app/schemas/schedule.py` 作成
+- [x] `backend/app/schemas/schedule.py` 作成
   - LocationScheduleRequest
   - LocationScheduleResponse
   - ScheduleStatus enum
-- [ ] `backend/app/api/v1/schedules.py` 作成
+- [x] `backend/app/api/v1/schedules.py` 作成
   - POST /schedules - スケジュール作成
   - GET /schedules - 一覧取得
   - GET /schedules/{id} - 詳細取得
   - PUT /schedules/{id} - 更新
-- [ ] `main.py` にルーター追加
+- [x] `backend/app/services/schedules.py` 作成
+- [x] `main.py` にルーター追加
 
 **成果物:**
-- スケジュールCRUD API
+- ✅ スケジュールCRUD API
 
 ---
 
 #### Week 2: Day 1-2 - お気に入り場所API
 **タスク:**
-- [ ] `backend/app/schemas/favorite.py` 作成
-- [ ] `backend/app/api/v1/favorites.py` 作成
+- [x] `backend/app/schemas/favorite.py` 作成
+- [x] `backend/app/services/favorites.py` 作成
+- [x] `backend/app/api/v1/favorites.py` 作成
   - POST /favorites - お気に入り追加
   - GET /favorites - 一覧取得
   - DELETE /favorites/{id} - 削除
-- [ ] `main.py` にルーター追加
+- [x] `main.py` にルーター追加
 
 **成果物:**
-- お気に入り場所管理API
+- ✅ お気に入り場所管理API
 
 ---
 
 #### Week 2: Day 3-5 - 位置情報トラッキングAPI
 **タスク:**
-- [ ] `backend/app/schemas/location.py` 作成
-- [ ] `backend/app/api/v1/location.py` 作成
+- [x] `backend/app/schemas/location.py` 作成
+- [x] `backend/app/services/location.py` 作成
+  - Haversine formula（距離計算）実装
+  - 位置情報履歴記録・取得
+  - 24時間自動削除機能
+- [x] `backend/app/api/v1/location.py` 作成
   - POST /location/update - 位置情報送信
   - GET /location/status - 現在のステータス取得
-- [ ] `main.py` にルーター追加
+- [x] `main.py` にルーター追加
 
 **成果物:**
-- 位置情報トラッキングAPI
+- ✅ 位置情報トラッキングAPI
 
 ---
 
@@ -393,6 +399,20 @@ App Store説明文またはアプリ内に以下を記載予定:
 - RELEASE_PLAN.md作成完了
 - Phase 1 (MVP) の開発計画策定
 - 10週間でTestFlightリリース目標設定
+
+**Week 1-2完了:**
+- ✅ Week 1: Day 1-3 - クリーンアップ完了（不要ファイル削除、ドキュメント更新）
+- ✅ Week 1: Day 4-5 - スケジュール管理API完了（CRUD実装）
+- ✅ Week 2: Day 1-2 - お気に入り場所API完了
+- ✅ Week 2: Day 3-5 - 位置情報トラッキングAPI完了（距離計算、24時間TTL実装）
+- ✅ FIREBASE_SETUP.md を imane 用に更新（TTLポリシー設定追加）
+
+**実装済みAPI:**
+- `/api/v1/schedules` - スケジュール管理
+- `/api/v1/favorites` - お気に入り場所管理
+- `/api/v1/location` - 位置情報トラッキング
+
+**次のステップ:** Week 3-4 ジオフェンシング・自動通知の実装
 
 ---
 

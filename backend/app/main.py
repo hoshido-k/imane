@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.v1 import auth, friends, notifications, schedules, users
+from app.api.v1 import auth, favorites, friends, location, notifications, schedules, users
 from app.core.firebase import initialize_firebase
 
 app = FastAPI(
@@ -26,6 +26,8 @@ app.include_router(auth.router, prefix="/api/v1/auth", tags=["認証"])
 app.include_router(users.router, prefix="/api/v1/users", tags=["ユーザー"])
 app.include_router(friends.router, prefix="/api/v1/friends", tags=["フレンド"])
 app.include_router(schedules.router, prefix="/api/v1/schedules", tags=["スケジュール"])
+app.include_router(favorites.router, prefix="/api/v1/favorites", tags=["お気に入り"])
+app.include_router(location.router, prefix="/api/v1/location", tags=["位置情報"])
 app.include_router(notifications.router, prefix="/api/v1/notifications", tags=["通知"])
 
 @app.get("/")
