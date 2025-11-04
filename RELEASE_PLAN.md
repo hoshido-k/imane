@@ -249,48 +249,51 @@
 
 #### Week 7: Day 1-2 - スケジュール作成画面
 **タスク:**
-- [ ] `mobile/lib/screens/schedule/create_schedule_screen.dart` 作成
+- [x] `mobile/lib/screens/schedule/create_schedule_screen.dart` 作成
   - 目的地入力フォーム
   - 地図選択（poplink流用）
   - 時間範囲選択
   - お気に入りから選択機能
 
 **成果物:**
-- スケジュール作成画面
+- ✅ スケジュール作成画面
 
 ---
 
 #### Week 7: Day 3-5 - フレンド選択・スケジュール一覧
 **タスク:**
-- [ ] 通知先フレンド選択UI
-- [ ] `mobile/lib/screens/schedule/schedule_list_screen.dart`
+- [x] 通知先フレンド選択UI（TODO実装）
+- [x] `mobile/lib/screens/schedule/schedule_list_screen.dart`
   - アクティブな予定一覧
   - ステータス表示（active/arrived/completed）
+- [x] `mobile/lib/screens/schedule/schedule_detail_screen.dart`
+  - スケジュール詳細表示
+  - 地図表示・ジオフェンス可視化
 
 **成果物:**
-- スケジュール一覧・詳細画面
+- ✅ スケジュール一覧・詳細画面
 
 ---
 
 #### Week 8: Day 1-2 - お気に入り場所管理
 **タスク:**
-- [ ] `mobile/lib/screens/favorites/favorites_screen.dart`
+- [x] `mobile/lib/screens/favorites/favorites_screen.dart`
   - お気に入り一覧
   - 追加・削除機能
 
 **成果物:**
-- お気に入り場所管理画面
+- ✅ お気に入り場所管理画面
 
 ---
 
 #### Week 8: Day 3-5 - 通知履歴画面
 **タスク:**
-- [ ] `mobile/lib/screens/notification/notification_history_screen.dart`
+- [x] `mobile/lib/screens/notification/notification_history_screen.dart`
   - 過去24時間の通知表示
   - 地図リンククリック対応
 
 **成果物:**
-- 通知履歴画面
+- ✅ 通知履歴画面
 
 ---
 
@@ -443,7 +446,27 @@ App Store説明文またはアプリ内に以下を記載予定:
 - 「Always Allow」への誘導UI
 - 権限拒否時のフォールバック処理
 
-**次のステップ:** Week 6: Day 4-5 実機テスト（手動テスト）または Week 7-8 Flutter UI実装
+**Week 7-8完了:**
+- ✅ Week 7: Day 1-2 - スケジュール作成画面完了
+- ✅ Week 7: Day 3-5 - スケジュール一覧・詳細画面完了
+- ✅ Week 8: Day 1-2 - お気に入り場所管理画面完了
+- ✅ Week 8: Day 3-5 - 通知履歴画面完了
+
+**実装済み画面:**
+- スケジュール作成画面（create_schedule_screen.dart）
+- スケジュール一覧画面（schedule_list_screen.dart）
+- スケジュール詳細画面（schedule_detail_screen.dart）
+- お気に入り場所管理画面（favorites_screen.dart）
+- 通知履歴画面（notification_history_screen.dart）
+- デバッグ画面（location_debug_screen.dart）
+- main_screen.dart更新（imane用画面構成）
+
+**実装済みモデル:**
+- LocationSchedule（schedule.dart）
+- FavoriteLocation（favorite_location.dart）
+- NotificationHistory（notification_history.dart）
+
+**次のステップ:** Week 9-10 テスト・デバッグ・リリース
 
 ---
 
