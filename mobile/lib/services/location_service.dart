@@ -19,7 +19,6 @@ class LocationService {
   final Connectivity _connectivity = Connectivity();
 
   bool _isTracking = false;
-  StreamSubscription<Location>? _locationSubscription;
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
   DateTime? _lastUpdateTime;
   bool _isOnline = true;
@@ -97,7 +96,7 @@ class LocationService {
       );
 
       // Listen to location updates
-      _locationSubscription = BackgroundLocation.getLocationUpdates((location) {
+      BackgroundLocation.getLocationUpdates((location) {
         _handleLocationUpdate(location);
       });
 
@@ -123,9 +122,6 @@ class LocationService {
     }
 
     try {
-      await _locationSubscription?.cancel();
-      _locationSubscription = null;
-
       await _connectivitySubscription?.cancel();
       _connectivitySubscription = null;
 
@@ -231,6 +227,7 @@ class LocationService {
     } catch (e) {
       print('Error retrying cached locations: $e');
     }
+  }
 
   /// Send location data to backend API
   Future<void> _sendLocationToApi(Location location) async {
