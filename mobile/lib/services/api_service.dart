@@ -143,6 +143,24 @@ class ApiService {
     }
   }
 
+  /// 位置情報を更新
+  /// POST /location/update
+  Future<dynamic> updateLocation({
+    required double latitude,
+    required double longitude,
+    double? accuracy,
+  }) async {
+    return await post(
+      '/location/update',
+      body: {
+        'latitude': latitude,
+        'longitude': longitude,
+        if (accuracy != null) 'accuracy': accuracy,
+      },
+      requiresAuth: true,
+    );
+  }
+
   /// レスポンスを処理
   dynamic _handleResponse(http.Response response) {
     final statusCode = response.statusCode;
