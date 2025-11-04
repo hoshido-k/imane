@@ -1,0 +1,10 @@
+# Python bytecode
+__pycache__/
+
+# Python virtual environment (uv manages .venv, venv is for Firebase CLI)
+venv/
+.venv/
+*.local
+
+# Auto-generated files (for Firebase deployment only)
+requirements.txt
