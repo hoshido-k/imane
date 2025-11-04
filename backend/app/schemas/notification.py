@@ -45,6 +45,10 @@ class NotificationType(str, Enum):
     FRIEND_REQUEST = "friend_request"
     FRIEND_ACCEPTED = "friend_accepted"
     TRUST_LEVEL_UP = "trust_level_up"
+    # imane固有の通知タイプ
+    ARRIVAL = "arrival"  # 目的地到着通知
+    STAY = "stay"  # 滞在通知
+    DEPARTURE = "departure"  # 退出通知
 
 
 class NotificationInDB(BaseModel):

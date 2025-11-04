@@ -18,6 +18,17 @@ class Settings(BaseSettings):
     # 暗号化設定
     ENCRYPTION_KEY: str
 
+    # 位置情報設定
+    GEOFENCE_RADIUS_METERS: int = 50
+    LOCATION_UPDATE_INTERVAL_MINUTES: int = 10
+    DATA_RETENTION_HOURS: int = 24
+
+    # 通知設定
+    NOTIFICATION_STAY_DURATION_MINUTES: int = 60
+
+    # バッチ処理設定
+    BATCH_TOKEN: Optional[str] = None  # 本番環境では必須
+
     class Config:
         env_file = ".env"
         case_sensitive = True

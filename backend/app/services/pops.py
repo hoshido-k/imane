@@ -11,7 +11,6 @@ from firebase_admin import firestore
 
 from app.core.firebase import get_firestore_client
 from app.schemas.pop import (
-    PopCategory,
     PopCreate,
     PopInDB,
     PopResponse,

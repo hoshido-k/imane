@@ -3,12 +3,14 @@
 """
 
 from datetime import UTC, datetime
-from typing import Optional, Dict, Any
+from typing import Optional
+
 from firebase_admin import auth, firestore
 from firebase_admin.exceptions import FirebaseError
-from app.core.firebase import get_firestore_client, get_auth_client
-from app.schemas.auth import SignupRequest, LoginRequest, TokenResponse
-from app.schemas.user import UserInDB, UserCreate
+
+from app.core.firebase import get_auth_client, get_firestore_client
+from app.schemas.auth import SignupRequest, TokenResponse
+from app.schemas.user import UserInDB
 from app.utils.jwt import create_access_token, get_token_expire_time
 
 
