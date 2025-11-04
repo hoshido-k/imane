@@ -1,0 +1,145 @@
+"""
+位置情報スケジュール関連のPydanticスキーマ定義
+
+Firestoreのschedules コレクション構造:
+{
+    "id": "auto-generated",
+    "user_id": "firebase_auth_uid",
+    "destination_name": "渋谷駅",
+    "destination_address": "東京都渋谷区道玄坂1-1-1",
+    "destination_coords": {
+        "lat": 35.6580,
+        "lng": 139.7016
+    },
+    "geofence_radius": 50,  # デフォルト50メートル
+    "notify_to_user_ids": ["uid1", "uid2"],  # 通知先フレンド
+    "start_time": "2025-01-15T14:00:00Z",
+    "end_time": "2025-01-15T18:00:00Z",
+    "recurrence": null,  # "daily", "weekdays", "weekends"
+    "notify_on_arrival": true,
+    "notify_after_minutes": 60,  # 滞在通知までの分数
+    "notify_on_departure": true,
+    "status": "active",  # "active", "arrived", "completed", "expired"
+    "arrived_at": null,
+    "departed_at": null,
+    "favorite": false,
+    "created_at": "2025-01-15T10:00:00Z",
+    "updated_at": "2025-01-15T10:00:00Z"
+}
+"""
+
+from datetime import datetime
+from enum import Enum
+from typing import List, Optional
+
+from pydantic import BaseModel, ConfigDict, Field
+
+
+class ScheduleStatus(str, Enum):
+    """スケジュールステータス"""
+
+    ACTIVE = "active"  # アクティブ（開始時刻前、または目的地到着前）
+    ARRIVED = "arrived"  # 目的地到着済み
+    COMPLETED = "completed"  # 完了（退出済み）
+    EXPIRED = "expired"  # 期限切れ（終了時刻を過ぎた）
+
+
+class RecurrenceType(str, Enum):
+    """繰り返しタイプ"""
+
+    DAILY = "daily"  # 毎日
+    WEEKDAYS = "weekdays"  # 平日のみ
+    WEEKENDS = "weekends"  # 週末のみ
+
+
+class Coordinates(BaseModel):
+    """座標情報"""
+
+    lat: float = Field(..., ge=-90, le=90, description="緯度")
+    lng: float = Field(..., ge=-180, le=180, description="経度")
+
+
+class LocationScheduleBase(BaseModel):
+    """位置情報スケジュールの基本情報"""
+
+    destination_name: str = Field(..., min_length=1, max_length=100, description="目的地名")
+    destination_address: str = Field(..., min_length=1, max_length=200, description="目的地住所")
+    destination_coords: Coordinates = Field(..., description="目的地の座標")
+    geofence_radius: int = Field(default=50, ge=10, le=500, description="ジオフェンス半径（メートル）")
+    notify_to_user_ids: List[str] = Field(..., min_length=1, description="通知先ユーザーIDリスト")
+    start_time: datetime = Field(..., description="開始時刻")
+    end_time: datetime = Field(..., description="終了時刻")
+    recurrence: Optional[RecurrenceType] = Field(None, description="繰り返し設定")
+    notify_on_arrival: bool = Field(default=True, description="到着時通知の有無")
+    notify_after_minutes: int = Field(default=60, ge=1, le=1440, description="滞在通知までの分数")
+    notify_on_departure: bool = Field(default=True, description="退出時通知の有無")
+
+
+class LocationScheduleCreate(LocationScheduleBase):
+    """スケジュール作成リクエスト"""
+
+    favorite: bool = Field(default=False, description="お気に入り登録")
+
+
+class LocationScheduleUpdate(BaseModel):
+    """スケジュール更新リクエスト"""
+
+    destination_name: Optional[str] = Field(None, min_length=1, max_length=100)
+    destination_address: Optional[str] = Field(None, min_length=1, max_length=200)
+    destination_coords: Optional[Coordinates] = None
+    geofence_radius: Optional[int] = Field(None, ge=10, le=500)
+    notify_to_user_ids: Optional[List[str]] = Field(None, min_length=1)
+    start_time: Optional[datetime] = None
+    end_time: Optional[datetime] = None
+    recurrence: Optional[RecurrenceType] = None
+    notify_on_arrival: Optional[bool] = None
+    notify_after_minutes: Optional[int] = Field(None, ge=1, le=1440)
+    notify_on_departure: Optional[bool] = None
+
+
+class LocationScheduleInDB(LocationScheduleBase):
+    """データベース内のスケジュール"""
+
+    id: str = Field(..., description="スケジュールID")
+    user_id: str = Field(..., description="作成者のユーザーID")
+    status: ScheduleStatus = Field(default=ScheduleStatus.ACTIVE, description="スケジュールステータス")
+    arrived_at: Optional[datetime] = Field(None, description="到着日時")
+    departed_at: Optional[datetime] = Field(None, description="退出日時")
+    favorite: bool = Field(default=False, description="お気に入り")
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class LocationScheduleResponse(BaseModel):
+    """スケジュールのレスポンス"""
+
+    id: str
+    user_id: str
+    destination_name: str
+    destination_address: str
+    destination_coords: Coordinates
+    geofence_radius: int
+    notify_to_user_ids: List[str]
+    start_time: datetime
+    end_time: datetime
+    recurrence: Optional[RecurrenceType] = None
+    notify_on_arrival: bool
+    notify_after_minutes: int
+    notify_on_departure: bool
+    status: ScheduleStatus
+    arrived_at: Optional[datetime] = None
+    departed_at: Optional[datetime] = None
+    favorite: bool
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class LocationScheduleListResponse(BaseModel):
+    """スケジュール一覧のレスポンス"""
+
+    schedules: List[LocationScheduleResponse]
+    total: int = Field(..., description="総件数")

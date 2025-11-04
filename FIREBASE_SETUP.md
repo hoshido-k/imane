@@ -1,6 +1,6 @@
 # Firebase セットアップガイド
 
-PopLinkアプリケーションでFirebaseを使用するための完全セットアップ手順。
+imane（イマネ）アプリケーションでFirebaseを使用するための完全セットアップ手順。
 
 ## 前提条件
 
@@ -14,7 +14,7 @@ PopLinkアプリケーションでFirebaseを使用するための完全セッ�
 
 1. [Firebase Console](https://console.firebase.google.com/)にアクセス
 2. 「プロジェクトを追加」をクリック
-3. プロジェクト名を入力（例: `poplink-dev`）
+3. プロジェクト名を入力（例: `imane-dev`）
 4. Google Analyticsを有効化（推奨）
 5. プロジェクトを作成
 
@@ -24,9 +24,9 @@ Firebase Console > プロジェクト設定 > 全般タブ
 
 **iOSアプリを追加** (Flutter iOS用)
 1. 「アプリを追加」 > 「iOS」を選択
-2. iOSバンドルIDを入力: `com.yourcompany.poplink`
-   - 既存のバンドルIDを確認する場合: `frontend/ios/Runner.xcodeproj/project.pbxproj`内を検索
-3. アプリのニックネーム: `PopLink iOS` (任意)
+2. iOSバンドルIDを入力: `com.yourcompany.imane`
+   - 既存のバンドルIDを確認する場合: `mobile/ios/Runner.xcodeproj/project.pbxproj`内を検索
+3. アプリのニックネーム: `imane iOS` (任意)
 4. App Store ID: 空欄のまま（リリース後に追加可能）
 5. 「アプリを登録」をクリック
 6. **`GoogleService-Info.plist`をダウンロード**（重要！）
@@ -90,38 +90,43 @@ service cloud.firestore {
       allow write: if isOwner(userId);
     }
 
-    // ポップコレクション
-    match /pops/{popId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated();
-      allow update, delete: if isAuthenticated() &&
-                              resource.data.author_id == request.auth.uid;
-    }
-
-    // リアクションコレクション
-    match /reactions/{reactionId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated();
-      allow update, delete: if isAuthenticated() &&
-                              resource.data.user_id == request.auth.uid;
-    }
-
     // フレンドコレクション
     match /friends/{friendId} {
       allow read: if isAuthenticated();
       allow write: if isAuthenticated();
     }
 
-    // メッセージコレクション
-    match /messages/{messageId} {
+    // 位置情報スケジュールコレクション
+    match /schedules/{scheduleId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() &&
+                              resource.data.user_id == request.auth.uid;
+    }
+
+    // お気に入り場所コレクション
+    match /favorites/{favoriteId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow delete: if isAuthenticated() &&
+                     resource.data.user_id == request.auth.uid;
+    }
+
+    // 位置情報履歴コレクション（24時間TTL）
+    match /location_history/{historyId} {
       allow read: if isAuthenticated() &&
-                    (resource.data.sender_id == request.auth.uid ||
-                     resource.data.receiver_id == request.auth.uid);
-      allow create: if isAuthenticated() &&
-                      request.resource.data.sender_id == request.auth.uid;
-      allow update: if isAuthenticated() &&
-                     (resource.data.sender_id == request.auth.uid ||
-                      resource.data.receiver_id == request.auth.uid);
+                    resource.data.user_id == request.auth.uid;
+      allow create: if isAuthenticated();
+      allow delete: if isAuthenticated() &&
+                     resource.data.user_id == request.auth.uid;
+    }
+
+    // 通知履歴コレクション（24時間TTL）
+    match /notification_history/{notificationId} {
+      allow read: if isAuthenticated() &&
+                    (resource.data.from_user_id == request.auth.uid ||
+                     resource.data.to_user_id == request.auth.uid);
+      allow create: if isAuthenticated();
     }
   }
 }
@@ -133,25 +138,39 @@ Firestore Database > インデックス タブ
 
 以下の複合インデックスを作成:
 
-1. **ポップ検索用インデックス**
-   - コレクション: `pops`
+1. **アクティブなスケジュール検索用インデックス**
+   - コレクション: `schedules`
    - フィールド:
-     - `is_active` (昇順)
-     - `expires_at` (昇順)
+     - `user_id` (昇順)
+     - `status` (昇順)
+     - `start_time` (昇順)
    - クエリスコープ: コレクション
 
-2. **ユーザーのポップ取得用インデックス**
-   - コレクション: `pops`
+2. **期限切れスケジュールクリーンアップ用インデックス**
+   - コレクション: `schedules`
    - フィールド:
-     - `author_id` (昇順)
-     - `created_at` (降順)
+     - `status` (昇順)
+     - `end_time` (昇順)
    - クエリスコープ: コレクション
 
-3. **削除済みポップクリーンアップ用インデックス**
-   - コレクション: `pops`
+3. **位置情報履歴TTL用インデックス**
+   - コレクション: `location_history`
    - フィールド:
-     - `is_active` (昇順)
-     - `deleted_at` (昇順)
+     - `user_id` (昇順)
+     - `auto_delete_at` (昇順)
+   - クエリスコープ: コレクション
+
+4. **通知履歴取得用インデックス**
+   - コレクション: `notification_history`
+   - フィールド:
+     - `to_user_id` (昇順)
+     - `sent_at` (降順)
+   - クエリスコープ: コレクション
+
+5. **通知履歴TTL用インデックス**
+   - コレクション: `notification_history`
+   - フィールド:
+     - `auto_delete_at` (昇順)
    - クエリスコープ: コレクション
 
 **注意**: インデックスは実際にクエリを実行してエラーが出た際に、Firebaseが提供するリンクから自動作成することも可能です。
@@ -170,7 +189,7 @@ Firebase Console > プロジェクト設定 > サービスアカウント タブ
 
 ```bash
 # バックエンド用
-cp ~/Downloads/poplink-xxxxx-firebase-adminsdk-xxxxx.json backend/serviceAccountKey.json
+cp ~/Downloads/imane-xxxxx-firebase-adminsdk-xxxxx.json backend/serviceAccountKey.json
 
 # 注意: このファイルは.gitignoreに含まれており、Gitにコミットされません
 ```
@@ -183,7 +202,7 @@ cp ~/Downloads/poplink-xxxxx-firebase-adminsdk-xxxxx.json backend/serviceAccount
 
 ```bash
 # Firebase設定
-FIREBASE_PROJECT_ID=poplink-dev  # 実際のプロジェクトID
+FIREBASE_PROJECT_ID=imane-dev  # 実際のプロジェクトID
 FIREBASE_CREDENTIALS_PATH=./serviceAccountKey.json
 
 # JWT設定
@@ -195,6 +214,14 @@ ENCRYPTION_KEY=your-32-byte-encryption-key-change-this
 
 # デバッグモード
 DEBUG=True
+
+# 位置情報設定
+GEOFENCE_RADIUS_METERS=50
+LOCATION_UPDATE_INTERVAL_MINUTES=10
+DATA_RETENTION_HOURS=24
+
+# 通知設定
+NOTIFICATION_STAY_DURATION_MINUTES=60
 ```
 
 **暗号化キーの生成方法**:
@@ -211,10 +238,10 @@ python3 -c "import secrets; print(secrets.token_urlsafe(32))"
 
 ```bash
 # Firebase Consoleからダウンロードしたファイルを配置
-cp ~/Downloads/GoogleService-Info.plist frontend/ios/Runner/GoogleService-Info.plist
+cp ~/Downloads/GoogleService-Info.plist mobile/ios/Runner/GoogleService-Info.plist
 ```
 
-**配置場所**: `frontend/ios/Runner/GoogleService-Info.plist`
+**配置場所**: `mobile/ios/Runner/GoogleService-Info.plist`
 
 #### 方法2: FlutterFire CLI（推奨 - 自動設定）
 
@@ -225,12 +252,12 @@ FlutterFire CLIを使用すると、設定ファイルの配置と`firebase_opti
 dart pub global activate flutterfire_cli
 
 # プロジェクトディレクトリで実行
-cd frontend
+cd mobile
 flutterfire configure
 ```
 
 プロンプトで:
-1. Firebaseプロジェクトを選択: `poplink-dev`
+1. Firebaseプロジェクトを選択: `imane-dev`
 2. プラットフォームを選択: `iOS` のみ選択（スペースキーで選択、Enterで確定）
 3. 自動的に以下が生成されます:
    - `ios/Runner/GoogleService-Info.plist`（自動配置）
@@ -242,10 +269,10 @@ flutterfire configure
 
 ```bash
 # iOSの設定ファイル
-ls -la frontend/ios/Runner/GoogleService-Info.plist
+ls -la mobile/ios/Runner/GoogleService-Info.plist
 
 # Firebase初期化コード（FlutterFire CLI使用時のみ）
-ls -la frontend/lib/firebase_options.dart
+ls -la mobile/lib/firebase_options.dart
 ```
 
 ## 6. Cloud Messaging設定（プッシュ通知 - iOS）
@@ -259,7 +286,7 @@ iOS向けプッシュ通知にはAPNs（Apple Push Notification service）の設
 1. [Apple Developer](https://developer.apple.com/)にログイン
 2. 「Certificates, Identifiers & Profiles」を選択
 3. 「Keys」 > 「+」ボタンをクリック
-4. キー名を入力（例: `PopLink APNs Key`）
+4. キー名を入力（例: `imane APNs Key`）
 5. 「Apple Push Notifications service (APNs)」にチェック
 6. 「Continue」 > 「Register」
 7. **`.p8`ファイルをダウンロード**（重要: 一度しかダウンロードできません）
@@ -299,12 +326,12 @@ firebase login
 ### 7.3 プロジェクトの初期化
 
 ```bash
-cd /path/to/poplink
+cd /path/to/imane
 firebase init functions
 ```
 
 プロンプトで選択:
-- 既存のプロジェクトを使用: `poplink-dev`
+- 既存のプロジェクトを使用: `imane-dev`
 - 言語: Python
 - 依存関係のインストール: Yes
 - 既存のファイルを上書き: No
