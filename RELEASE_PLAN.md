@@ -1,469 +1,444 @@
-# PopLink リリース計画
+# imane リリース計画
 
-**最終更新日**: 2025-11-02
+**最終更新日**: 2025-11-04
 
 ---
 
 ## 🎯 リリース戦略
 
-**早期リリース → 継続的アップデート**
+**段階的リリース → 継続的改善**
 
-- 最小限の機能で早くリリースし、実績を作る
-- ユーザーフィードバックを受けながら段階的に機能追加
-- 2週間ごとのリリースサイクルで継続的に価値提供
+- Phase 1でMVP（最小限の自動通知機能）をリリース
+- ユーザーフィードバックを受けながら機能拡張（Phase 2, 3）
+- iOS優先、Android対応は Phase 3
 
 ---
 
-## 📅 バージョン別リリーススケジュール
+## 📅 フェーズ別リリーススケジュール
 
-### v1.0.0 - 超MVP版 🚀
-**リリース予定**: 2025/11/11 - 11/15
+### Phase 1: MVP版 🚀
+**リリース予定**: 2025年1月中旬 - 2月中旬（10週間）
 **ステータス**: 🔄 準備中
 
 #### 実装する機能
-- ✅ 簡易ログイン（メールアドレスのみ）
-- ✅ 地図表示 + 現在位置
-- ✅ ポップ投稿（テキスト + カテゴリ + 有効期限）
-- ✅ ポップ一覧表示・詳細表示
-- ✅ カテゴリフィルター
+- ✅ ユーザー認証（Firebase Auth + JWT）
+- ✅ フレンド管理
+- 🆕 位置情報スケジュール作成・編集・一覧
+- 🆕 お気に入り場所管理
+- 🆕 バックグラウンド位置情報トラッキング（10分間隔）
+- 🆕 ジオフェンシング（50m圏内判定）
+- 🆕 自動通知（到着・滞在・退出）
+- 🆕 通知履歴表示（24時間）
+- 🆕 24時間データ自動削除
 
 #### 実装しない機能（後回し）
-- ❌ リアクション機能
-- ❌ チャット機能
-- ❌ フレンド機能
-- ❌ Google認証
-- ❌ プロフィール編集
-- ❌ プッシュ通知
+- ❌ スケジュール削除・キャンセル機能
+- ❌ 繰り返しスケジュール
+- ❌ 通知グループ設定
+- ❌ LINE Messaging API統合
+- ❌ Android対応
+- ❌ 統計・ダッシュボード
 
 #### 目的
-「地図上にポップを投稿・閲覧できる」という最小限の価値提供で、リリース実績を作る
+「今ね、ここにいるよ」を自動で伝える最小限の機能を提供し、TestFlightでベータテスト実施
 
 ---
 
-### v1.1.0 - リアクション機能追加
-**リリース予定**: 2025/11/25 - 11/29
+### Phase 2: 機能拡張
+**リリース予定**: 2025年3月 - 4月（1〜2ヶ月）
 **ステータス**: ⏳ 未着手
 
 #### 追加機能
-- リアクション送信・受信
-- リアクション一覧画面
-- 未読バッジ表示
-- リアクション承認・拒否
+- スケジュールのキャンセル・一時停止
+- 繰り返しスケジュール（毎日・平日・週末）
+- 通知先グループ管理（「家族」「パートナー」など）
+- LINE Messaging API統合
+- 統計・ダッシュボード機能
 
 ---
 
-### v1.2.0 - チャット機能追加
-**リリース予定**: 2025/12/09 - 12/13
+### Phase 3: プラットフォーム拡大
+**リリース予定**: 2025年5月 - 7月（2〜3ヶ月）
 **ステータス**: ⏳ 未着手
 
 #### 追加機能
-- 1対1チャット
-- メッセージ送受信
-- チャット一覧
-- 未読メッセージ表示
+- Android対応
+- Apple Watch対応（オプション）
+- PWA対応（オプション）
 
 ---
 
-### v1.3.0 - ソーシャル機能追加
-**リリース予定**: 2025/12/16 - 12/27
-**ステータス**: ⏳ 未着手
+## 📋 Phase 1 詳細タスク（10週間）
 
-#### 追加機能
-- フレンド機能
-- プロフィール編集
-- Google認証
-- プッシュ通知
+### Week 1-2: バックエンド基盤構築
 
----
+#### Week 1: Day 1-3 - クリーンアップ
+**タスク:**
+- [ ] 不要ファイル削除
+  - `backend/app/api/v1/pops.py`
+  - `backend/app/api/v1/reactions.py`
+  - `backend/app/schemas/pop.py`
+  - `backend/app/schemas/reaction.py`
+  - `backend/app/services/pops.py`
+  - `backend/app/services/reactions.py`
+- [ ] `main.py` から pops, reactions ルーター削除
+- [ ] ドキュメント更新（README, CLAUDE.md）
 
-## 📋 v1.0.0 詳細タスク
-
-### Week 1: 11/5(火) - 11/8(金) - 基盤構築
-**※11/3(日)文化の日、11/4(月)振替休日のため、11/5(火)スタート**
-
-#### 11/5(火): 簡易認証の実装 ✅ **完了**
-- [x] Firebase基盤セットアップ（10/29完了済み）
-- [x] .env設定、serviceAccountKey.json配置（10/29完了済み）
-- [x] Firestore有効化（10/29完了済み）
-- [x] backend/app/main.py:22 のFirebase初期化有効化済み
-- [x] バックエンドのFirebase接続確認（11/2完了）
-- [x] 簡易認証の実装（メール + パスワード）（11/2完了）
-- [x] トークン保存・自動ログイン機能（11/2完了）
-- [x] 新規登録・ログイン・ログアウト動作確認（11/2完了）
-
-**🎉 11/2に完了！予定より3日前倒し！**
+**成果物:**
+- クリーンなコードベース
+- imane用に更新されたドキュメント
 
 ---
 
-#### 11/6(水): 簡易認証完成 & API連携基盤
-- [ ] メールアドレスのみの簡易ログイン実装完了
-  - パスワードは自動生成 or 固定値でOK
-- [ ] トークン保存・自動ログイン機能
-- [ ] `mobile/lib/services/api_service.dart` 作成開始
+#### Week 1: Day 4-5 - スケジュール管理API
+**タスク:**
+- [ ] `backend/app/schemas/schedule.py` 作成
+  - LocationScheduleRequest
+  - LocationScheduleResponse
+  - ScheduleStatus enum
+- [ ] `backend/app/api/v1/schedules.py` 作成
+  - POST /schedules - スケジュール作成
+  - GET /schedules - 一覧取得
+  - GET /schedules/{id} - 詳細取得
+  - PUT /schedules/{id} - 更新
+- [ ] `main.py` にルーター追加
 
-**担当**:
-- Backend: `backend/app/api/v1/auth.py`
-- Frontend: `mobile/lib/screens/auth/login_screen.dart:26`
-
----
-
-#### 11/7(木): API連携基盤完成 & 認証フロー統合
-- [ ] `mobile/lib/services/auth_service.dart` 作成
-- [ ] Provider状態管理セットアップ
-- [ ] HTTP通信の基本エラーハンドリング
-- [ ] 認証APIとFlutterの連携確認
-
-**新規作成ファイル**:
-- `mobile/lib/services/api_service.dart`
-- `mobile/lib/services/auth_service.dart`
-- `mobile/lib/providers/auth_provider.dart`
+**成果物:**
+- スケジュールCRUD API
 
 ---
 
-#### 11/8(金): 位置情報 & Week 1 統合テスト
-- [ ] 実際の位置情報取得実装（東京駅固定から変更）
-- [ ] 位置情報権限処理（iOS/Android）
-- [ ] 地図の現在位置表示
-- [ ] 位置情報エラーハンドリング
-- [ ] Week 1 統合確認
+#### Week 2: Day 1-2 - お気に入り場所API
+**タスク:**
+- [ ] `backend/app/schemas/favorite.py` 作成
+- [ ] `backend/app/api/v1/favorites.py` 作成
+  - POST /favorites - お気に入り追加
+  - GET /favorites - 一覧取得
+  - DELETE /favorites/{id} - 削除
+- [ ] `main.py` にルーター追加
 
-**担当**: `mobile/lib/screens/map/map_screen.dart:487-534`
-
----
-
-### Week 2: 11/11(月) - 11/15(金) - ポップ機能
-
-#### 11/11(月): ポップ投稿画面
-- [ ] ポップ投稿画面UI作成
-- [ ] カテゴリ選択UI
-- [ ] 有効期限選択UI（15分/30分/60分）
-- [ ] 投稿ボタンとバリデーション
-
-**新規作成ファイル**:
-- `mobile/lib/screens/pop/create_pop_screen.dart`
+**成果物:**
+- お気に入り場所管理API
 
 ---
 
-#### 11/12(火): ポップAPI連携
-- [ ] `mobile/lib/services/pop_service.dart` 作成
-- [ ] ポップ作成APIとの連携
-- [ ] ポップ検索APIとの連携（位置情報ベース）
-- [ ] ポップ詳細取得APIとの連携
+#### Week 2: Day 3-5 - 位置情報トラッキングAPI
+**タスク:**
+- [ ] `backend/app/schemas/location.py` 作成
+- [ ] `backend/app/api/v1/location.py` 作成
+  - POST /location/update - 位置情報送信
+  - GET /location/status - 現在のステータス取得
+- [ ] `main.py` にルーター追加
 
-**新規作成ファイル**:
-- `mobile/lib/services/pop_service.dart`
-- `mobile/lib/providers/pop_provider.dart`
-
----
-
-#### 11/13(水): 地図表示統合
-- [ ] モックデータから実データへ切り替え
-- [ ] カテゴリフィルター動作確認
-- [ ] ポップ詳細表示の実データ連携
-- [ ] ポップのリアルタイム更新（最小限）
-
-**担当**: `mobile/lib/screens/map/map_screen.dart:38-117` のモックデータ削除
+**成果物:**
+- 位置情報トラッキングAPI
 
 ---
 
-#### 11/14(木): テスト & デバッグ
-- [ ] エラーハンドリング追加
-- [ ] ローディング表示実装
-- [ ] UI/UX調整
-- [ ] エッジケース対応
+### Week 3-4: ジオフェンシング・自動通知
+
+#### Week 3: Day 1-3 - ジオフェンシングロジック
+**タスク:**
+- [ ] `backend/app/services/geofencing.py` 作成
+  - `calculate_distance()` - Haversine formula実装
+  - `check_geofence_entry()` - 到着判定
+  - `check_geofence_exit()` - 退出判定
+  - `get_active_schedules()` - アクティブな予定取得
+- [ ] ユニットテスト作成
+
+**成果物:**
+- ジオフェンシングサービス
+
+---
+
+#### Week 3: Day 4-5 - 自動通知トリガー（到着・退出）
+**タスク:**
+- [ ] `backend/app/services/auto_notification.py` 作成
+  - `trigger_arrival_notification()` - 到着通知送信
+  - `trigger_departure_notification()` - 退出通知送信
+  - `send_fcm_notification()` - FCM送信ヘルパー
+- [ ] 通知メッセージテンプレート作成
+
+**成果物:**
+- 到着・退出通知機能
+
+---
+
+#### Week 4: Day 1-2 - 滞在通知ロジック
+**タスク:**
+- [ ] `trigger_stay_notification()` 実装
+  - 1時間滞在判定
+  - 滞在時間計算
+- [ ] Cloud Functions用スケジューラー設計（後回しOK）
+
+**成果物:**
+- 滞在通知機能
+
+---
+
+#### Week 4: Day 3-5 - 位置情報更新処理統合
+**タスク:**
+- [ ] POST /location/update エンドポイント拡張
+  - 受信した位置情報でジオフェンス判定
+  - ステータス更新（active → arrived → departed）
+  - 自動通知トリガー呼び出し
 - [ ] 統合テスト
 
+**成果物:**
+- 位置情報更新時の自動通知フロー
+
 ---
 
-#### 11/15(金): v1.0.0 リリース準備
-- [ ] 最終テスト
-- [ ] リリースノート作成
-- [ ] ストア申請準備（iOS/Android）
-- [ ] **🚀 v1.0.0 リリース**
+### Week 5-6: iOS位置情報トラッキング
+
+#### Week 5: Day 1-2 - iOS Background Location基盤
+**タスク:**
+- [ ] `Info.plist` に権限設定追加
+  - NSLocationAlwaysAndWhenInUseUsageDescription
+  - NSLocationWhenInUseUsageDescription
+  - UIBackgroundModes: location
+- [ ] `mobile/lib/services/location_service.dart` 作成
+  - background_location パッケージ統合
+  - 10分間隔の位置情報取得設定
+
+**成果物:**
+- バックグラウンド位置情報取得基盤
+
+---
+
+#### Week 5: Day 3-5 - 位置情報アップロード実装
+**タスク:**
+- [ ] バックグラウンドで取得した位置情報をAPIに送信
+- [ ] エラーハンドリング（ネットワーク切断時のリトライ）
+- [ ] ローカルキャッシュ実装（オフライン対応）
+
+**成果物:**
+- 位置情報自動送信機能
+
+---
+
+#### Week 6: Day 1-3 - 権限リクエスト実装
+**タスク:**
+- [ ] 初回起動時の権限リクエストフロー
+- [ ] 「Always Allow」への誘導UI
+- [ ] 権限拒否時のフォールバック処理
+
+**成果物:**
+- 位置情報権限管理UI
+
+---
+
+#### Week 6: Day 4-5 - 実機テスト
+**タスク:**
+- [ ] 実機でバックグラウンド動作確認
+- [ ] バッテリー消費測定
+- [ ] 位置情報精度確認
+
+**成果物:**
+- バックグラウンド位置情報トラッキング動作確認
+
+---
+
+### Week 7-8: Flutter UI実装
+
+#### Week 7: Day 1-2 - スケジュール作成画面
+**タスク:**
+- [ ] `mobile/lib/screens/schedule/create_schedule_screen.dart` 作成
+  - 目的地入力フォーム
+  - 地図選択（poplink流用）
+  - 時間範囲選択
+  - お気に入りから選択機能
+
+**成果物:**
+- スケジュール作成画面
+
+---
+
+#### Week 7: Day 3-5 - フレンド選択・スケジュール一覧
+**タスク:**
+- [ ] 通知先フレンド選択UI
+- [ ] `mobile/lib/screens/schedule/schedule_list_screen.dart`
+  - アクティブな予定一覧
+  - ステータス表示（active/arrived/completed）
+
+**成果物:**
+- スケジュール一覧・詳細画面
+
+---
+
+#### Week 8: Day 1-2 - お気に入り場所管理
+**タスク:**
+- [ ] `mobile/lib/screens/favorites/favorites_screen.dart`
+  - お気に入り一覧
+  - 追加・削除機能
+
+**成果物:**
+- お気に入り場所管理画面
+
+---
+
+#### Week 8: Day 3-5 - 通知履歴画面
+**タスク:**
+- [ ] `mobile/lib/screens/notification/notification_history_screen.dart`
+  - 過去24時間の通知表示
+  - 地図リンククリック対応
+
+**成果物:**
+- 通知履歴画面
+
+---
+
+### Week 9-10: テスト・デバッグ・リリース
+
+#### Week 9: 統合テスト
+**タスク:**
+- [ ] エンドツーエンドテストシナリオ実行
+  - スケジュール作成 → 到着 → 滞在 → 退出の全フロー
+- [ ] エッジケーステスト
+  - GPS精度が低い場所
+  - 複数スケジュール同時アクティブ
+  - ネットワーク切断時の動作
+  - バックグラウンド位置情報取得の精度
+
+**成果物:**
+- テスト結果レポート
+
+---
+
+#### Week 10: Day 1-3 - バグ修正・最適化
+**タスク:**
+- [ ] Week 9 で発見されたバグ修正
+- [ ] パフォーマンス最適化
+- [ ] バッテリー消費の最適化
+
+---
+
+#### Week 10: Day 4-5 - リリース準備
+**タスク:**
+- [ ] App Store用スクリーンショット作成
+- [ ] プライバシーポリシー作成
+- [ ] App Store説明文作成
+- [ ] TestFlight配信
+- [ ] ベータテスター募集（5名）
+
+**成果物:**
+- TestFlightでのベータ版リリース
 
 ---
 
 ## 📊 工数見積もり
 
-| バージョン | 機能 | 工数 | リリース週 | ステータス |
-|-----------|------|------|-----------|-----------|
-| v1.0.0 | 超MVP | 8-10日 | 11/11-11/15 | 🔄 準備中 |
-| v1.1.0 | リアクション | 4-5日 | 11/25-11/29 | ⏳ 未着手 |
-| v1.2.0 | チャット | 4-5日 | 12/9-12/13 | ⏳ 未着手 |
-| v1.3.0 | ソーシャル | 6-8日 | 12/16-12/27 | ⏳ 未着手 |
+| フェーズ | 機能 | 工数 | リリース時期 | ステータス |
+|---------|------|------|------------|-----------|
+| Phase 1 | MVP | 10週間 | 2025年1-2月 | 🔄 準備中 |
+| Phase 2 | 機能拡張 | 1-2ヶ月 | 2025年3-4月 | ⏳ 未着手 |
+| Phase 3 | プラットフォーム拡大 | 2-3ヶ月 | 2025年5-7月 | ⏳ 未着手 |
 
-**平日のみ稼働で完全に実現可能！**
+**個人開発で完全に実現可能！**
 
 ---
 
-## 🚨 v1.0.0での制限事項
+## 🚨 Phase 1 での制限事項
 
-アプリ内またはストア説明文に以下を記載予定:
+App Store説明文またはアプリ内に以下を記載予定:
 
 ```
 【現在の機能】
-✅ 地図上でポップ（募集投稿）を見る
-✅ 自分でポップを投稿する
-✅ カテゴリでフィルタリング
-✅ ポップの詳細表示
+✅ 目的地を設定して自動通知
+✅ 到着・滞在・退出の3種類の通知
+✅ お気に入り場所の登録
+✅ 通知履歴の確認（24時間）
+✅ フレンドへの自動通知
 
 【近日追加予定】
-🔜 リアクション機能 (11月末)
-🔜 チャット機能 (12月中旬)
-🔜 フレンド機能 (12月下旬)
-🔜 プッシュ通知 (12月下旬)
+🔜 繰り返しスケジュール (Phase 2)
+🔜 通知先グループ設定 (Phase 2)
+🔜 LINE統合 (Phase 2)
+🔜 Android対応 (Phase 3)
 ```
 
 ---
 
 ## 🎯 成功基準
 
-### v1.0.0
-- [ ] App Store / Google Playに公開
+### Phase 1 (MVP)
+- [ ] TestFlightでベータ版公開
 - [ ] 最低5名のテストユーザーが使用可能
 - [ ] クリティカルなバグなし
-- [ ] ポップの投稿・閲覧が正常に動作
+- [ ] スケジュール作成・編集が正常に動作
+- [ ] バックグラウンド位置情報トラッキングが動作
+- [ ] 到着・滞在・退出の自動通知が正常に送信される
+- [ ] 24時間データ自動削除が動作
+- [ ] バッテリー消費が1日10%以内
 
-### v1.1.0
-- [ ] リアクション送受信が正常に動作
+### Phase 2
+- [ ] 繰り返しスケジュールが正常に動作
+- [ ] 通知先グループ設定が使いやすい
+- [ ] LINE統合が動作（オプション）
 - [ ] 既存機能に影響なし
 
-### v1.2.0
-- [ ] チャット送受信が正常に動作
-- [ ] リアルタイム性の確保
-
-### v1.3.0
+### Phase 3
+- [ ] Android版リリース
+- [ ] iOS/Android間でデータ同期
 - [ ] 全機能が統合された状態で安定動作
-- [ ] ユーザーフィードバックを反映
 
 ---
 
 ## 📝 進捗メモ
 
-### 2025-11-02
-- リリース計画策定
-- 早期リリース戦略決定
-- v1.0.0を超MVP版として11/11-11/15にリリース目標設定
-- 祝日考慮でスケジュール調整（11/3-11/4は休み、11/5スタート）
-- **Firebase基盤セットアップが10/29に完了済みと判明！**
-  - ✅ serviceAccountKey.json配置済み
-  - ✅ .env設定完了済み
-  - ✅ Firestore有効化済み
-  - ✅ `initialize_firebase()` 有効化済み
-  - ✅ バックエンドサーバー正常起動確認
-- **認証機能の実装完了！**
-  - ✅ API連携サービスレイヤー作成（api_service.dart, auth_service.dart）
-  - ✅ ログイン/新規登録画面実装
-  - ✅ Firebase iOS設定完了（GoogleService-Info.plist, firebase_options.dart）
-  - ✅ FlutterFire CLI設定完了
-  - ✅ 新規登録・ログイン・ログアウト動作確認完了
-  - ✅ frontendディレクトリ削除（mobileのみに統一）
-- **🎉 11/5の予定タスクを11/2に完了！3日前倒し！**
+### 2025-11-04
+- プロジェクト開始
+- poplinkコードベースからimane用にフォーク
+- REQUIREMENTS.md作成完了
+- RELEASE_PLAN.md作成完了
+- Phase 1 (MVP) の開発計画策定
+- 10週間でTestFlightリリース目標設定
 
 ---
 
-## 🔧 Firebase基盤セットアップ手順（11/5実施）
+## 🔧 開発環境セットアップ
 
-### ステップ1: Firebaseプロジェクトの作成
+Phase 1の開発を始める前に、以下のセットアップが必要:
 
-1. **Firebase Consoleにアクセス**
-   - https://console.firebase.google.com/ にアクセス
-   - Googleアカウントでログイン
+### 必須ツール
+- Python 3.11+（バックエンド）
+- uv（Pythonパッケージマネージャー）
+- Flutter 3.x（iOS開発）
+- Xcode（iOS simulator & build）
+- Firebase プロジェクト
 
-2. **新規プロジェクト作成**
-   - 「プロジェクトを追加」をクリック
-   - プロジェクト名: `poplink` (または任意の名前)
-   - Google Analyticsは「今は設定しない」でOK
-   - 「プロジェクトを作成」をクリック
-
-3. **Firebaseプロジェクトの準備完了を待つ**
-   - 約30秒〜1分で完了
-
----
-
-### ステップ2: Firestoreの有効化
-
-1. **Firestore Databaseを作成**
-   - 左メニューから「Firestore Database」を選択
-   - 「データベースの作成」をクリック
-   - **ロケーション**: `asia-northeast1` (東京) を選択
-   - **セキュリティルール**: 「テストモードで開始」を選択
-     - ⚠️ 後で本番用ルールに変更必要
-   - 「有効にする」をクリック
-
-2. **Firestoreの初期化完了を待つ**
-   - 約1分で完了
+### セットアップ手順
+1. Firebaseプロジェクト作成 → [FIREBASE_SETUP.md](./FIREBASE_SETUP.md)（更新予定）
+2. バックエンド依存関係インストール: `cd backend && uv sync`
+3. フロントエンド依存関係インストール: `cd mobile && flutter pub get`
+4. 環境変数設定: `backend/.env` ファイル作成
+5. バックエンド起動: `uv run uvicorn app.main:app --reload`
+6. Flutter起動: `flutter run`
 
 ---
 
-### ステップ3: サービスアカウントキーの取得
+## 📊 コスト見積もり（個人開発規模）
 
-1. **プロジェクト設定を開く**
-   - 左上の⚙️（歯車アイコン）→「プロジェクトの設定」をクリック
+| サービス | 使用量（Phase 1） | 月額コスト |
+|---------|-----------------|-----------|
+| Firestore | 読取: 50,000 / 書込: 10,000 | **$0**（無料枠内） |
+| Cloud Functions | 10,000回/月 | **$0** |
+| Firebase Auth | 1,000ユーザー | **$0** |
+| FCM | 無制限 | **$0** |
+| Maps API | 5,000リクエスト | **$0** |
 
-2. **サービスアカウントキーを生成**
-   - 「サービス アカウント」タブを選択
-   - 「新しい秘密鍵の生成」をクリック
-   - 「キーを生成」を確認してクリック
-   - JSONファイルがダウンロードされる（例: `poplink-xxxxx.json`）
-
-3. **JSONファイルをプロジェクトに配置**
-   ```bash
-   # ダウンロードしたJSONファイルを backend ディレクトリに移動
-   mv ~/Downloads/poplink-xxxxx.json /Users/shoto4410/Desktop/develop/poplink/backend/serviceAccountKey.json
-   ```
-
----
-
-### ステップ4: .envファイルの設定
-
-1. **.env.exampleをコピーして.envを作成**
-   ```bash
-   cd /Users/shoto4410/Desktop/develop/poplink/backend
-   cp .env.example .env
-   ```
-
-2. **.envファイルを編集**
-   ```bash
-   # エディタで開く（VSCode使用の場合）
-   code .env
-   ```
-
-3. **以下の項目を設定**
-   ```env
-   # Application
-   APP_NAME=PopLink API
-   DEBUG=True  # 開発中はTrue
-
-   # Firebase設定
-   FIREBASE_PROJECT_ID=あなたのプロジェクトID  # Firebase Consoleで確認
-   FIREBASE_CREDENTIALS_PATH=./serviceAccountKey.json
-
-   # JWT設定
-   SECRET_KEY=ランダムな長い文字列を生成  # 例: openssl rand -hex 32 で生成
-   ALGORITHM=HS256
-   ACCESS_TOKEN_EXPIRE_MINUTES=30
-
-   # 暗号化キー
-   ENCRYPTION_KEY=別のランダムな長い文字列を生成  # 例: openssl rand -hex 32 で生成
-   ```
-
-4. **FIREBASE_PROJECT_IDの確認方法**
-   - Firebase Console → プロジェクト設定 → 全般タブ
-   - 「プロジェクトID」をコピー
-
-5. **SECRET_KEYとENCRYPTION_KEYの生成**
-   ```bash
-   # ターミナルで実行してランダムな文字列を生成
-   openssl rand -hex 32
-   # 出力された文字列を.envに貼り付け
-
-   # もう一度実行して別の文字列を生成（ENCRYPTION_KEY用）
-   openssl rand -hex 32
-   ```
-
----
-
-### ステップ5: Firebase初期化コードの有効化
-
-1. **firebase.pyのコメントを解除**
-   ```bash
-   # backend/app/core/firebase.py を開く
-   code backend/app/core/firebase.py
-   ```
-
-2. **23行目付近のコメントを確認**
-   - 現在: `# initialize_firebase()`
-   - 後で有効化: `initialize_firebase()`
-   - **※今は触らない。まず.envとserviceAccountKey.jsonを配置してから**
-
----
-
-### ステップ6: backend/app/main.pyの修正
-
-1. **main.pyを開く**
-   ```bash
-   code backend/app/main.py
-   ```
-
-2. **22-23行目のコメントを解除**
-   ```python
-   # 修正前:
-   # Firebase初期化（一時的にコメントアウト - Firebaseセットアップ後に有効化）
-   # initialize_firebase()
-
-   # 修正後:
-   # Firebase初期化
-   initialize_firebase()
-   ```
-
----
-
-### ステップ7: 動作確認
-
-1. **バックエンドサーバーを起動**
-   ```bash
-   cd /Users/shoto4410/Desktop/develop/poplink/backend
-   uv run uvicorn app.main:app --reload
-   ```
-
-2. **エラーがないか確認**
-   - ✅ 正常起動: `Application startup complete` と表示される
-   - ❌ エラー発生: エラーメッセージを確認して修正
-
-3. **APIにアクセスして確認**
-   ```bash
-   # 別のターミナルで実行
-   curl http://localhost:8000/
-   # 出力: {"message":"PopLink API","status":"running","version":"1.0.0"}
-
-   curl http://localhost:8000/health
-   # 出力: {"status":"healthy"}
-   ```
-
-4. **Firestoreの接続確認**
-   - Firebase Console → Firestore Database
-   - データベースが作成されていることを確認
-   - まだデータは空でOK
-
----
-
-### ✅ 完了チェックリスト
-
-- [ ] Firebaseプロジェクト作成完了
-- [ ] Firestore Database有効化完了
-- [ ] serviceAccountKey.json配置完了
-- [ ] .envファイル設定完了（全項目記入）
-- [ ] backend/app/main.pyのFirebase初期化を有効化
-- [ ] バックエンドサーバーが正常起動
-- [ ] `/` と `/health` エンドポイントにアクセス可能
-
----
-
-### 🚨 トラブルシューティング
-
-#### エラー1: `FileNotFoundError: serviceAccountKey.json`
-**原因**: JSONファイルのパスが間違っている
-**解決策**:
-```bash
-# ファイルの存在確認
-ls -la /Users/shoto4410/Desktop/develop/poplink/backend/serviceAccountKey.json
-
-# なければ正しい場所に配置
-```
-
-#### エラー2: `ValueError: Project ID not found`
-**原因**: FIREBASE_PROJECT_IDが設定されていない
-**解決策**: .envファイルのFIREBASE_PROJECT_IDを確認
-
-#### エラー3: `Permission denied`
-**原因**: サービスアカウントの権限不足
-**解決策**: Firebase Console → IAM と管理 → サービスアカウントの権限確認
+> ✅ **Phase 1は実質無料運用可能**
 
 ---
 
 ## 🔗 関連ドキュメント
 
 - [プロジェクト概要](./README.md)
+- [要件定義書](./REQUIREMENTS.md)
 - [開発ガイドライン](./CLAUDE.md)
-- [バックエンドテスト](./backend/tests/INTEGRATION_TEST_README.md)
+- [Firebase設定手順](./FIREBASE_SETUP.md)
+
+---
+
+**最終更新**: 2025-11-04
+**Version**: 1.0.0
