@@ -99,7 +99,7 @@ class _LoginScreenState extends State<LoginScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: Colors.red,
+        backgroundColor: AppColors.error,
       ),
     );
   }
@@ -107,221 +107,201 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: AppColors.backgroundGradient,
-        ),
-        child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 32),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // Header
-                    Text(
-                      _isSignupMode ? 'Sign up' : 'Sign in',
-                      style: const TextStyle(
-                        color: AppColors.textWhite,
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      _isSignupMode
-                          ? 'Create your account'
-                          : 'Access to your account',
-                      style: const TextStyle(
-                        color: AppColors.textGray,
-                        fontSize: 14,
-                      ),
-                    ),
-                    const SizedBox(height: 40),
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Top spacing
+                  const SizedBox(height: 210),
 
-                    // Display Name Field (新規登録時のみ)
-                    if (_isSignupMode) ...[
-                      TextFormField(
-                        controller: _displayNameController,
-                        style: const TextStyle(color: AppColors.textWhite),
-                        decoration: InputDecoration(
-                          hintText: 'Display Name',
-                          prefixIcon: const Icon(
-                            Icons.person_outline,
-                            color: AppColors.textGrayDark,
-                          ),
-                          filled: true,
-                          fillColor: AppColors.cardBackground,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: AppColors.borderGray),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: AppColors.borderGray),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: AppColors.primary, width: 2),
-                          ),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter your display name';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                    ],
+                  // Logo/Title
+                  Text(
+                    'imane',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.displayLarge,
+                  ),
 
-                    // Email Field
-                    TextFormField(
-                      controller: _emailController,
-                      style: const TextStyle(color: AppColors.textWhite),
-                      keyboardType: TextInputType.emailAddress,
-                      decoration: InputDecoration(
-                        hintText: 'Email',
-                        prefixIcon: const Icon(
-                          Icons.email_outlined,
-                          color: AppColors.textGrayDark,
-                        ),
-                        filled: true,
-                        fillColor: AppColors.cardBackground,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AppColors.borderGray),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AppColors.borderGray),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AppColors.primary, width: 2),
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your email';
-                        }
-                        if (!value.contains('@')) {
-                          return 'Please enter a valid email';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
+                  const SizedBox(height: 40),
 
-                    // Password Field
-                    TextFormField(
-                      controller: _passwordController,
-                      obscureText: _obscurePassword,
-                      style: const TextStyle(color: AppColors.textWhite),
-                      decoration: InputDecoration(
-                        hintText: 'Password',
-                        prefixIcon: const Icon(
-                          Icons.lock_outline,
-                          color: AppColors.textGrayDark,
-                        ),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                            color: AppColors.textGrayDark,
+                  // Form Container
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(32, 32, 32, 0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Display Name Field (新規登録時のみ)
+                        if (_isSignupMode) ...[
+                          _buildLabel('表示名'),
+                          const SizedBox(height: 8),
+                          TextFormField(
+                            controller: _displayNameController,
+                            style: Theme.of(context).textTheme.bodyLarge,
+                            decoration: InputDecoration(
+                              hintText: 'あなたの名前',
+                              hintStyle: Theme.of(context)
+                                  .inputDecorationTheme
+                                  .hintStyle,
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return '表示名を入力してください';
+                              }
+                              return null;
+                            },
                           ),
-                          onPressed: () {
-                            setState(() {
-                              _obscurePassword = !_obscurePassword;
-                            });
+                          const SizedBox(height: 24),
+                        ],
+
+                        // Email Field
+                        _buildLabel('メールアドレス'),
+                        const SizedBox(height: 8),
+                        TextFormField(
+                          controller: _emailController,
+                          style: Theme.of(context).textTheme.bodyLarge,
+                          keyboardType: TextInputType.emailAddress,
+                          decoration: InputDecoration(
+                            hintText: 'your@email.com',
+                            hintStyle:
+                                Theme.of(context).inputDecorationTheme.hintStyle,
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'メールアドレスを入力してください';
+                            }
+                            if (!value.contains('@')) {
+                              return '有効なメールアドレスを入力してください';
+                            }
+                            return null;
                           },
                         ),
-                        filled: true,
-                        fillColor: AppColors.cardBackground,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AppColors.borderGray),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AppColors.borderGray),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AppColors.primary, width: 2),
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your password';
-                        }
-                        if (_isSignupMode && value.length < 8) {
-                          return 'Password must be at least 8 characters';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 24),
+                        const SizedBox(height: 24),
 
-                    // Sign In/Up Button
-                    ElevatedButton(
-                      onPressed: _isLoading
-                          ? null
-                          : (_isSignupMode ? _handleSignup : _handleLogin),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: AppColors.textWhite,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: _isLoading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor:
-                                    AlwaysStoppedAnimation(AppColors.textWhite),
+                        // Password Field
+                        _buildLabel('パスワード'),
+                        const SizedBox(height: 8),
+                        TextFormField(
+                          controller: _passwordController,
+                          obscureText: _obscurePassword,
+                          style: Theme.of(context).textTheme.bodyLarge,
+                          decoration: InputDecoration(
+                            hintText: '••••••••',
+                            hintStyle:
+                                Theme.of(context).inputDecorationTheme.hintStyle,
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscurePassword
+                                    ? Icons.visibility_off
+                                    : Icons.visibility,
+                                color: AppColors.textPlaceholder,
+                                size: 20,
                               ),
-                            )
-                          : Text(
-                              _isSignupMode ? 'Sign Up' : 'Sign In',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
+                              onPressed: () {
+                                setState(() {
+                                  _obscurePassword = !_obscurePassword;
+                                });
+                              },
+                            ),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'パスワードを入力してください';
+                            }
+                            if (_isSignupMode && value.length < 8) {
+                              return 'パスワードは8文字以上で入力してください';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 24),
+
+                        // Sign In Button
+                        SizedBox(
+                          height: 48,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(100),
+                              boxShadow: AppColors.buttonShadow,
+                            ),
+                            child: ElevatedButton(
+                              onPressed: _isLoading
+                                  ? null
+                                  : (_isSignupMode ? _handleSignup : _handleLogin),
+                              child: _isLoading
+                                  ? const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor: AlwaysStoppedAnimation(
+                                            AppColors.textWhite),
+                                      ),
+                                    )
+                                  : Text(
+                                      _isSignupMode ? 'Sign Up' : 'Sign in',
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w400,
+                                        letterSpacing: -0.31,
+                                      ),
+                                    ),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 24),
+
+                        // Sign Up Link
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              _isSignupMode
+                                  ? 'Already have an account?'
+                                  : "Don't have an account?",
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                            const SizedBox(width: 4),
+                            GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _isSignupMode = !_isSignupMode;
+                                });
+                              },
+                              child: Text(
+                                _isSignupMode ? 'Sign In' : 'Sign Up',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                      color: AppColors.primary,
+                                      fontWeight: FontWeight.w400,
+                                    ),
                               ),
                             ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Toggle Sign In/Up
-                    TextButton(
-                      onPressed: () {
-                        setState(() {
-                          _isSignupMode = !_isSignupMode;
-                        });
-                      },
-                      child: Text(
-                        _isSignupMode
-                            ? 'Already have an account? Sign In'
-                            : "Don't have an account? Sign Up",
-                        style: const TextStyle(
-                          color: AppColors.primary,
-                          fontSize: 14,
+                          ],
                         ),
-                      ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildLabel(String text) {
+    return Text(
+      text,
+      style: Theme.of(context).textTheme.labelLarge,
     );
   }
 }
