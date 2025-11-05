@@ -153,6 +153,8 @@ venv.bak/
 # Firebase認証情報
 firebase-credentials.json
 serviceAccountKey.json
+**/GoogleService-Info.plist
+**/google-services.json
 
 # Node.js
 node_modules/

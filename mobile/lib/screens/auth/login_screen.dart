@@ -117,8 +117,8 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Top spacing
-                  const SizedBox(height: 210),
+                  // Top spacing (reduced from 210 to 140)
+                  const SizedBox(height: 140),
 
                   // Logo/Title
                   Text(
@@ -286,6 +286,27 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ],
                         ),
+
+                        // Forgot Password Link (ログインモード時のみ)
+                        if (!_isSignupMode) ...[
+                          const SizedBox(height: 12),
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.of(context).pushNamed('/password-reset');
+                            },
+                            child: Text(
+                              'Forgot password?',
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    color: AppColors.primary,
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),

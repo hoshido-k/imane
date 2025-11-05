@@ -51,6 +51,61 @@ Firebase Console > Authentication > Sign-in method
    - プロジェクトのサポートメールを設定
    - 保存
 
+### 2.2 パスワードリセットメールのカスタマイズ
+
+Firebase Console > Authentication > Templates
+
+パスワードリセットメールのテンプレートをimane用にカスタマイズします。
+
+1. **「Password reset」テンプレートを選択**
+
+2. **送信者情報を設定**
+   - **From name（送信者名）**: `imane`
+   - **From email（送信者メールアドレス）**: デフォルトのまま（例: `noreply@imane-dev.firebaseapp.com`）
+   - カスタムドメインを使用する場合は、「Customize action URL」を参照
+
+3. **メール件名をカスタマイズ**
+   - 日本語の場合: `imaneのパスワードをリセット`
+   - 英語の場合: `Reset your imane password`
+
+4. **メール本文をカスタマイズ（例）**
+
+```
+こんにちは、
+
+imaneアカウントのパスワードリセットのリクエストを受け取りました。
+以下のボタンをクリックして、新しいパスワードを設定してください。
+
+%LINK%
+
+このリクエストに心当たりがない場合は、このメールを無視してください。
+
+今ね、
+imaneチーム
+```
+
+英語版の例:
+```
+Hello,
+
+We received a request to reset the password for your imane account.
+Click the button below to set a new password.
+
+%LINK%
+
+If you didn't request this, you can safely ignore this email.
+
+Thanks,
+The imane Team
+```
+
+5. **「保存」をクリック**
+
+**重要**:
+- `%LINK%` プレースホルダーは必ず含めてください（Firebaseが自動的にリセットリンクに置き換えます）
+- リンクのURLには自動的にFirebaseプロジェクトID（例: `imane-dev`）が含まれます
+- URLをカスタマイズする場合は「Customize action URL」で独自ドメインを設定できます
+
 ## 3. Cloud Firestore設定
 
 ### 3.1 Firestoreデータベースの作成

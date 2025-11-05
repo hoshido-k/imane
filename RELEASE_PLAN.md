@@ -251,7 +251,7 @@
 **タスク:**
 - [x] `mobile/lib/screens/schedule/create_schedule_screen.dart` 作成
   - 目的地入力フォーム
-  - 地図選択（poplink流用）
+  - 地図選択（imane流用）
   - 時間範囲選択
   - お気に入りから選択機能
 
@@ -397,7 +397,7 @@ App Store説明文またはアプリ内に以下を記載予定:
 
 ### 2025-11-04
 - プロジェクト開始
-- poplinkコードベースからimane用にフォーク
+- imaneコードベースからimane用にフォーク
 - REQUIREMENTS.md作成完了
 - RELEASE_PLAN.md作成完了
 - Phase 1 (MVP) の開発計画策定

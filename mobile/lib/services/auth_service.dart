@@ -65,11 +65,15 @@ class AuthService {
     required String password,
   }) async {
     try {
+      print('[Auth] Attempting login with Firebase Auth for email: $email');
+
       // 1. Firebase Authenticationでログイン
       final userCredential = await _firebaseAuth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
+
+      print('[Auth] Firebase login successful, user: ${userCredential.user?.uid}');
 
       // 2. Firebase IDトークンを取得
       final idToken = await userCredential.user?.getIdToken();
@@ -101,6 +105,7 @@ class AuthService {
         uid: uid,
       );
     } on FirebaseAuthException catch (e) {
+      print('[Auth] FirebaseAuthException: code=${e.code}, message=${e.message}');
       String errorMessage;
       switch (e.code) {
         case 'user-not-found':
@@ -115,8 +120,11 @@ class AuthService {
         case 'user-disabled':
           errorMessage = 'このアカウントは無効化されています';
           break;
+        case 'invalid-credential':
+          errorMessage = 'メールアドレスまたはパスワードが正しくありません';
+          break;
         default:
-          errorMessage = 'ログインに失敗しました: ${e.message}';
+          errorMessage = 'ログインに失敗しました (${e.code}): ${e.message}';
       }
 
       return AuthResult(
@@ -124,11 +132,13 @@ class AuthService {
         errorMessage: errorMessage,
       );
     } on ApiException catch (e) {
+      print('[Auth] ApiException: ${e.message}');
       return AuthResult(
         success: false,
         errorMessage: e.message,
       );
     } catch (e) {
+      print('[Auth] Unknown error: $e');
       return AuthResult(
         success: false,
         errorMessage: 'ログインに失敗しました: $e',
@@ -149,6 +159,45 @@ class AuthService {
       _apiService.clearAccessToken();
     } catch (e) {
       throw Exception('ログアウトに失敗しました: $e');
+    }
+  }
+
+  /// パスワードリセットメールを送信
+  Future<AuthResult> sendPasswordResetEmail({
+    required String email,
+  }) async {
+    try {
+      print('[Auth] Sending password reset email to: $email');
+      await _firebaseAuth.sendPasswordResetEmail(email: email);
+      print('[Auth] Password reset email sent successfully');
+
+      return AuthResult(
+        success: true,
+      );
+    } on FirebaseAuthException catch (e) {
+      print('[Auth] Password reset failed: code=${e.code}, message=${e.message}');
+      String errorMessage;
+      switch (e.code) {
+        case 'user-not-found':
+          errorMessage = 'このメールアドレスは登録されていません';
+          break;
+        case 'invalid-email':
+          errorMessage = 'メールアドレスの形式が正しくありません';
+          break;
+        default:
+          errorMessage = 'パスワードリセットメールの送信に失敗しました (${e.code}): ${e.message}';
+      }
+
+      return AuthResult(
+        success: false,
+        errorMessage: errorMessage,
+      );
+    } catch (e) {
+      print('[Auth] Password reset unknown error: $e');
+      return AuthResult(
+        success: false,
+        errorMessage: 'パスワードリセットメールの送信に失敗しました: $e',
+      );
     }
   }
 

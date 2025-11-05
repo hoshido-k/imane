@@ -44,7 +44,7 @@ backend/
 └── tests/                   # Unit and integration tests
 
 mobile/                      # Flutter frontend (iOS)
-└── (Flutter project structure from poplink)
+└── (Flutter project structure from imane)
 ```
 
 **Key architectural decisions:**
@@ -222,19 +222,19 @@ When working on new features or fixes:
 
 ## API Endpoints Reference
 
-### Authentication (`/api/v1/auth`) - From poplink
+### Authentication (`/api/v1/auth`) - From imane
 - `POST /signup` - Register new user
 - `POST /login` - Login with email/password
 - `POST /refresh` - Refresh JWT token
 - `POST /logout` - Logout user
 
-### Users (`/api/v1/users`) - From poplink
+### Users (`/api/v1/users`) - From imane
 - `GET /me` - Get current user profile
 - `PUT /me` - Update user profile
 - `GET /{user_id}` - Get user by ID
 - `DELETE /me` - Delete account
 
-### Friends (`/api/v1/friends`) - From poplink
+### Friends (`/api/v1/friends`) - From imane
 - `POST /request` - Send friend request
 - `POST /accept` - Accept friend request
 - `POST /reject` - Reject friend request
@@ -353,8 +353,8 @@ All notifications follow the "今ね、" (imane) format:
 ## Implementation Phases
 
 ### Phase 1: MVP (Current)
-- ✅ Authentication & user management (from poplink)
-- ✅ Friend management (from poplink)
+- ✅ Authentication & user management (from imane)
+- ✅ Friend management (from imane)
 - 🆕 Location schedule CRUD
 - 🆕 Favorite locations
 - 🆕 Background location tracking (10 min intervals)
@@ -380,7 +380,7 @@ When working on imane:
 
 1. **Remember the core concept**: "今ね、" automatic notifications - no chat, just timely updates
 2. **Privacy is paramount**: Always implement 24-hour TTL for location data
-3. **From poplink template**: Auth, users, friends, notifications are reused. Messages functionality was deleted.
+3. **From imane template**: Auth, users, friends, notifications are reused. Messages functionality was deleted.
 4. **New functionality**: Schedules, favorites, location tracking, geofencing, auto-notifications
 5. **iOS-first**: Focus on iOS Background Location APIs, not Android (yet)
 6. **Notification format**: Always use "今ね、" prefix and natural Japanese phrasing
@@ -409,7 +409,7 @@ multiple simultaneous schedules, so we just need to ensure proper filtering."
 - Don't send duplicate notifications (check NotificationHistory)
 - Always validate geofence distance with GPS accuracy margin
 
-## Changelog from poplink
+## Changelog from imane
 
 ### Removed
 - ❌ `backend/app/api/v1/messages.py`

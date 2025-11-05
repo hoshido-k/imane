@@ -1,4 +1,4 @@
-# PopLink Cloud Functions
+# imane Cloud Functions
 
 Firebase Cloud Functionsを使用したポップ自動削除機能の実装。
 

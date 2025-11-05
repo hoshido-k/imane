@@ -10,7 +10,7 @@
 
 1. **Firebaseプロジェクトの作成**
    - [Firebase Console](https://console.firebase.google.com/)でプロジェクトを作成
-   - プロジェクト名: `poplink-dev` (推奨)
+   - プロジェクト名: `imane-dev` (推奨)
 
 2. **Firestoreデータベースの作成**
    - Firebase Console > Firestore Database
@@ -29,7 +29,7 @@
 
 ```bash
 # Firebase設定
-FIREBASE_PROJECT_ID=poplink-dev  # 実際のプロジェクトID
+FIREBASE_PROJECT_ID=imane-dev  # 実際のプロジェクトID
 FIREBASE_CREDENTIALS_PATH=./serviceAccountKey.json
 
 # JWT設定
@@ -274,7 +274,7 @@ jobs:
 
 1. **テスト用プロジェクトを使用**
    - 本番Firebaseプロジェクトでテストを実行しない
-   - `poplink-dev`や`poplink-test`など専用プロジェクトを作成
+   - `imane-dev`や`imane-test`など専用プロジェクトを作成
 
 2. **ローカルエミュレータを優先**
    - コストゼロ

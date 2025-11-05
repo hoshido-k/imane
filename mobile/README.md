@@ -1,4 +1,4 @@
-# PopLink Mobile (Flutter)
+# imane Mobile (Flutter)
 
 Figmaデザインを基にしたリアルタイム位置情報ベースのモバイルアプリケーション（iOS版）
 
@@ -193,4 +193,4 @@ fvm flutter build ios
 
 ## ライセンス
 
-このプロジェクトはPopLinkアプリケーションの一部です。
+このプロジェクトはimaneアプリケーションの一部です。

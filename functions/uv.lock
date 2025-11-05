@@ -859,7 +859,7 @@ wheels = [
 ]
 
 [[package]]
-name = "poplink-functions"
+name = "imane-functions"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
