@@ -47,7 +47,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (result.success) {
         // ログイン成功
-        Navigator.of(context).pushReplacementNamed('/map');
+        Navigator.of(context).pushReplacementNamed('/home');
       } else {
         // エラー表示
         _showError(result.errorMessage ?? 'ログインに失敗しました');
@@ -81,7 +81,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (result.success) {
         // 登録成功
-        Navigator.of(context).pushReplacementNamed('/map');
+        Navigator.of(context).pushReplacementNamed('/home');
       } else {
         // エラー表示
         _showError(result.errorMessage ?? '登録に失敗しました');

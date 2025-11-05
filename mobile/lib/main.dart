@@ -5,7 +5,7 @@ import 'firebase_options.dart';
 import 'core/theme/app_theme.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/password_reset_screen.dart';
-import 'screens/main_screen.dart';
+import 'screens/schedule/schedule_list_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -52,7 +52,7 @@ class ImaneApp extends StatelessWidget {
       routes: {
         '/login': (context) => const LoginScreen(),
         '/password-reset': (context) => const PasswordResetScreen(),
-        '/map': (context) => const MainScreen(),
+        '/home': (context) => const ScheduleListScreen(),
       },
     );
   }

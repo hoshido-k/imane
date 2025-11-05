@@ -19,7 +19,14 @@ class ApiService {
   final String baseUrl;
   String? _accessToken;
 
-  ApiService({String? baseUrl})
+  // Singleton pattern
+  static final ApiService _instance = ApiService._internal();
+
+  factory ApiService({String? baseUrl}) {
+    return _instance;
+  }
+
+  ApiService._internal({String? baseUrl})
       : baseUrl = baseUrl ?? ApiConfig.baseUrl;
 
   /// アクセストークンを設定

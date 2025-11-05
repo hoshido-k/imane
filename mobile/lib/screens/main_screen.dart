@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/constants/app_colors.dart';
 import 'schedule/schedule_list_screen.dart';
 import 'favorites/favorites_screen.dart';
 import 'notification/notification_history_screen.dart';
@@ -22,13 +23,6 @@ class _MainScreenState extends State<MainScreen> {
     // ProfileScreen(),
   ];
 
-  final List<String> _titles = const [
-    'スケジュール',
-    'お気に入り',
-    '通知履歴',
-    // 'プロフィール',
-  ];
-
   void _onTabTapped(int index) {
     setState(() {
       _currentIndex = index;
@@ -38,25 +32,7 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_titles[_currentIndex]),
-        backgroundColor: _getAppBarColor(),
-        actions: [
-          // Debug button (for testing only)
-          IconButton(
-            icon: const Icon(Icons.bug_report),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const LocationDebugScreen(),
-                ),
-              );
-            },
-            tooltip: 'デバッグ画面',
-          ),
-        ],
-      ),
+      backgroundColor: AppColors.background,
       body: IndexedStack(
         index: _currentIndex,
         children: _screens,
@@ -65,7 +41,17 @@ class _MainScreenState extends State<MainScreen> {
         currentIndex: _currentIndex,
         onTap: _onTabTapped,
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: _getAppBarColor(),
+        backgroundColor: Colors.white,
+        selectedItemColor: AppColors.primary,
+        unselectedItemColor: AppColors.textSecondary,
+        selectedLabelStyle: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+        ),
+        unselectedLabelStyle: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w400,
+        ),
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.calendar_today),
@@ -86,18 +72,5 @@ class _MainScreenState extends State<MainScreen> {
         ],
       ),
     );
-  }
-
-  Color _getAppBarColor() {
-    switch (_currentIndex) {
-      case 0:
-        return Colors.blue;
-      case 1:
-        return Colors.orange;
-      case 2:
-        return Colors.purple;
-      default:
-        return Colors.blue;
-    }
   }
 }
