@@ -16,12 +16,16 @@ class PlacePrediction {
     required this.secondaryText,
   });
 
-  factory PlacePrediction.fromJson(Map<String, dynamic> json) {
+  /// Factory for Places API (New) format
+  factory PlacePrediction.fromJsonNew(Map<String, dynamic> json) {
+    final placePrediction = json['placePrediction'] ?? {};
+    final structuredFormat = placePrediction['structuredFormat'] ?? {};
+
     return PlacePrediction(
-      placeId: json['place_id'] as String,
-      description: json['description'] as String,
-      mainText: json['structured_formatting']['main_text'] as String,
-      secondaryText: json['structured_formatting']['secondary_text'] as String? ?? '',
+      placeId: placePrediction['placeId'] as String? ?? '',
+      description: placePrediction['text']?['text'] as String? ?? '',
+      mainText: structuredFormat['mainText']?['text'] as String? ?? '',
+      secondaryText: structuredFormat['secondaryText']?['text'] as String? ?? '',
     );
   }
 }
@@ -42,6 +46,22 @@ class PlaceDetails {
     required this.longitude,
   });
 
+  /// Factory for Places API (New) format
+  factory PlaceDetails.fromJsonNew(Map<String, dynamic> json, String placeId) {
+    final location = json['location'] ?? {};
+    final displayName = json['displayName'] ?? {};
+    final formattedAddress = json['formattedAddress'] as String? ?? '';
+
+    return PlaceDetails(
+      placeId: placeId,
+      name: displayName['text'] as String? ?? formattedAddress,
+      formattedAddress: formattedAddress,
+      latitude: (location['latitude'] as num?)?.toDouble() ?? 0.0,
+      longitude: (location['longitude'] as num?)?.toDouble() ?? 0.0,
+    );
+  }
+
+  /// Legacy format (kept for Geocoding API compatibility)
   factory PlaceDetails.fromJson(Map<String, dynamic> json) {
     final location = json['geometry']['location'];
     return PlaceDetails(
@@ -54,53 +74,66 @@ class PlaceDetails {
   }
 }
 
-/// Service for Google Places API
+/// Service for Google Places API (New)
 class PlacesService {
-  static const String _baseUrl = 'https://maps.googleapis.com/maps/api';
+  // Places API (New) endpoints
+  static const String _placesBaseUrl = 'https://places.googleapis.com/v1';
+
+  // Geocoding API (still uses legacy endpoint)
+  static const String _geocodingBaseUrl = 'https://maps.googleapis.com/maps/api';
+
   static const String _apiKey = ApiKeys.googleMapsApiKey;
 
-  /// Get autocomplete predictions for a search query
+  /// Get autocomplete predictions for a search query using Places API (New)
   ///
   /// [input] - The user's search query
   /// [language] - Language code (default: 'ja' for Japanese)
-  /// [components] - Country restriction (default: 'country:jp' for Japan)
+  /// [region] - Region code (default: 'jp' for Japan)
   Future<List<PlacePrediction>> getAutocompletePredictions(
     String input, {
     String language = 'ja',
-    String components = 'country:jp',
+    String region = 'jp',
   }) async {
     if (input.trim().isEmpty) {
       return [];
     }
 
     try {
-      final url = Uri.parse(
-        '$_baseUrl/place/autocomplete/json'
-        '?input=${Uri.encodeComponent(input)}'
-        '&language=$language'
-        '&components=$components'
-        '&key=$_apiKey',
-      );
+      final url = Uri.parse('$_placesBaseUrl/places:autocomplete');
 
-      final response = await http.get(url);
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Goog-Api-Key': _apiKey,
+          'X-Goog-FieldMask': 'suggestions.placePrediction.placeId,suggestions.placePrediction.text,suggestions.placePrediction.structuredFormat',
+        },
+        body: json.encode({
+          'input': input,
+          'languageCode': language,
+          'regionCode': region,
+          'includedPrimaryTypes': [], // Empty to include all types
+          'includedRegionCodes': [region.toUpperCase()],
+        }),
+      );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
 
-        if (data['status'] == 'OK') {
-          final predictions = (data['predictions'] as List)
-              .map((json) => PlacePrediction.fromJson(json))
+        if (data['suggestions'] != null && (data['suggestions'] as List).isNotEmpty) {
+          final predictions = (data['suggestions'] as List)
+              .where((s) => s['placePrediction'] != null)
+              .map((s) => PlacePrediction.fromJsonNew(s))
               .toList();
           return predictions;
-        } else if (data['status'] == 'ZERO_RESULTS') {
-          return [];
         } else {
-          final errorMessage = data['error_message'] ?? data['status'];
-          print('Places API error: ${data['status']} - $errorMessage');
-          throw Exception('Places API error: ${data['status']} - $errorMessage');
+          return [];
         }
       } else {
-        throw Exception('HTTP error: ${response.statusCode}');
+        final errorData = json.decode(response.body);
+        final errorMessage = errorData['error']?['message'] ?? 'Unknown error';
+        print('Places API error: ${response.statusCode} - $errorMessage');
+        throw Exception('Places API error: ${response.statusCode} - $errorMessage');
       }
     } catch (e) {
       print('Error fetching autocomplete predictions: $e');
@@ -108,7 +141,7 @@ class PlacesService {
     }
   }
 
-  /// Get detailed information about a place by place ID
+  /// Get detailed information about a place by place ID using Places API (New)
   ///
   /// [placeId] - The place ID from autocomplete prediction
   /// [language] - Language code (default: 'ja' for Japanese)
@@ -117,26 +150,26 @@ class PlacesService {
     String language = 'ja',
   }) async {
     try {
-      final url = Uri.parse(
-        '$_baseUrl/place/details/json'
-        '?place_id=${Uri.encodeComponent(placeId)}'
-        '&fields=place_id,name,formatted_address,geometry'
-        '&language=$language'
-        '&key=$_apiKey',
-      );
+      final url = Uri.parse('$_placesBaseUrl/places/$placeId');
 
-      final response = await http.get(url);
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Goog-Api-Key': _apiKey,
+          'X-Goog-FieldMask': 'id,displayName,formattedAddress,location',
+          'X-Goog-LanguageCode': language,
+        },
+      );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-
-        if (data['status'] == 'OK') {
-          return PlaceDetails.fromJson(data['result']);
-        } else {
-          throw Exception('Places API error: ${data['status']}');
-        }
+        return PlaceDetails.fromJsonNew(data, placeId);
       } else {
-        throw Exception('HTTP error: ${response.statusCode}');
+        final errorData = json.decode(response.body);
+        final errorMessage = errorData['error']?['message'] ?? 'Unknown error';
+        print('Places API error: ${response.statusCode} - $errorMessage');
+        throw Exception('Places API error: ${response.statusCode} - $errorMessage');
       }
     } catch (e) {
       print('Error fetching place details: $e');
@@ -144,98 +177,8 @@ class PlacesService {
     }
   }
 
-  /// Search places near a location
-  ///
-  /// [query] - Search query (e.g., "カフェ", "駅")
-  /// [latitude] - Latitude of center point
-  /// [longitude] - Longitude of center point
-  /// [radius] - Search radius in meters (default: 1000)
-  /// [language] - Language code (default: 'ja' for Japanese)
-  Future<List<PlaceDetails>> searchNearby(
-    String query, {
-    required double latitude,
-    required double longitude,
-    int radius = 1000,
-    String language = 'ja',
-  }) async {
-    try {
-      final url = Uri.parse(
-        '$_baseUrl/place/nearbysearch/json'
-        '?location=$latitude,$longitude'
-        '&radius=$radius'
-        '&keyword=${Uri.encodeComponent(query)}'
-        '&language=$language'
-        '&key=$_apiKey',
-      );
-
-      final response = await http.get(url);
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-
-        if (data['status'] == 'OK') {
-          final places = (data['results'] as List)
-              .map((json) => PlaceDetails.fromJson(json))
-              .toList();
-          return places;
-        } else if (data['status'] == 'ZERO_RESULTS') {
-          return [];
-        } else {
-          throw Exception('Places API error: ${data['status']}');
-        }
-      } else {
-        throw Exception('HTTP error: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('Error searching nearby places: $e');
-      return [];
-    }
-  }
-
-  /// Geocode an address to get coordinates
-  ///
-  /// [address] - Full address string
-  /// [language] - Language code (default: 'ja' for Japanese)
-  Future<PlaceDetails?> geocodeAddress(
-    String address, {
-    String language = 'ja',
-  }) async {
-    try {
-      final url = Uri.parse(
-        '$_baseUrl/geocode/json'
-        '?address=${Uri.encodeComponent(address)}'
-        '&language=$language'
-        '&key=$_apiKey',
-      );
-
-      final response = await http.get(url);
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-
-        if (data['status'] == 'OK') {
-          final result = data['results'][0];
-          final location = result['geometry']['location'];
-          return PlaceDetails(
-            placeId: result['place_id'] as String,
-            name: result['formatted_address'] as String,
-            formattedAddress: result['formatted_address'] as String,
-            latitude: (location['lat'] as num).toDouble(),
-            longitude: (location['lng'] as num).toDouble(),
-          );
-        } else {
-          throw Exception('Geocoding API error: ${data['status']}');
-        }
-      } else {
-        throw Exception('HTTP error: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('Error geocoding address: $e');
-      return null;
-    }
-  }
-
   /// Reverse geocode coordinates to get address (緯度経度→住所)
+  /// Uses Geocoding API (legacy endpoint)
   ///
   /// [latitude] - Latitude
   /// [longitude] - Longitude
@@ -247,7 +190,7 @@ class PlacesService {
   }) async {
     try {
       final url = Uri.parse(
-        '$_baseUrl/geocode/json'
+        '$_geocodingBaseUrl/geocode/json'
         '?latlng=$latitude,$longitude'
         '&language=$language'
         '&key=$_apiKey',
