@@ -47,40 +47,12 @@ class _FriendsScreenState extends State<FriendsScreen> {
     );
   }
 
-  /// ヘッダー部分（戻るボタン・タイトル・通知・追加ボタン）
+  /// ヘッダー部分（タイトル・通知・追加ボタン）
   Widget _buildHeader() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
       child: Row(
         children: [
-          // 戻るボタン
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(100),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x1A000000),
-                  offset: Offset(0, 1),
-                  blurRadius: 3,
-                ),
-                BoxShadow(
-                  color: Color(0x1A000000),
-                  offset: Offset(0, 1),
-                  blurRadius: 2,
-                  spreadRadius: -1,
-                ),
-              ],
-            ),
-            child: IconButton(
-              icon: const Icon(Icons.arrow_back, size: 20),
-              onPressed: () => Navigator.of(context).pop(),
-              padding: EdgeInsets.zero,
-            ),
-          ),
-          const SizedBox(width: 16),
           // タイトル・サブタイトル
           Expanded(
             child: Column(

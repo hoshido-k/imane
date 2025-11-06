@@ -199,15 +199,15 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Container(
-        height: 176,
+        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const SizedBox(height: 32),
             Container(
               width: 48,
               height: 48,
@@ -244,7 +244,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 32),
           ],
         ),
       ),

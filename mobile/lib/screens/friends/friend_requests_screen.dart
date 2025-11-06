@@ -384,13 +384,13 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
                     child: const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.person_add_outlined, size: 16),
-                        SizedBox(width: 8),
+                        Icon(Icons.person_add_outlined, size: 14),
+                        SizedBox(width: 6),
                         Text(
                           '承認',
                           style: TextStyle(
                             fontFamily: 'Inter',
-                            fontSize: 16,
+                            fontSize: 14,
                             fontWeight: FontWeight.w400,
                             letterSpacing: -0.3125,
                           ),
@@ -420,13 +420,13 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
                     child: const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.person_remove_outlined, size: 16),
-                        SizedBox(width: 8),
+                        Icon(Icons.person_remove_outlined, size: 14),
+                        SizedBox(width: 6),
                         Text(
                           '拒否',
                           style: TextStyle(
                             fontFamily: 'Inter',
-                            fontSize: 16,
+                            fontSize: 14,
                             fontWeight: FontWeight.w400,
                             letterSpacing: -0.3125,
                           ),
@@ -607,13 +607,13 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.close, size: 16),
-                  SizedBox(width: 8),
+                  Icon(Icons.close, size: 14),
+                  SizedBox(width: 6),
                   Text(
                     '申請を取り消す',
                     style: TextStyle(
                       fontFamily: 'Inter',
-                      fontSize: 16,
+                      fontSize: 14,
                       fontWeight: FontWeight.w400,
                       letterSpacing: -0.3125,
                     ),
