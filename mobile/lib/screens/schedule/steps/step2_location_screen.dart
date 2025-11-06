@@ -45,6 +45,7 @@ class _Step2LocationScreenState extends State<Step2LocationScreen> {
 
   // Map search controller
   final TextEditingController _searchController = TextEditingController();
+  List<Map<String, String>> _searchResults = [];
 
   @override
   void initState() {
@@ -52,6 +53,49 @@ class _Step2LocationScreenState extends State<Step2LocationScreen> {
     if (widget.initialLocation != null) {
       _selectedLocation = widget.initialLocation;
     }
+    // Listen to search input changes
+    _searchController.addListener(_onSearchTextChanged);
+
+    // Listen to manual input changes for button state
+    _prefectureController.addListener(_updateState);
+    _cityController.addListener(_updateState);
+    _streetController.addListener(_updateState);
+  }
+
+  void _updateState() {
+    setState(() {});
+  }
+
+  void _onSearchTextChanged() {
+    final query = _searchController.text.trim();
+    if (query.isEmpty) {
+      setState(() {
+        _searchResults = [];
+      });
+      return;
+    }
+
+    // Filter stations by search query
+    final allStations = [
+      {'name': '東京駅', 'address': '東京都千代田区丸の内1丁目'},
+      {'name': '渋谷駅', 'address': '東京都渋谷区道玄坂1丁目'},
+      {'name': '新宿駅', 'address': '東京都新宿区新宿3丁目'},
+      {'name': '池袋駅', 'address': '東京都豊島区南池袋1丁目'},
+      {'name': '品川駅', 'address': '東京都港区高輪3丁目'},
+      {'name': '上野駅', 'address': '東京都台東区上野7丁目'},
+      {'name': '秋葉原駅', 'address': '東京都千代田区外神田1丁目'},
+      {'name': '六本木駅', 'address': '東京都港区六本木6丁目'},
+      {'name': '表参道駅', 'address': '東京都港区北青山3丁目'},
+      {'name': '銀座駅', 'address': '東京都中央区銀座4丁目'},
+    ];
+
+    setState(() {
+      _searchResults = allStations
+          .where((station) =>
+              station['name']!.contains(query) ||
+              station['address']!.contains(query))
+          .toList();
+    });
   }
 
   @override
@@ -76,6 +120,12 @@ class _Step2LocationScreenState extends State<Step2LocationScreen> {
       return;
     }
     widget.onNext(_selectedLocation!);
+  }
+
+  bool _isManualInputValid() {
+    return _prefectureController.text.trim().isNotEmpty &&
+        _cityController.text.trim().isNotEmpty &&
+        _streetController.text.trim().isNotEmpty;
   }
 
   void _onManualSubmit() {
@@ -444,10 +494,12 @@ class _Step2LocationScreenState extends State<Step2LocationScreen> {
               width: double.infinity,
               height: 56,
               child: ElevatedButton(
-                onPressed: _onManualSubmit,
+                onPressed: _isManualInputValid() ? _onManualSubmit : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
+                  disabledBackgroundColor: AppColors.inputBorder,
+                  disabledForegroundColor: AppColors.textSecondary,
                   elevation: 4,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(28),
@@ -653,10 +705,12 @@ class _Step2LocationScreenState extends State<Step2LocationScreen> {
             width: double.infinity,
             height: 56,
             child: ElevatedButton(
-              onPressed: _onMapLocationConfirm,
+              onPressed: _tempSelectedLocation != null ? _onMapLocationConfirm : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
+                disabledBackgroundColor: AppColors.inputBorder,
+                disabledForegroundColor: AppColors.textSecondary,
                 elevation: 4,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(28),
@@ -677,15 +731,12 @@ class _Step2LocationScreenState extends State<Step2LocationScreen> {
   }
 
   List<Widget> _buildStationList() {
-    final stations = [
-      {'name': '東京駅', 'address': '東京都千代田区丸の内1丁目'},
-      {'name': '渋谷駅', 'address': '東京都渋谷区道玄坂1丁目'},
-      {'name': '新宿駅', 'address': '東京都新宿区新宿3丁目'},
-      {'name': '池袋駅', 'address': '東京都豊島区南池袋1丁目'},
-      {'name': '品川駅', 'address': '東京都港区高輪3丁目'},
-    ];
+    // Only show results if search query is not empty
+    if (_searchResults.isEmpty) {
+      return [];
+    }
 
-    return stations.map((station) {
+    return _searchResults.map((station) {
       final isSelected = _tempSelectedLocation?.name == station['name'];
 
       return Container(

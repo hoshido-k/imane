@@ -440,16 +440,20 @@ class _Step3RecipientsScreenState extends State<Step3RecipientsScreen> {
   }
 
   Widget _buildNextButton() {
+    final bool isEnabled = _selectedFriendIds.isNotEmpty;
+
     return Container(
       padding: const EdgeInsets.all(24),
       child: SizedBox(
         width: double.infinity,
         height: 56,
         child: ElevatedButton(
-          onPressed: _onNextPressed,
+          onPressed: isEnabled ? _onNextPressed : null,
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
             foregroundColor: Colors.white,
+            disabledBackgroundColor: AppColors.inputBorder,
+            disabledForegroundColor: AppColors.textSecondary,
             elevation: 4,
             shadowColor: Colors.black.withOpacity(0.1),
             shape: RoundedRectangleBorder(
