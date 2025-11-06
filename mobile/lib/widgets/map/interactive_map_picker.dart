@@ -217,48 +217,41 @@ class _InteractiveMapPickerState extends State<InteractiveMapPicker> {
     }
   }
 
-  void _onPoiTapped(PointOfInterest poi) async {
-    // POI (Point of Interest) tapped - e.g., station, landmark, facility
-    print('POI tapped: ${poi.name} at ${poi.position}');
-
+  void _onMapLongPressed(LatLng position) async {
+    // Long press on map - show more detailed information
     setState(() {
+      _currentPosition = position;
       _isLoadingLocation = true;
-      _currentPosition = poi.position;
     });
 
-    // Get detailed info about the POI using place ID
-    PlaceDetails? placeDetails;
-    if (poi.placeId != null) {
-      placeDetails = await _placesService.getPlaceDetails(poi.placeId!);
-    }
+    // Get address from coordinates using reverse geocoding
+    final placeDetails = await _placesService.reverseGeocode(
+      position.latitude,
+      position.longitude,
+    );
 
     if (mounted) {
       if (placeDetails != null) {
         setState(() {
           _selectedLocation = LocationData(
-            name: placeDetails!.name,
+            name: placeDetails.name,
             address: placeDetails.formattedAddress,
-            latitude: poi.position.latitude,
-            longitude: poi.position.longitude,
+            latitude: position.latitude,
+            longitude: position.longitude,
           );
-          _addMarker(poi.position, placeDetails.name);
+          _addMarker(position, placeDetails.name);
           _isLoadingLocation = false;
         });
-
-        // Animate camera to POI
-        _mapController?.animateCamera(
-          CameraUpdate.newLatLngZoom(poi.position, 17),
-        );
       } else {
-        // Use POI name and position
+        // Fallback to coordinates if reverse geocoding fails
         setState(() {
           _selectedLocation = LocationData(
-            name: poi.name ?? '選択された場所',
-            address: '${poi.position.latitude.toStringAsFixed(6)}, ${poi.position.longitude.toStringAsFixed(6)}',
-            latitude: poi.position.latitude,
-            longitude: poi.position.longitude,
+            name: '選択された場所',
+            address: '${position.latitude.toStringAsFixed(6)}, ${position.longitude.toStringAsFixed(6)}',
+            latitude: position.latitude,
+            longitude: position.longitude,
           );
-          _addMarker(poi.position, poi.name ?? '選択された場所');
+          _addMarker(position, '選択された場所');
           _isLoadingLocation = false;
         });
       }
@@ -307,10 +300,7 @@ class _InteractiveMapPickerState extends State<InteractiveMapPicker> {
               _mapController = controller;
             },
             onTap: _onMapTapped,
-            onPoiTapped: (poi) {
-              // POI (Point of Interest) tapped - e.g., station, landmark, facility
-              _onPoiTapped(poi);
-            },
+            onLongPress: _onMapLongPressed,
             markers: _markers,
             myLocationEnabled: true,
             myLocationButtonEnabled: false,
