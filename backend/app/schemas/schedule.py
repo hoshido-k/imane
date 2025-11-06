@@ -37,6 +37,14 @@ from pydantic import BaseModel, ConfigDict, Field
 from app.schemas.common import Coordinates
 
 
+class NotifyToUser(BaseModel):
+    """通知先ユーザー情報"""
+
+    user_id: str = Field(..., description="ユーザーID")
+    display_name: str = Field(..., description="表示名")
+    avatar_url: Optional[str] = Field(None, description="アバターURL")
+
+
 class ScheduleStatus(str, Enum):
     """スケジュールステータス"""
 
@@ -117,6 +125,7 @@ class LocationScheduleResponse(BaseModel):
     destination_coords: Coordinates
     geofence_radius: int
     notify_to_user_ids: List[str]
+    notify_to_users: List[NotifyToUser] = Field(default_factory=list, description="通知先ユーザー情報")
     start_time: datetime
     end_time: datetime
     recurrence: Optional[RecurrenceType] = None

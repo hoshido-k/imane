@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../services/api_service.dart';
+import 'dart:io';
 
 /// Friend model for notification
 class Friend {
@@ -12,6 +14,15 @@ class Friend {
     required this.name,
     this.avatar,
   });
+
+  /// Create from JSON (FriendshipResponse)
+  factory Friend.fromJson(Map<String, dynamic> json) {
+    return Friend(
+      id: json['friend_id'],
+      name: json['friend_display_name'] ?? json['friend_email'] ?? 'Unknown',
+      avatar: json['friend_profile_image_url'],
+    );
+  }
 }
 
 /// Step 3: Recipients selection screen
@@ -32,10 +43,13 @@ class Step3RecipientsScreen extends StatefulWidget {
 }
 
 class _Step3RecipientsScreenState extends State<Step3RecipientsScreen> {
+  final ApiService _apiService = ApiService();
   final TextEditingController _searchController = TextEditingController();
   List<String> _selectedFriendIds = [];
   List<Friend> _friends = [];
   List<Friend> _filteredFriends = [];
+  bool _isLoading = false;
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -50,17 +64,66 @@ class _Step3RecipientsScreenState extends State<Step3RecipientsScreen> {
     super.dispose();
   }
 
-  void _loadFriends() {
-    // TODO: Load from API
-    _friends = [
-      Friend(id: '1', name: '田中 太郎'),
-      Friend(id: '2', name: '佐藤 花子'),
-      Friend(id: '3', name: '鈴木 次郎'),
-      Friend(id: '4', name: '高橋 美咲'),
-      Friend(id: '5', name: '渡辺 健太'),
-      Friend(id: '6', name: '伊藤 あゆみ'),
-    ];
-    _filteredFriends = List.from(_friends);
+  Future<void> _loadFriends() async {
+    print('[Step3Recipients] Loading friends...');
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final response = await _apiService.get('/friends');
+      print('[Step3Recipients] Response: $response');
+
+      List<dynamic> friendsJson;
+      if (response is Map && response['friends'] != null) {
+        friendsJson = response['friends'];
+      } else if (response is List) {
+        friendsJson = response;
+      } else {
+        friendsJson = [];
+      }
+
+      setState(() {
+        _friends = friendsJson
+            .map((json) {
+              try {
+                return Friend.fromJson(json);
+              } catch (e) {
+                print('[Step3Recipients] Error parsing friend: $e');
+                print('[Step3Recipients] Friend data: $json');
+                return null;
+              }
+            })
+            .where((friend) => friend != null)
+            .cast<Friend>()
+            .toList();
+        _filteredFriends = List.from(_friends);
+        _isLoading = false;
+      });
+
+      print('[Step3Recipients] Loaded ${_friends.length} friends');
+    } catch (e, stackTrace) {
+      print('[Step3Recipients] Error loading friends: $e');
+      print('[Step3Recipients] Stack trace: $stackTrace');
+
+      // Show empty list for most errors
+      setState(() {
+        _friends = [];
+        _filteredFriends = [];
+        _isLoading = false;
+      });
+
+      // Only show error message for network errors
+      if (e is SocketException && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('フレンドリストの取得に失敗しました'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
   }
 
   void _onSearchChanged(String query) {
@@ -370,8 +433,30 @@ class _Step3RecipientsScreenState extends State<Step3RecipientsScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          // Friend list
-          ..._filteredFriends.map((friend) => _buildFriendItem(friend)),
+          // Loading or friend list
+          if (_isLoading)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(32),
+                child: CircularProgressIndicator(),
+              ),
+            )
+          else if (_filteredFriends.isEmpty)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Text(
+                  'フレンドがいません',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ),
+            )
+          else
+            // Friend list
+            ..._filteredFriends.map((friend) => _buildFriendItem(friend)),
         ],
       ),
     );

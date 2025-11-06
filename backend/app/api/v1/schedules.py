@@ -12,12 +12,44 @@ from app.schemas.schedule import (
     LocationScheduleListResponse,
     LocationScheduleResponse,
     LocationScheduleUpdate,
+    NotifyToUser,
     ScheduleStatus,
 )
 from app.schemas.user import UserInDB
 from app.services.schedules import ScheduleService
+from app.services.users import UserService
 
 router = APIRouter()
+
+
+async def _enrich_schedule_with_user_info(
+    schedule: LocationScheduleResponse,
+    user_service: UserService,
+) -> LocationScheduleResponse:
+    """
+    スケジュールに通知先ユーザー情報を追加
+
+    Args:
+        schedule: スケジュールレスポンス
+        user_service: ユーザーサービス
+
+    Returns:
+        ユーザー情報を追加したスケジュールレスポンス
+    """
+    notify_to_users = []
+    for user_id in schedule.notify_to_user_ids:
+        user = await user_service.get_user_by_uid(user_id)
+        if user:
+            notify_to_users.append(
+                NotifyToUser(
+                    user_id=user.uid,
+                    display_name=user.display_name,
+                    avatar_url=user.avatar_url,
+                )
+            )
+
+    schedule.notify_to_users = notify_to_users
+    return schedule
 
 
 @router.post("", response_model=LocationScheduleResponse, status_code=status.HTTP_201_CREATED)
@@ -25,6 +57,7 @@ async def create_schedule(
     schedule_data: LocationScheduleCreate,
     current_user: UserInDB = Depends(get_current_user),
     schedule_service: ScheduleService = Depends(lambda: ScheduleService()),
+    user_service: UserService = Depends(lambda: UserService()),
 ):
     """
     位置情報スケジュールを作成
@@ -35,6 +68,7 @@ async def create_schedule(
         schedule_data: スケジュール作成データ
         current_user: 現在のユーザー
         schedule_service: スケジュールサービス
+        user_service: ユーザーサービス
 
     Returns:
         作成されたスケジュール情報
@@ -44,7 +78,8 @@ async def create_schedule(
     """
     try:
         schedule = await schedule_service.create_schedule(current_user.uid, schedule_data)
-        return LocationScheduleResponse(**schedule.model_dump())
+        schedule_response = LocationScheduleResponse(**schedule.model_dump())
+        return await _enrich_schedule_with_user_info(schedule_response, user_service)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
@@ -56,6 +91,7 @@ async def get_schedules(
     ),
     current_user: UserInDB = Depends(get_current_user),
     schedule_service: ScheduleService = Depends(lambda: ScheduleService()),
+    user_service: UserService = Depends(lambda: UserService()),
 ):
     """
     スケジュール一覧を取得
@@ -67,14 +103,19 @@ async def get_schedules(
         status_filter: ステータスフィルター（active/arrived/completed/expired）
         current_user: 現在のユーザー
         schedule_service: スケジュールサービス
+        user_service: ユーザーサービス
 
     Returns:
         スケジュール一覧
     """
     schedules = await schedule_service.get_schedules_by_user(current_user.uid, status_filter)
 
-    # LocationScheduleInDB -> LocationScheduleResponse に変換
-    schedule_responses = [LocationScheduleResponse(**s.model_dump()) for s in schedules]
+    # LocationScheduleInDB -> LocationScheduleResponse に変換し、ユーザー情報を追加
+    schedule_responses = []
+    for s in schedules:
+        schedule_response = LocationScheduleResponse(**s.model_dump())
+        enriched_schedule = await _enrich_schedule_with_user_info(schedule_response, user_service)
+        schedule_responses.append(enriched_schedule)
 
     return LocationScheduleListResponse(schedules=schedule_responses, total=len(schedule_responses))
 
@@ -83,6 +124,7 @@ async def get_schedules(
 async def get_active_schedules(
     current_user: UserInDB = Depends(get_current_user),
     schedule_service: ScheduleService = Depends(lambda: ScheduleService()),
+    user_service: UserService = Depends(lambda: UserService()),
 ):
     """
     アクティブなスケジュール一覧を取得
@@ -92,14 +134,19 @@ async def get_active_schedules(
     Args:
         current_user: 現在のユーザー
         schedule_service: スケジュールサービス
+        user_service: ユーザーサービス
 
     Returns:
         アクティブなスケジュール一覧
     """
     schedules = await schedule_service.get_active_schedules(current_user.uid)
 
-    # LocationScheduleInDB -> LocationScheduleResponse に変換
-    schedule_responses = [LocationScheduleResponse(**s.model_dump()) for s in schedules]
+    # LocationScheduleInDB -> LocationScheduleResponse に変換し、ユーザー情報を追加
+    schedule_responses = []
+    for s in schedules:
+        schedule_response = LocationScheduleResponse(**s.model_dump())
+        enriched_schedule = await _enrich_schedule_with_user_info(schedule_response, user_service)
+        schedule_responses.append(enriched_schedule)
 
     return LocationScheduleListResponse(schedules=schedule_responses, total=len(schedule_responses))
 
@@ -109,6 +156,7 @@ async def get_schedule(
     schedule_id: str = Path(..., description="スケジュールID"),
     current_user: UserInDB = Depends(get_current_user),
     schedule_service: ScheduleService = Depends(lambda: ScheduleService()),
+    user_service: UserService = Depends(lambda: UserService()),
 ):
     """
     スケジュール詳細を取得
@@ -119,6 +167,7 @@ async def get_schedule(
         schedule_id: スケジュールID
         current_user: 現在のユーザー
         schedule_service: スケジュールサービス
+        user_service: ユーザーサービス
 
     Returns:
         スケジュール詳細情報
@@ -134,7 +183,8 @@ async def get_schedule(
                 status_code=status.HTTP_404_NOT_FOUND, detail="スケジュールが見つかりません"
             )
 
-        return LocationScheduleResponse(**schedule.model_dump())
+        schedule_response = LocationScheduleResponse(**schedule.model_dump())
+        return await _enrich_schedule_with_user_info(schedule_response, user_service)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
 
@@ -145,6 +195,7 @@ async def update_schedule(
     update_data: LocationScheduleUpdate = ...,
     current_user: UserInDB = Depends(get_current_user),
     schedule_service: ScheduleService = Depends(lambda: ScheduleService()),
+    user_service: UserService = Depends(lambda: UserService()),
 ):
     """
     スケジュール情報を更新
@@ -156,6 +207,7 @@ async def update_schedule(
         update_data: 更新データ
         current_user: 現在のユーザー
         schedule_service: スケジュールサービス
+        user_service: ユーザーサービス
 
     Returns:
         更新後のスケジュール情報
@@ -168,7 +220,8 @@ async def update_schedule(
             schedule_id, current_user.uid, update_data
         )
 
-        return LocationScheduleResponse(**schedule.model_dump())
+        schedule_response = LocationScheduleResponse(**schedule.model_dump())
+        return await _enrich_schedule_with_user_info(schedule_response, user_service)
     except ValueError as e:
         # スケジュールが見つからない場合は404、権限がない場合は403
         if "見つかりません" in str(e):
