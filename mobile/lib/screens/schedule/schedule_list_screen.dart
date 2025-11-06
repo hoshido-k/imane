@@ -157,18 +157,17 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> with WidgetsBin
     _loadSchedules();
   }
 
-  /// Navigate to schedule detail screen
-  Future<void> _navigateToScheduleDetail(LocationSchedule schedule) async {
-    final result = await Navigator.push(
+  /// Navigate to schedule edit flow
+  Future<void> _navigateToEditSchedule(LocationSchedule schedule) async {
+    await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => ScheduleDetailScreen(schedule: schedule),
+        builder: (context) => CreateScheduleFlow(existingSchedule: schedule),
       ),
     );
 
-    if (result == true) {
-      _loadSchedules();
-    }
+    // Reload schedules after returning from edit flow
+    _loadSchedules();
   }
 
   /// Delete schedule
@@ -417,7 +416,7 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> with WidgetsBin
           final schedule = _schedules[index];
           return _ScheduleCard(
             schedule: schedule,
-            onTap: () => _navigateToScheduleDetail(schedule),
+            onTap: () => _navigateToEditSchedule(schedule),
             onDelete: () => _deleteSchedule(schedule),
           );
         },

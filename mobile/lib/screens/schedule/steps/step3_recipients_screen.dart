@@ -18,11 +18,13 @@ class Friend {
 class Step3RecipientsScreen extends StatefulWidget {
   final List<String>? initialRecipients;
   final Function(List<String>) onNext;
+  final bool isEditMode;
 
   const Step3RecipientsScreen({
     super.key,
     this.initialRecipients,
     required this.onNext,
+    this.isEditMode = false,
   });
 
   @override
@@ -146,7 +148,7 @@ class _Step3RecipientsScreenState extends State<Step3RecipientsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '通知先を設定',
+                      widget.isEditMode ? '通知先を編集' : '通知先を設定',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w500,

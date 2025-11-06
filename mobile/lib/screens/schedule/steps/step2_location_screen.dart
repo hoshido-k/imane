@@ -20,11 +20,13 @@ class LocationData {
 class Step2LocationScreen extends StatefulWidget {
   final LocationData? initialLocation;
   final Function(LocationData) onNext;
+  final bool isEditMode;
 
   const Step2LocationScreen({
     super.key,
     this.initialLocation,
     required this.onNext,
+    this.isEditMode = false,
   });
 
   @override
@@ -207,7 +209,7 @@ class _Step2LocationScreenState extends State<Step2LocationScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '目的地を設定',
+                      widget.isEditMode ? '目的地を編集' : '目的地を設定',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w500,

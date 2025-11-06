@@ -7,8 +7,14 @@ import 'steps/step3_recipients_screen.dart';
 import 'steps/step4_confirm_screen.dart';
 
 /// Create schedule flow - manages all 4 steps
+/// Can be used for both creating new schedules and editing existing ones
 class CreateScheduleFlow extends StatefulWidget {
-  const CreateScheduleFlow({super.key});
+  final LocationSchedule? existingSchedule;
+
+  const CreateScheduleFlow({
+    super.key,
+    this.existingSchedule,
+  });
 
   @override
   State<CreateScheduleFlow> createState() => _CreateScheduleFlowState();
@@ -23,6 +29,24 @@ class _CreateScheduleFlowState extends State<CreateScheduleFlow> {
   List<String>? _selectedRecipientIds;
 
   bool _isCreating = false;
+  bool get _isEditMode => widget.existingSchedule != null;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize with existing data if editing
+    if (widget.existingSchedule != null) {
+      final schedule = widget.existingSchedule!;
+      _selectedDateTime = schedule.startTime;
+      _selectedLocation = LocationData(
+        name: schedule.destinationName,
+        address: schedule.destinationAddress,
+        latitude: schedule.destinationCoords.latitude,
+        longitude: schedule.destinationCoords.longitude,
+      );
+      _selectedRecipientIds = List.from(schedule.notifyToUserIds);
+    }
+  }
 
   void _navigateToStep2() {
     Navigator.push(
@@ -30,6 +54,7 @@ class _CreateScheduleFlowState extends State<CreateScheduleFlow> {
       MaterialPageRoute(
         builder: (context) => Step2LocationScreen(
           initialLocation: _selectedLocation,
+          isEditMode: _isEditMode,
           onNext: (location) {
             setState(() {
               _selectedLocation = location;
@@ -47,6 +72,7 @@ class _CreateScheduleFlowState extends State<CreateScheduleFlow> {
       MaterialPageRoute(
         builder: (context) => Step3RecipientsScreen(
           initialRecipients: _selectedRecipientIds,
+          isEditMode: _isEditMode,
           onNext: (recipientIds) {
             setState(() {
               _selectedRecipientIds = recipientIds;
@@ -83,6 +109,7 @@ class _CreateScheduleFlowState extends State<CreateScheduleFlow> {
           recipientNames: recipientNames,
           onConfirm: _createSchedule,
           isLoading: _isCreating,
+          isEditMode: _isEditMode,
         ),
       ),
     );
@@ -96,7 +123,8 @@ class _CreateScheduleFlowState extends State<CreateScheduleFlow> {
     });
 
     try {
-      print('[CreateSchedule] Starting schedule creation...');
+      final action = _isEditMode ? 'update' : 'creation';
+      print('[CreateSchedule] Starting schedule $action...');
       print('[CreateSchedule] DateTime: $_selectedDateTime');
       print('[CreateSchedule] Location: ${_selectedLocation!.name}');
       print('[CreateSchedule] Recipients: $_selectedRecipientIds');
@@ -119,10 +147,12 @@ class _CreateScheduleFlowState extends State<CreateScheduleFlow> {
       };
 
       print('[CreateSchedule] Sending data: $scheduleData');
-      print('[CreateSchedule] Making POST request to /schedules...');
 
-      // Send to API
-      final response = await _apiService.post('/schedules', body: scheduleData);
+      // Send to API - use PUT for edit, POST for create
+      final response = _isEditMode
+          ? await _apiService.put('/schedules/${widget.existingSchedule!.id}', body: scheduleData)
+          : await _apiService.post('/schedules', body: scheduleData);
+
       print('[CreateSchedule] SUCCESS! Response: $response');
       print('[CreateSchedule] Response type: ${response.runtimeType}');
 
@@ -130,10 +160,10 @@ class _CreateScheduleFlowState extends State<CreateScheduleFlow> {
 
       // Show success message
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('予定を作成しました'),
+        SnackBar(
+          content: Text(_isEditMode ? '予定を更新しました' : '予定を作成しました'),
           backgroundColor: Colors.green,
-          duration: Duration(seconds: 2),
+          duration: const Duration(seconds: 2),
         ),
       );
 
@@ -175,6 +205,7 @@ class _CreateScheduleFlowState extends State<CreateScheduleFlow> {
     // Step 1 is the entry point
     return Step1DateTimeScreen(
       initialDateTime: _selectedDateTime,
+      isEditMode: _isEditMode,
       onNext: (dateTime) {
         setState(() {
           _selectedDateTime = dateTime;
