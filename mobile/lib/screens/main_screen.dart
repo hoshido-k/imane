@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import '../core/constants/app_colors.dart';
+import '../widgets/navigation/bottom_nav_bar.dart';
 import 'schedule/schedule_list_screen.dart';
-import 'favorites/favorites_screen.dart';
-import 'notification/notification_history_screen.dart';
-import 'debug/location_debug_screen.dart';
-// import 'profile/profile_screen.dart';
+import 'friends/friends_screen.dart';
+import 'settings/settings_screen.dart';
 
+/// Main screen with bottom navigation bar (Figma design)
+/// Three tabs: Schedule, Friends, Settings
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
 
@@ -18,9 +19,8 @@ class _MainScreenState extends State<MainScreen> {
 
   final List<Widget> _screens = const [
     ScheduleListScreen(),
-    FavoritesScreen(),
-    NotificationHistoryScreen(),
-    // ProfileScreen(),
+    FriendsScreen(),
+    SettingsScreen(),
   ];
 
   void _onTabTapped(int index) {
@@ -37,39 +37,9 @@ class _MainScreenState extends State<MainScreen> {
         index: _currentIndex,
         children: _screens,
       ),
-      bottomNavigationBar: BottomNavigationBar(
+      bottomNavigationBar: BottomNavBar(
         currentIndex: _currentIndex,
         onTap: _onTabTapped,
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.white,
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: AppColors.textSecondary,
-        selectedLabelStyle: const TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
-        ),
-        unselectedLabelStyle: const TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w400,
-        ),
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_today),
-            label: 'スケジュール',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.star),
-            label: 'お気に入り',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.notifications),
-            label: '通知履歴',
-          ),
-          // BottomNavigationBarItem(
-          //   icon: Icon(Icons.person),
-          //   label: 'プロフィール',
-          // ),
-        ],
       ),
     );
   }

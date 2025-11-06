@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 
+/// Bottom navigation bar matching Figma design for imane app
+/// Displays three tabs: Schedule, Friends, Settings
 class BottomNavBar extends StatelessWidget {
   final int currentIndex;
   final Function(int) onTap;
@@ -13,55 +15,52 @@ class BottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Get bottom padding from MediaQuery (safe area insets)
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+
     return Container(
-      decoration: BoxDecoration(
-        color: AppColors.cardBackground.withValues(alpha: 0.8),
-        border: const Border(
-          top: BorderSide(color: AppColors.borderGray, width: 1),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          top: BorderSide(color: Color(0xFFD8D4CF), width: 1),
         ),
       ),
-      child: SafeArea(
-        top: false,
-        bottom: false,
-        minimum: EdgeInsets.zero, // Remove minimum padding
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10), // Reduced from 8 to 4
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _NavBarItem(
-                icon: Icons.map_rounded,
-                label: 'Map',
-                isActive: currentIndex == 0,
-                onTap: () => onTap(0),
-              ),
-              // _NavBarItem(
-              //   icon: Icons.add_box,
-              //   label: 'Post',
-              //   isActive: currentIndex == 1,
-              //   // onTap: () => onTap(2),
-              // ),
-              _NavBarItem(
-                icon: Icons.star,
-                label: 'Reaction',
-                isActive: currentIndex == 1,
-                onTap: () => onTap(1),
-              ),
-              _NavBarItem(
-                icon: Icons.chat_bubble_rounded,
-                label: 'Chat',
-                isActive: currentIndex == 2,
-                onTap: () => onTap(2),
-              ),
-              // _NavBarItem(
-              //   icon: Icons.account_circle_rounded,
-              //   label: 'Profile',
-              //   isActive: currentIndex == 3,
-              //   onTap: () => onTap(3),
-              // ),
-            ],
+      // Use device's actual bottom safe area, with minimum padding
+      padding: EdgeInsets.only(
+        top: 12,
+        left: 24,
+        right: 24,
+        bottom: bottomPadding > 0 ? bottomPadding : 8,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: _NavBarItem(
+              icon: Icons.calendar_today,
+              label: 'スケジュール',
+              isActive: currentIndex == 0,
+              onTap: () => onTap(0),
+            ),
           ),
-        ),
+          Expanded(
+            child: _NavBarItem(
+              icon: Icons.people_outline,
+              label: 'フレンド',
+              isActive: currentIndex == 1,
+              onTap: () => onTap(1),
+            ),
+          ),
+          Expanded(
+            child: _NavBarItem(
+              icon: Icons.settings_outlined,
+              label: '設定',
+              isActive: currentIndex == 2,
+              onTap: () => onTap(2),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -84,28 +83,41 @@ class _NavBarItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4), // Reduced from 8 to 4
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              color: isActive ? AppColors.primary : AppColors.textGrayDark,
-              size: 24,
+      borderRadius: BorderRadius.circular(14),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Icon container with background
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: isActive ? AppColors.primary : const Color(0xFFF5F5F5),
+              shape: BoxShape.circle,
             ),
-            const SizedBox(height: 2), // Reduced from 4 to 2
-            Text(
-              label,
-              style: TextStyle(
-                color: isActive ? AppColors.primary : AppColors.textGrayDark,
-                fontSize: 12,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+            child: Center(
+              child: Icon(
+                icon,
+                color: isActive ? Colors.white : AppColors.textPrimary,
+                size: 20,
               ),
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 4),
+          // Label text
+          Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 12,
+              fontWeight: FontWeight.w400,
+              color: isActive ? AppColors.primary : AppColors.textPrimary,
+              height: 1.33,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }
