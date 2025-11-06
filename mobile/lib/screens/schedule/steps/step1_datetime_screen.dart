@@ -6,11 +6,13 @@ import '../../../widgets/custom_calendar.dart';
 class Step1DateTimeScreen extends StatefulWidget {
   final DateTime? initialDateTime;
   final Function(DateTime) onNext;
+  final bool isEditMode;
 
   const Step1DateTimeScreen({
     super.key,
     this.initialDateTime,
     required this.onNext,
+    this.isEditMode = false,
   });
 
   @override
@@ -105,7 +107,7 @@ class _Step1DateTimeScreenState extends State<Step1DateTimeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '日時を設定',
+                      widget.isEditMode ? '日時を編集' : '日時を設定',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w500,

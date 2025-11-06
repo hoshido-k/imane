@@ -20,11 +20,13 @@ class LocationData {
 class Step2LocationScreen extends StatefulWidget {
   final LocationData? initialLocation;
   final Function(LocationData) onNext;
+  final bool isEditMode;
 
   const Step2LocationScreen({
     super.key,
     this.initialLocation,
     required this.onNext,
+    this.isEditMode = false,
   });
 
   @override
@@ -52,6 +54,8 @@ class _Step2LocationScreenState extends State<Step2LocationScreen> {
     super.initState();
     if (widget.initialLocation != null) {
       _selectedLocation = widget.initialLocation;
+      // Don't pre-fill manual input fields - user can see selected location in prompt card
+      // If they want to change it, they can manually input new data
     }
     // Listen to search input changes
     _searchController.addListener(_onSearchTextChanged);
@@ -123,27 +127,45 @@ class _Step2LocationScreenState extends State<Step2LocationScreen> {
   }
 
   bool _isManualInputValid() {
+    // If location is already selected (e.g., edit mode), button should be enabled
+    if (_selectedLocation != null) return true;
+
+    // Otherwise, check if manual input fields are filled
     return _prefectureController.text.trim().isNotEmpty &&
         _cityController.text.trim().isNotEmpty &&
         _streetController.text.trim().isNotEmpty;
   }
 
   void _onManualSubmit() {
-    final address =
-        '${_prefectureController.text} ${_cityController.text} ${_streetController.text} ${_buildingController.text}';
-    setState(() {
-      _selectedLocation = LocationData(
-        name: _buildingController.text.isNotEmpty
-            ? _buildingController.text
-            : _cityController.text,
-        address: address.trim(),
-      );
-    });
+    // If user has filled in manual input fields, create new LocationData
+    if (_prefectureController.text.trim().isNotEmpty ||
+        _cityController.text.trim().isNotEmpty ||
+        _streetController.text.trim().isNotEmpty) {
+      final address =
+          '${_prefectureController.text} ${_cityController.text} ${_streetController.text} ${_buildingController.text}';
+      setState(() {
+        _selectedLocation = LocationData(
+          name: _buildingController.text.isNotEmpty
+              ? _buildingController.text
+              : _cityController.text,
+          address: address.trim(),
+        );
+      });
+    }
+    // If no manual input but existing location exists (edit mode), use existing
+    // This is handled by _onNextPressed which checks _selectedLocation
     _onNextPressed();
   }
 
   void _onMapLocationConfirm() {
-    if (_tempSelectedLocation == null) {
+    // If user selected a new location from map, use it
+    if (_tempSelectedLocation != null) {
+      setState(() {
+        _selectedLocation = _tempSelectedLocation;
+      });
+    }
+    // If no new selection but existing location exists (edit mode), use existing
+    else if (_selectedLocation == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('場所を選択してください'),
@@ -152,9 +174,7 @@ class _Step2LocationScreenState extends State<Step2LocationScreen> {
       );
       return;
     }
-    setState(() {
-      _selectedLocation = _tempSelectedLocation;
-    });
+    // Proceed to next step with the selected location
     widget.onNext(_selectedLocation!);
   }
 
@@ -207,7 +227,7 @@ class _Step2LocationScreenState extends State<Step2LocationScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '目的地を設定',
+                      widget.isEditMode ? '目的地を編集' : '目的地を設定',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w500,
@@ -705,7 +725,9 @@ class _Step2LocationScreenState extends State<Step2LocationScreen> {
             width: double.infinity,
             height: 56,
             child: ElevatedButton(
-              onPressed: _tempSelectedLocation != null ? _onMapLocationConfirm : null,
+              onPressed: (_tempSelectedLocation != null || _selectedLocation != null)
+                  ? _onMapLocationConfirm
+                  : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,

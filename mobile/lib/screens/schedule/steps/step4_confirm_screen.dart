@@ -10,6 +10,7 @@ class Step4ConfirmScreen extends StatelessWidget {
   final List<String> recipientNames;
   final Function() onConfirm;
   final bool isLoading;
+  final bool isEditMode;
 
   const Step4ConfirmScreen({
     super.key,
@@ -19,6 +20,7 @@ class Step4ConfirmScreen extends StatelessWidget {
     required this.recipientNames,
     required this.onConfirm,
     this.isLoading = false,
+    this.isEditMode = false,
   });
 
   @override
@@ -263,12 +265,12 @@ class Step4ConfirmScreen extends StatelessWidget {
                 )
               : Row(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
-                    Icon(Icons.check, size: 20),
-                    SizedBox(width: 8),
+                  children: [
+                    const Icon(Icons.check, size: 20),
+                    const SizedBox(width: 8),
                     Text(
-                      '予定を作成',
-                      style: TextStyle(
+                      isEditMode ? '変更を保存' : '予定を作成',
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w400,
                         letterSpacing: -0.3125,
