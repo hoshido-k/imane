@@ -54,6 +54,12 @@ class _Step2LocationScreenState extends State<Step2LocationScreen> {
     super.initState();
     if (widget.initialLocation != null) {
       _selectedLocation = widget.initialLocation;
+      // Pre-fill manual input fields with existing data
+      _streetController.text = widget.initialLocation!.address;
+      // Optionally set building name as the location name
+      if (widget.initialLocation!.name.isNotEmpty) {
+        _buildingController.text = widget.initialLocation!.name;
+      }
     }
     // Listen to search input changes
     _searchController.addListener(_onSearchTextChanged);
