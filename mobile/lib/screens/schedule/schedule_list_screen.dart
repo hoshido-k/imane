@@ -684,13 +684,11 @@ class _ScheduleCard extends StatelessWidget {
     return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
   }
 
-  String _getRecipientNames(List<dynamic> notifyToUsers) {
+  String _getRecipientNames(List<NotifyToUser> notifyToUsers) {
     if (notifyToUsers.isEmpty) return '通知先なし';
 
-    // Import the NotifyToUser model at the top of the file
-    final names = notifyToUsers.map((user) => user.displayName).toList();
-
     // Display all names separated by commas
+    final names = notifyToUsers.map((user) => user.displayName).toList();
     return names.join(', ');
   }
 }
