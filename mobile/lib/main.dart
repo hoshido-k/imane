@@ -6,6 +6,9 @@ import 'core/theme/app_theme.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/password_reset_screen.dart';
 import 'screens/main_screen.dart';
+import 'screens/friends/friends_screen.dart';
+import 'screens/friends/add_friend_screen.dart';
+import 'screens/profile/profile_screen.dart';
 import 'services/auth_service.dart';
 
 void main() async {
@@ -54,6 +57,9 @@ class ImaneApp extends StatelessWidget {
         '/login': (context) => const LoginScreen(),
         '/password-reset': (context) => const PasswordResetScreen(),
         '/home': (context) => const MainScreen(),
+        '/friends': (context) => const FriendsScreen(),
+        '/friends/add': (context) => const AddFriendScreen(),
+        '/profile': (context) => const ProfileScreen(),
       },
     );
   }

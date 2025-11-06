@@ -74,10 +74,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             title: 'アカウント',
             subtitle: 'プロフィールとアカウント情報',
             onTap: () {
-              // TODO: Navigate to account settings
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('アカウント設定は準備中です')),
-              );
+              Navigator.of(context).pushNamed('/profile');
             },
           ),
           const SizedBox(height: 16),
