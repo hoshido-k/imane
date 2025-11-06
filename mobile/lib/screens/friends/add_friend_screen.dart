@@ -94,13 +94,14 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                   'フレンドを追加',
                   style: TextStyle(
                     fontFamily: 'Inter',
-                    fontSize: 16,
+                    fontSize: 30,
                     fontWeight: FontWeight.w400,
                     color: AppColors.primary,
-                    height: 1.5,
-                    letterSpacing: 0.4875,
+                    height: 1.2,
+                    letterSpacing: 0.3955,
                   ),
                 ),
+                SizedBox(height: 4),
                 Text(
                   'IDまたは名前で検索',
                   style: TextStyle(

@@ -121,12 +121,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   /// ヘッダー部分
   Widget _buildHeader() {
-    return const Padding(
-      padding: EdgeInsets.fromLTRB(24, 24, 24, 24),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
       child: Row(
         children: [
+          // 戻るボタン
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x1A000000),
+                  offset: Offset(0, 1),
+                  blurRadius: 3,
+                  spreadRadius: 0,
+                ),
+                BoxShadow(
+                  color: Color(0x1A000000),
+                  offset: Offset(0, 1),
+                  blurRadius: 2,
+                  spreadRadius: -1,
+                ),
+              ],
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back, size: 20),
+              onPressed: () => Navigator.of(context).pop(),
+              padding: EdgeInsets.zero,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(width: 16),
           // タイトル・サブタイトル
-          Expanded(
+          const Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -134,13 +164,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   'プロフィール設定',
                   style: TextStyle(
                     fontFamily: 'Inter',
-                    fontSize: 16,
+                    fontSize: 30,
                     fontWeight: FontWeight.w400,
                     color: AppColors.primary,
-                    height: 1.5,
-                    letterSpacing: 0.4875,
+                    height: 1.2,
+                    letterSpacing: 0.3955,
                   ),
                 ),
+                SizedBox(height: 4),
                 Text(
                   'あなたの情報を編集',
                   style: TextStyle(
