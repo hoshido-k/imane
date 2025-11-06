@@ -156,6 +156,10 @@ serviceAccountKey.json
 **/GoogleService-Info.plist
 **/google-services.json
 
+# Google Maps API Key (Flutter & iOS)
+mobile/lib/core/config/api_keys.dart
+mobile/ios/Runner/Config.plist
+
 # Node.js
 node_modules/
 npm-debug.log*

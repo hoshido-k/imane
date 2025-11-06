@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../widgets/map/interactive_map_picker.dart';
+import '../../../services/places_service.dart';
+import 'dart:async';
 
 /// Location data model
 class LocationData {
@@ -47,7 +50,10 @@ class _Step2LocationScreenState extends State<Step2LocationScreen> {
 
   // Map search controller
   final TextEditingController _searchController = TextEditingController();
-  List<Map<String, String>> _searchResults = [];
+  List<PlacePrediction> _searchResults = [];
+  final PlacesService _placesService = PlacesService();
+  Timer? _debounceTimer;
+  bool _isSearching = false;
 
   @override
   void initState() {
@@ -72,34 +78,81 @@ class _Step2LocationScreenState extends State<Step2LocationScreen> {
 
   void _onSearchTextChanged() {
     final query = _searchController.text.trim();
+
+    // Cancel previous timer
+    _debounceTimer?.cancel();
+
     if (query.isEmpty) {
       setState(() {
         _searchResults = [];
+        _isSearching = false;
       });
       return;
     }
 
-    // Filter stations by search query
-    final allStations = [
-      {'name': '東京駅', 'address': '東京都千代田区丸の内1丁目'},
-      {'name': '渋谷駅', 'address': '東京都渋谷区道玄坂1丁目'},
-      {'name': '新宿駅', 'address': '東京都新宿区新宿3丁目'},
-      {'name': '池袋駅', 'address': '東京都豊島区南池袋1丁目'},
-      {'name': '品川駅', 'address': '東京都港区高輪3丁目'},
-      {'name': '上野駅', 'address': '東京都台東区上野7丁目'},
-      {'name': '秋葉原駅', 'address': '東京都千代田区外神田1丁目'},
-      {'name': '六本木駅', 'address': '東京都港区六本木6丁目'},
-      {'name': '表参道駅', 'address': '東京都港区北青山3丁目'},
-      {'name': '銀座駅', 'address': '東京都中央区銀座4丁目'},
-    ];
-
     setState(() {
-      _searchResults = allStations
-          .where((station) =>
-              station['name']!.contains(query) ||
-              station['address']!.contains(query))
-          .toList();
+      _isSearching = true;
     });
+
+    // Debounce search by 500ms to avoid too many API calls
+    _debounceTimer = Timer(const Duration(milliseconds: 500), () {
+      _performSearch(query);
+    });
+  }
+
+  Future<void> _performSearch(String query) async {
+    try {
+      final predictions = await _placesService.getAutocompletePredictions(query);
+      if (mounted) {
+        setState(() {
+          _searchResults = predictions;
+          _isSearching = false;
+        });
+      }
+    } catch (e) {
+      print('Error performing search: $e');
+      if (mounted) {
+        setState(() {
+          _searchResults = [];
+          _isSearching = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _onSearchResultTapped(PlacePrediction prediction) async {
+    // Clear search
+    setState(() {
+      _searchController.clear();
+      _searchResults = [];
+    });
+
+    // Show loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+
+    // Get place details (coordinates)
+    final placeDetails = await _placesService.getPlaceDetails(prediction.placeId);
+
+    if (!mounted) return;
+    Navigator.pop(context); // Close loading dialog
+
+    if (placeDetails != null) {
+      setState(() {
+        _tempSelectedLocation = LocationData(
+          name: placeDetails.name,
+          address: placeDetails.formattedAddress,
+          latitude: placeDetails.latitude,
+          longitude: placeDetails.longitude,
+        );
+        _selectedLocation = _tempSelectedLocation;
+      });
+    }
   }
 
   @override
@@ -110,6 +163,7 @@ class _Step2LocationScreenState extends State<Step2LocationScreen> {
     _streetController.dispose();
     _buildingController.dispose();
     _searchController.dispose();
+    _debounceTimer?.cancel();
     super.dispose();
   }
 
@@ -616,25 +670,37 @@ class _Step2LocationScreenState extends State<Step2LocationScreen> {
                       SizedBox(
                         width: double.infinity,
                         height: 44,
-                        child: OutlinedButton.icon(
+                        child: ElevatedButton.icon(
                           onPressed: () {
-                            // TODO: Use current location
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => InteractiveMapPicker(
+                                  initialLocation: _selectedLocation,
+                                  onLocationSelected: (location) {
+                                    setState(() {
+                                      _tempSelectedLocation = location;
+                                      _selectedLocation = location;
+                                    });
+                                  },
+                                ),
+                              ),
+                            );
                           },
-                          style: OutlinedButton.styleFrom(
-                            side: BorderSide(color: AppColors.textSecondary),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(22),
                             ),
                           ),
-                          icon: Icon(
-                            Icons.my_location,
-                            color: AppColors.textPrimary,
+                          icon: const Icon(
+                            Icons.map,
                             size: 20,
                           ),
-                          label: Text(
-                            '現在地を使用',
+                          label: const Text(
+                            'マップから選択',
                             style: TextStyle(
-                              color: AppColors.textPrimary,
                               fontSize: 14,
                             ),
                           ),
@@ -753,13 +819,29 @@ class _Step2LocationScreenState extends State<Step2LocationScreen> {
   }
 
   List<Widget> _buildStationList() {
+    // Show loading indicator
+    if (_isSearching) {
+      return [
+        Container(
+          padding: const EdgeInsets.all(32),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const Center(
+            child: CircularProgressIndicator(),
+          ),
+        ),
+      ];
+    }
+
     // Only show results if search query is not empty
     if (_searchResults.isEmpty) {
       return [];
     }
 
-    return _searchResults.map((station) {
-      final isSelected = _tempSelectedLocation?.name == station['name'];
+    return _searchResults.map((prediction) {
+      final isSelected = _tempSelectedLocation?.name == prediction.mainText;
 
       return Container(
         margin: const EdgeInsets.only(bottom: 12),
@@ -788,7 +870,7 @@ class _Step2LocationScreenState extends State<Step2LocationScreen> {
             ),
           ),
           title: Text(
-            station['name']!,
+            prediction.mainText,
             style: TextStyle(
               fontSize: 16,
               fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
@@ -796,21 +878,13 @@ class _Step2LocationScreenState extends State<Step2LocationScreen> {
             ),
           ),
           subtitle: Text(
-            station['address']!,
+            prediction.secondaryText,
             style: TextStyle(
               fontSize: 12,
               color: AppColors.textSecondary,
             ),
           ),
-          onTap: () {
-            setState(() {
-              _tempSelectedLocation = LocationData(
-                name: station['name']!,
-                address: station['address']!,
-              );
-              _selectedLocation = _tempSelectedLocation;
-            });
-          },
+          onTap: () => _onSearchResultTapped(prediction),
         ),
       );
     }).toList();
