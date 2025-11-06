@@ -1,0 +1,18 @@
+/// Google Maps Platform API Keys
+///
+/// SETUP INSTRUCTIONS:
+/// 1. Copy this file and rename it to 'api_keys.dart' (remove .example)
+/// 2. Replace 'YOUR_API_KEY_HERE' with your actual Google Maps API key
+/// 3. Never commit api_keys.dart to version control (it's in .gitignore)
+///
+/// For production, consider using:
+/// - Flutter environment variables (--dart-define)
+/// - Secret management services (Firebase Remote Config, etc.)
+class ApiKeys {
+  /// Google Maps API Key for iOS
+  /// Used for:
+  /// - Maps SDK for iOS (map display)
+  /// - Places API (autocomplete, place search)
+  /// - Geocoding API (address to coordinates conversion)
+  static const String googleMapsApiKey = 'YOUR_API_KEY_HERE';
+}

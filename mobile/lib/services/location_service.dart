@@ -312,6 +312,16 @@ class LocationService {
     await _cacheService.clearCache();
   }
 
+  /// Open app settings (iOS Settings)
+  Future<bool> openAppSettings() async {
+    return await Geolocator.openAppSettings();
+  }
+
+  /// Open location settings
+  Future<bool> openLocationSettings() async {
+    return await Geolocator.openLocationSettings();
+  }
+
   /// Dispose resources
   Future<void> dispose() async {
     await stopTracking();
