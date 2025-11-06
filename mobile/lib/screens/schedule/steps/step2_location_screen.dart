@@ -411,10 +411,10 @@ class _Step2LocationScreenState extends State<Step2LocationScreen> {
                   const SizedBox(height: 4),
                   Text(
                     _selectedLocation != null
-                        ? '${_selectedLocation!.name}\n${_selectedLocation!.address}'
+                        ? _selectedLocation!.address
                         : '---',
                     style: TextStyle(
-                      fontSize: _selectedLocation != null ? 16 : 18,
+                      fontSize: _selectedLocation != null ? 14 : 18,
                       fontWeight: FontWeight.w600,
                       color: AppColors.primary,
                     ),

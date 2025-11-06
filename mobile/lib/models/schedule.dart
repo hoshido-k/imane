@@ -1,3 +1,32 @@
+/// Notify to user info
+class NotifyToUser {
+  final String userId;
+  final String displayName;
+  final String? avatarUrl;
+
+  NotifyToUser({
+    required this.userId,
+    required this.displayName,
+    this.avatarUrl,
+  });
+
+  factory NotifyToUser.fromJson(Map<String, dynamic> json) {
+    return NotifyToUser(
+      userId: json['user_id'],
+      displayName: json['display_name'],
+      avatarUrl: json['avatar_url'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'user_id': userId,
+      'display_name': displayName,
+      if (avatarUrl != null) 'avatar_url': avatarUrl,
+    };
+  }
+}
+
 /// Location Schedule model for imane
 class LocationSchedule {
   final String? id;
@@ -7,6 +36,7 @@ class LocationSchedule {
   final LatLng destinationCoords;
   final double geofenceRadius;
   final List<String> notifyToUserIds;
+  final List<NotifyToUser> notifyToUsers;
   final DateTime startTime;
   final DateTime endTime;
   final String? recurrence;
@@ -28,6 +58,7 @@ class LocationSchedule {
     required this.destinationCoords,
     this.geofenceRadius = 50.0,
     required this.notifyToUserIds,
+    this.notifyToUsers = const [],
     required this.startTime,
     required this.endTime,
     this.recurrence,
@@ -55,6 +86,11 @@ class LocationSchedule {
       ),
       geofenceRadius: (json['geofence_radius'] ?? 50.0).toDouble(),
       notifyToUserIds: List<String>.from(json['notify_to_user_ids'] ?? []),
+      notifyToUsers: json['notify_to_users'] != null
+          ? (json['notify_to_users'] as List)
+              .map((user) => NotifyToUser.fromJson(user))
+              .toList()
+          : [],
       startTime: DateTime.parse(json['start_time']),
       endTime: DateTime.parse(json['end_time']),
       recurrence: json['recurrence'],
@@ -91,6 +127,7 @@ class LocationSchedule {
       },
       'geofence_radius': geofenceRadius,
       'notify_to_user_ids': notifyToUserIds,
+      'notify_to_users': notifyToUsers.map((user) => user.toJson()).toList(),
       'start_time': startTime.toIso8601String(),
       'end_time': endTime.toIso8601String(),
       if (recurrence != null) 'recurrence': recurrence,
@@ -115,6 +152,7 @@ class LocationSchedule {
     LatLng? destinationCoords,
     double? geofenceRadius,
     List<String>? notifyToUserIds,
+    List<NotifyToUser>? notifyToUsers,
     DateTime? startTime,
     DateTime? endTime,
     String? recurrence,
@@ -136,6 +174,7 @@ class LocationSchedule {
       destinationCoords: destinationCoords ?? this.destinationCoords,
       geofenceRadius: geofenceRadius ?? this.geofenceRadius,
       notifyToUserIds: notifyToUserIds ?? this.notifyToUserIds,
+      notifyToUsers: notifyToUsers ?? this.notifyToUsers,
       startTime: startTime ?? this.startTime,
       endTime: endTime ?? this.endTime,
       recurrence: recurrence ?? this.recurrence,

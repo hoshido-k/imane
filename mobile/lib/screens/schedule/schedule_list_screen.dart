@@ -530,7 +530,7 @@ class _ScheduleCard extends StatelessWidget {
           // Recipients with gray background icon
           _buildInfoRow(
             label: '通知先',
-            text: _getRecipientNames(schedule.notifyToUserIds),
+            text: _getRecipientNames(schedule.notifyToUsers),
             icon: Icons.people,
             isPrimary: false,
           ),
@@ -684,10 +684,13 @@ class _ScheduleCard extends StatelessWidget {
     return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
   }
 
-  String _getRecipientNames(List<String> recipientIds) {
-    // TODO: Get actual names from API
-    if (recipientIds.isEmpty) return '通知先なし';
-    if (recipientIds.length == 1) return '田中 太郎'; // Mock
-    return '田中 太郎 他${recipientIds.length - 1}人'; // Mock
+  String _getRecipientNames(List<dynamic> notifyToUsers) {
+    if (notifyToUsers.isEmpty) return '通知先なし';
+
+    // Import the NotifyToUser model at the top of the file
+    final names = notifyToUsers.map((user) => user.displayName).toList();
+
+    // Display all names separated by commas
+    return names.join(', ');
   }
 }
