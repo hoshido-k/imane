@@ -88,7 +88,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
           // タイトル・サブタイトル
           const Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'フレンドを追加',

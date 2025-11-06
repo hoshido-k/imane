@@ -158,7 +158,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           // タイトル・サブタイトル
           const Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'プロフィール設定',

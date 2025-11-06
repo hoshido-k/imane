@@ -109,7 +109,6 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
           // タイトル・サブタイトル
           Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
                   'フレンド申請',
