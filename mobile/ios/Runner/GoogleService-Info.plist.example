@@ -33,7 +33,7 @@
 	<string>1:YOUR_APP_ID:ios:YOUR_IOS_ID</string>
 
 	<!-- ⭐ Google Maps API Key（この行を追加してください） -->
-	<key>GOOGLE_MAPS_API_KEY</key>
+	<key>GoogleMapsAPIKey</key>
 	<string>YOUR_GOOGLE_MAPS_API_KEY_HERE</string>
 </dict>
 </plist>
