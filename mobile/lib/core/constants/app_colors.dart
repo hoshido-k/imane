@@ -21,6 +21,11 @@ class AppColors {
   // Input/Card Colors
   static const Color inputBackground = Color(0xFFF5F5F5); // Neutral 100
   static const Color inputBorder = Color(0xFFD8D4CF);
+  static const Color cardBackground = Colors.white;
+  static const Color borderGray = Color(0xFFD8D4CF);
+
+  // Additional text colors for compatibility
+  static const Color textGrayDark = Color(0xFF5A4A40);
 
   // Status Colors
   static const Color success = Color(0xFF10B981);
