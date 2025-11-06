@@ -8,6 +8,7 @@ import 'screens/auth/password_reset_screen.dart';
 import 'screens/main_screen.dart';
 import 'screens/friends/friends_screen.dart';
 import 'screens/friends/add_friend_screen.dart';
+import 'screens/friends/friend_requests_screen.dart';
 import 'screens/profile/profile_screen.dart';
 import 'services/auth_service.dart';
 
@@ -59,6 +60,7 @@ class ImaneApp extends StatelessWidget {
         '/home': (context) => const MainScreen(),
         '/friends': (context) => const FriendsScreen(),
         '/friends/add': (context) => const AddFriendScreen(),
+        '/friends/requests': (context) => const FriendRequestsScreen(),
         '/profile': (context) => const ProfileScreen(),
       },
     );

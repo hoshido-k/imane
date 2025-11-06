@@ -47,7 +47,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
     );
   }
 
-  /// ヘッダー部分（戻るボタン・タイトル・追加ボタン）
+  /// ヘッダー部分（戻るボタン・タイトル・通知・追加ボタン）
   Widget _buildHeader() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
@@ -105,6 +105,68 @@ class _FriendsScreenState extends State<FriendsScreen> {
                     fontWeight: FontWeight.w400,
                     color: AppColors.textSecondary,
                     height: 1.33,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // 通知アイコン（ベルマーク・バッジ付き）
+          Container(
+            width: 40,
+            height: 40,
+            margin: const EdgeInsets.only(right: 8),
+            child: Stack(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(100),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x1A000000),
+                        offset: Offset(0, 1),
+                        blurRadius: 3,
+                      ),
+                      BoxShadow(
+                        color: Color(0x1A000000),
+                        offset: Offset(0, 1),
+                        blurRadius: 2,
+                        spreadRadius: -1,
+                      ),
+                    ],
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.notifications_outlined, size: 20),
+                    onPressed: () {
+                      Navigator.of(context).pushNamed('/friends/requests');
+                    },
+                    padding: EdgeInsets.zero,
+                  ),
+                ),
+                // バッジ（通知数）
+                Positioned(
+                  right: 0,
+                  top: 0,
+                  child: Container(
+                    width: 20,
+                    height: 20,
+                    decoration: const BoxDecoration(
+                      color: AppColors.primary,
+                      shape: BoxShape.circle,
+                    ),
+                    alignment: Alignment.center,
+                    child: const Text(
+                      '3',
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                        color: Colors.white,
+                        height: 1.33,
+                      ),
+                    ),
                   ),
                 ),
               ],
