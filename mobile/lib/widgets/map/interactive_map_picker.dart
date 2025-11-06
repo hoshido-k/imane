@@ -67,17 +67,42 @@ class _InteractiveMapPickerState extends State<InteractiveMapPicker> {
         _addMarker(initialPos, widget.initialLocation!.name);
       });
     } else {
-      // Try to get current location
-      await _getCurrentLocation();
+      // Try to get current location (but don't block if permission is denied)
+      // User can still manually search or tap on map
+      _getCurrentLocation();
     }
   }
 
-  Future<void> _getCurrentLocation() async {
+  Future<void> _getCurrentLocation({bool showErrorMessage = false}) async {
     setState(() {
       _isLoadingLocation = true;
     });
 
     try {
+      // Check and request permission first
+      final hasPermission = await _locationService.requestPermission();
+
+      if (!hasPermission) {
+        // Permission denied - show message to user only if explicitly requested
+        if (mounted && showErrorMessage) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('位置情報の許可が必要です。設定から許可してください。'),
+              backgroundColor: AppColors.error,
+              action: SnackBarAction(
+                label: '設定',
+                textColor: Colors.white,
+                onPressed: () {
+                  _locationService.openAppSettings();
+                },
+              ),
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        }
+        return;
+      }
+
       final position = await _locationService.getCurrentLocation();
       if (position != null && mounted) {
         final latLng = LatLng(position.latitude, position.longitude);
@@ -90,6 +115,14 @@ class _InteractiveMapPickerState extends State<InteractiveMapPicker> {
       }
     } catch (e) {
       print('Error getting current location: $e');
+      if (mounted && showErrorMessage) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('現在地を取得できませんでした'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
     } finally {
       if (mounted) {
         setState(() {
@@ -137,7 +170,28 @@ class _InteractiveMapPickerState extends State<InteractiveMapPicker> {
       if (mounted) {
         setState(() {
           _isSearching = false;
+          _searchResults = [];
         });
+
+        // Show error message to user
+        if (e.toString().contains('403')) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text(
+                'API設定エラー: Google Cloud ConsoleでAPI Keyの制限を「なし」または「HTTPリファラー」に変更してください',
+              ),
+              backgroundColor: AppColors.error,
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('検索エラー: ${e.toString()}'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
       }
     }
   }
@@ -521,7 +575,9 @@ class _InteractiveMapPickerState extends State<InteractiveMapPicker> {
                               Icons.my_location,
                               color: AppColors.primary,
                             ),
-                            onPressed: _isLoadingLocation ? null : _getCurrentLocation,
+                            onPressed: _isLoadingLocation
+                                ? null
+                                : () => _getCurrentLocation(showErrorMessage: true),
                           ),
                         ),
                         const SizedBox(width: 12),
