@@ -54,12 +54,8 @@ class _Step2LocationScreenState extends State<Step2LocationScreen> {
     super.initState();
     if (widget.initialLocation != null) {
       _selectedLocation = widget.initialLocation;
-      // Pre-fill manual input fields with existing data
-      _streetController.text = widget.initialLocation!.address;
-      // Optionally set building name as the location name
-      if (widget.initialLocation!.name.isNotEmpty) {
-        _buildingController.text = widget.initialLocation!.name;
-      }
+      // Don't pre-fill manual input fields - user can see selected location in prompt card
+      // If they want to change it, they can manually input new data
     }
     // Listen to search input changes
     _searchController.addListener(_onSearchTextChanged);
@@ -131,27 +127,45 @@ class _Step2LocationScreenState extends State<Step2LocationScreen> {
   }
 
   bool _isManualInputValid() {
+    // If location is already selected (e.g., edit mode), button should be enabled
+    if (_selectedLocation != null) return true;
+
+    // Otherwise, check if manual input fields are filled
     return _prefectureController.text.trim().isNotEmpty &&
         _cityController.text.trim().isNotEmpty &&
         _streetController.text.trim().isNotEmpty;
   }
 
   void _onManualSubmit() {
-    final address =
-        '${_prefectureController.text} ${_cityController.text} ${_streetController.text} ${_buildingController.text}';
-    setState(() {
-      _selectedLocation = LocationData(
-        name: _buildingController.text.isNotEmpty
-            ? _buildingController.text
-            : _cityController.text,
-        address: address.trim(),
-      );
-    });
+    // If user has filled in manual input fields, create new LocationData
+    if (_prefectureController.text.trim().isNotEmpty ||
+        _cityController.text.trim().isNotEmpty ||
+        _streetController.text.trim().isNotEmpty) {
+      final address =
+          '${_prefectureController.text} ${_cityController.text} ${_streetController.text} ${_buildingController.text}';
+      setState(() {
+        _selectedLocation = LocationData(
+          name: _buildingController.text.isNotEmpty
+              ? _buildingController.text
+              : _cityController.text,
+          address: address.trim(),
+        );
+      });
+    }
+    // If no manual input but existing location exists (edit mode), use existing
+    // This is handled by _onNextPressed which checks _selectedLocation
     _onNextPressed();
   }
 
   void _onMapLocationConfirm() {
-    if (_tempSelectedLocation == null) {
+    // If user selected a new location from map, use it
+    if (_tempSelectedLocation != null) {
+      setState(() {
+        _selectedLocation = _tempSelectedLocation;
+      });
+    }
+    // If no new selection but existing location exists (edit mode), use existing
+    else if (_selectedLocation == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('場所を選択してください'),
@@ -160,9 +174,7 @@ class _Step2LocationScreenState extends State<Step2LocationScreen> {
       );
       return;
     }
-    setState(() {
-      _selectedLocation = _tempSelectedLocation;
-    });
+    // Proceed to next step with the selected location
     widget.onNext(_selectedLocation!);
   }
 
@@ -713,7 +725,9 @@ class _Step2LocationScreenState extends State<Step2LocationScreen> {
             width: double.infinity,
             height: 56,
             child: ElevatedButton(
-              onPressed: _tempSelectedLocation != null ? _onMapLocationConfirm : null,
+              onPressed: (_tempSelectedLocation != null || _selectedLocation != null)
+                  ? _onMapLocationConfirm
+                  : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
