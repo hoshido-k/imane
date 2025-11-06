@@ -8,13 +8,13 @@ import GoogleMaps
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
-    // Load Google Maps API key from Config.plist (not tracked in git)
-    if let path = Bundle.main.path(forResource: "Config", ofType: "plist"),
+    // Load Google Maps API key from GoogleService-Info.plist (not tracked in git)
+    if let path = Bundle.main.path(forResource: "GoogleService-Info", ofType: "plist"),
        let config = NSDictionary(contentsOfFile: path),
-       let apiKey = config["GoogleMapsAPIKey"] as? String {
+       let apiKey = config["GOOGLE_MAPS_API_KEY"] as? String {
       GMSServices.provideAPIKey(apiKey)
     } else {
-      print("Warning: Config.plist not found or GoogleMapsAPIKey is missing")
+      print("Warning: GoogleService-Info.plist not found or GOOGLE_MAPS_API_KEY is missing")
     }
 
     GeneratedPluginRegistrant.register(with: self)
