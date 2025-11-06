@@ -95,7 +95,9 @@ class PlacesService {
         } else if (data['status'] == 'ZERO_RESULTS') {
           return [];
         } else {
-          throw Exception('Places API error: ${data['status']}');
+          final errorMessage = data['error_message'] ?? data['status'];
+          print('Places API error: ${data['status']} - $errorMessage');
+          throw Exception('Places API error: ${data['status']} - $errorMessage');
         }
       } else {
         throw Exception('HTTP error: ${response.statusCode}');
@@ -229,6 +231,65 @@ class PlacesService {
       }
     } catch (e) {
       print('Error geocoding address: $e');
+      return null;
+    }
+  }
+
+  /// Reverse geocode coordinates to get address (緯度経度→住所)
+  ///
+  /// [latitude] - Latitude
+  /// [longitude] - Longitude
+  /// [language] - Language code (default: 'ja' for Japanese)
+  Future<PlaceDetails?> reverseGeocode(
+    double latitude,
+    double longitude, {
+    String language = 'ja',
+  }) async {
+    try {
+      final url = Uri.parse(
+        '$_baseUrl/geocode/json'
+        '?latlng=$latitude,$longitude'
+        '&language=$language'
+        '&key=$_apiKey',
+      );
+
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+
+        if (data['status'] == 'OK' && data['results'].isNotEmpty) {
+          final result = data['results'][0];
+          final location = result['geometry']['location'];
+
+          // Try to find a more specific name (e.g., building, landmark)
+          String name = result['formatted_address'] as String;
+          if (result['address_components'] != null && (result['address_components'] as List).isNotEmpty) {
+            // Check for establishment or point_of_interest
+            for (var component in result['address_components']) {
+              if (component['types'] != null &&
+                  (component['types'] as List).contains('establishment')) {
+                name = component['long_name'] as String;
+                break;
+              }
+            }
+          }
+
+          return PlaceDetails(
+            placeId: result['place_id'] as String,
+            name: name,
+            formattedAddress: result['formatted_address'] as String,
+            latitude: (location['lat'] as num).toDouble(),
+            longitude: (location['lng'] as num).toDouble(),
+          );
+        } else {
+          throw Exception('Reverse Geocoding API error: ${data['status']}');
+        }
+      } else {
+        throw Exception('HTTP error: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error reverse geocoding: $e');
       return null;
     }
   }

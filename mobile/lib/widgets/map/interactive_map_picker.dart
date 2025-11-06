@@ -180,19 +180,89 @@ class _InteractiveMapPickerState extends State<InteractiveMapPicker> {
     // User tapped on map - place a marker
     setState(() {
       _currentPosition = position;
-      _addMarker(position, '選択された場所');
+      _isLoadingLocation = true;
     });
 
     // Get address from coordinates using reverse geocoding
-    // For now, use coordinates as address
+    final placeDetails = await _placesService.reverseGeocode(
+      position.latitude,
+      position.longitude,
+    );
+
+    if (mounted) {
+      if (placeDetails != null) {
+        setState(() {
+          _selectedLocation = LocationData(
+            name: placeDetails.name,
+            address: placeDetails.formattedAddress,
+            latitude: position.latitude,
+            longitude: position.longitude,
+          );
+          _addMarker(position, placeDetails.name);
+          _isLoadingLocation = false;
+        });
+      } else {
+        // Fallback to coordinates if reverse geocoding fails
+        setState(() {
+          _selectedLocation = LocationData(
+            name: '選択された場所',
+            address: '${position.latitude.toStringAsFixed(6)}, ${position.longitude.toStringAsFixed(6)}',
+            latitude: position.latitude,
+            longitude: position.longitude,
+          );
+          _addMarker(position, '選択された場所');
+          _isLoadingLocation = false;
+        });
+      }
+    }
+  }
+
+  void _onPoiTapped(PointOfInterest poi) async {
+    // POI (Point of Interest) tapped - e.g., station, landmark, facility
+    print('POI tapped: ${poi.name} at ${poi.position}');
+
     setState(() {
-      _selectedLocation = LocationData(
-        name: '選択された場所',
-        address: '${position.latitude.toStringAsFixed(6)}, ${position.longitude.toStringAsFixed(6)}',
-        latitude: position.latitude,
-        longitude: position.longitude,
-      );
+      _isLoadingLocation = true;
+      _currentPosition = poi.position;
     });
+
+    // Get detailed info about the POI using place ID
+    PlaceDetails? placeDetails;
+    if (poi.placeId != null) {
+      placeDetails = await _placesService.getPlaceDetails(poi.placeId!);
+    }
+
+    if (mounted) {
+      if (placeDetails != null) {
+        setState(() {
+          _selectedLocation = LocationData(
+            name: placeDetails!.name,
+            address: placeDetails.formattedAddress,
+            latitude: poi.position.latitude,
+            longitude: poi.position.longitude,
+          );
+          _addMarker(poi.position, placeDetails.name);
+          _isLoadingLocation = false;
+        });
+
+        // Animate camera to POI
+        _mapController?.animateCamera(
+          CameraUpdate.newLatLngZoom(poi.position, 17),
+        );
+      } else {
+        // Use POI name and position
+        setState(() {
+          _selectedLocation = LocationData(
+            name: poi.name ?? '選択された場所',
+            address: '${poi.position.latitude.toStringAsFixed(6)}, ${poi.position.longitude.toStringAsFixed(6)}',
+            latitude: poi.position.latitude,
+            longitude: poi.position.longitude,
+          );
+          _addMarker(poi.position, poi.name ?? '選択された場所');
+          _isLoadingLocation = false;
+        });
+      }
+    }
   }
 
   void _addMarker(LatLng position, String title) {
@@ -237,11 +307,17 @@ class _InteractiveMapPickerState extends State<InteractiveMapPicker> {
               _mapController = controller;
             },
             onTap: _onMapTapped,
+            onPoiTapped: (poi) {
+              // POI (Point of Interest) tapped - e.g., station, landmark, facility
+              _onPoiTapped(poi);
+            },
             markers: _markers,
             myLocationEnabled: true,
             myLocationButtonEnabled: false,
             zoomControlsEnabled: false,
             mapToolbarEnabled: false,
+            buildingsEnabled: true,
+            trafficEnabled: false,
           ),
 
           // Top search bar
