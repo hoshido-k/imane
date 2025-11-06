@@ -84,12 +84,13 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
             height: 40,
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(100),
+              borderRadius: BorderRadius.circular(20),
               boxShadow: const [
                 BoxShadow(
                   color: Color(0x1A000000),
                   offset: Offset(0, 1),
                   blurRadius: 3,
+                  spreadRadius: 0,
                 ),
                 BoxShadow(
                   color: Color(0x1A000000),
@@ -103,9 +104,9 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
               icon: const Icon(Icons.arrow_back, size: 20),
               onPressed: () => Navigator.of(context).pop(),
               padding: EdgeInsets.zero,
+              color: AppColors.textSecondary,
             ),
           ),
-          const SizedBox(width: 16),
           // タイトル・サブタイトル
           Expanded(
             child: Column(
@@ -135,6 +136,8 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
               ],
             ),
           ),
+          // 右側スペーサー（左右対称）
+          const SizedBox(width: 40, height: 40),
         ],
       ),
     );

@@ -154,7 +154,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               color: AppColors.textSecondary,
             ),
           ),
-          const SizedBox(width: 16),
           // タイトル・サブタイトル
           const Expanded(
             child: Column(
@@ -184,6 +183,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ],
             ),
           ),
+          // 右側スペーサー（左右対称）
+          const SizedBox(width: 40, height: 40),
         ],
       ),
     );
