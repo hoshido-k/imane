@@ -119,15 +119,15 @@ class ScheduleService:
         if status:
             query = query.where("status", "==", status.value)
 
-        # 開始時刻で降順にソート
-        query = query.order_by("start_time", direction="DESCENDING")
-
         schedules_docs = query.stream()
 
         schedules = []
         for doc in schedules_docs:
             schedule_data = doc.to_dict()
             schedules.append(LocationScheduleInDB(**schedule_data))
+
+        # Pythonで開始時刻で降順にソート
+        schedules.sort(key=lambda x: x.start_time, reverse=True)
 
         return schedules
 

@@ -65,13 +65,21 @@ class ApiService {
         uri = uri.replace(queryParameters: queryParams);
       }
 
+      print('[ApiService] GET $uri');
+      print('[ApiService] Auth required: $requiresAuth');
+      print('[ApiService] Has token: ${_accessToken != null}');
+
       final response = await http.get(
         uri,
         headers: _getHeaders(includeAuth: requiresAuth),
       );
 
+      print('[ApiService] Response status: ${response.statusCode}');
+      print('[ApiService] Response body: ${response.body}');
+
       return _handleResponse(response);
     } catch (e) {
+      print('[ApiService] GET request error: $e');
       throw ApiException('GET request failed: $e');
     }
   }
@@ -83,14 +91,25 @@ class ApiService {
     bool requiresAuth = true,
   }) async {
     try {
+      print('[ApiService] POST $baseUrl$endpoint');
+      print('[ApiService] Auth required: $requiresAuth');
+      print('[ApiService] Has token: ${_accessToken != null}');
+      if (body != null) {
+        print('[ApiService] Request body: ${jsonEncode(body)}');
+      }
+
       final response = await http.post(
         Uri.parse('$baseUrl$endpoint'),
         headers: _getHeaders(includeAuth: requiresAuth),
         body: body != null ? jsonEncode(body) : null,
       );
 
+      print('[ApiService] Response status: ${response.statusCode}');
+      print('[ApiService] Response body: ${response.body}');
+
       return _handleResponse(response);
     } catch (e) {
+      print('[ApiService] POST request error: $e');
       throw ApiException('POST request failed: $e');
     }
   }

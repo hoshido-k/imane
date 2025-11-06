@@ -6,6 +6,7 @@ import 'core/theme/app_theme.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/password_reset_screen.dart';
 import 'screens/schedule/schedule_list_screen.dart';
+import 'services/auth_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -48,12 +49,79 @@ class ImaneApp extends StatelessWidget {
       title: 'imane',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      initialRoute: '/login',
+      home: const AuthCheckScreen(),
       routes: {
         '/login': (context) => const LoginScreen(),
         '/password-reset': (context) => const PasswordResetScreen(),
         '/home': (context) => const ScheduleListScreen(),
       },
+    );
+  }
+}
+
+/// Authentication check screen (splash/loading screen)
+class AuthCheckScreen extends StatefulWidget {
+  const AuthCheckScreen({super.key});
+
+  @override
+  State<AuthCheckScreen> createState() => _AuthCheckScreenState();
+}
+
+class _AuthCheckScreenState extends State<AuthCheckScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _checkAuth();
+  }
+
+  Future<void> _checkAuth() async {
+    print('[AuthCheck] Checking authentication status...');
+    final authService = AuthService();
+
+    try {
+      // Try to auto-login with saved token
+      final isLoggedIn = await authService.autoLogin();
+
+      if (!mounted) return;
+
+      if (isLoggedIn) {
+        print('[AuthCheck] Auto-login successful, navigating to home');
+        Navigator.of(context).pushReplacementNamed('/home');
+      } else {
+        print('[AuthCheck] No valid token found, navigating to login');
+        Navigator.of(context).pushReplacementNamed('/login');
+      }
+    } catch (e) {
+      print('[AuthCheck] Error during auth check: $e');
+      if (!mounted) return;
+      Navigator.of(context).pushReplacementNamed('/login');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFE8E4DF),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'imane',
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 48,
+                fontWeight: FontWeight.w400,
+                color: const Color(0xFFB85D4D),
+              ),
+            ),
+            const SizedBox(height: 24),
+            const CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation(Color(0xFFB85D4D)),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

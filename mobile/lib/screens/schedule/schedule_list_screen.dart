@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../models/schedule.dart';
 import '../../services/api_service.dart';
 import '../../core/constants/app_colors.dart';
-import 'create_schedule_screen.dart';
+import 'create_schedule_flow.dart';
 import 'schedule_detail_screen.dart';
 import 'dart:io';
 
@@ -14,7 +14,7 @@ class ScheduleListScreen extends StatefulWidget {
   State<ScheduleListScreen> createState() => _ScheduleListScreenState();
 }
 
-class _ScheduleListScreenState extends State<ScheduleListScreen> {
+class _ScheduleListScreenState extends State<ScheduleListScreen> with WidgetsBindingObserver {
   final ApiService _apiService = ApiService();
   List<LocationSchedule> _schedules = [];
   bool _isLoading = false;
@@ -23,38 +23,85 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadSchedules();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // App returned to foreground, reload schedules
+      _loadSchedules();
+    }
   }
 
   /// Load schedules from API
   Future<void> _loadSchedules() async {
+    print('[ScheduleList] ========================================');
+    print('[ScheduleList] Loading schedules...');
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
 
     try {
+      print('[ScheduleList] Making GET request to /schedules...');
       final response = await _apiService.get('/schedules');
+      print('[ScheduleList] Raw response: $response');
+      print('[ScheduleList] Response type: ${response.runtimeType}');
 
       // Handle different response formats
       List<dynamic> schedulesJson;
       if (response is List) {
+        print('[ScheduleList] Response is a List');
         schedulesJson = response;
       } else if (response is Map && response['schedules'] != null) {
+        print('[ScheduleList] Response is a Map with schedules key');
         schedulesJson = response['schedules'];
+        print('[ScheduleList] Total count from API: ${response['total']}');
       } else {
+        print('[ScheduleList] Response format not recognized, using empty list');
         schedulesJson = [];
+      }
+
+      print('[ScheduleList] Found ${schedulesJson.length} schedules in response');
+
+      if (schedulesJson.isNotEmpty) {
+        print('[ScheduleList] First schedule data: ${schedulesJson[0]}');
       }
 
       setState(() {
         _schedules = schedulesJson
-            .map((json) => LocationSchedule.fromJson(json))
+            .map((json) {
+              try {
+                return LocationSchedule.fromJson(json);
+              } catch (e) {
+                print('[ScheduleList] Error parsing schedule: $e');
+                print('[ScheduleList] Problem schedule data: $json');
+                rethrow;
+              }
+            })
             .toList();
         _isLoading = false;
       });
-    } catch (e) {
-      print('[ScheduleList] Error loading schedules: $e');
+
+      print('[ScheduleList] Successfully loaded ${_schedules.length} schedules');
+      if (_schedules.isNotEmpty) {
+        print('[ScheduleList] First schedule: ${_schedules[0].destinationName}');
+      }
+      print('[ScheduleList] ========================================');
+    } catch (e, stackTrace) {
+      print('[ScheduleList] ========================================');
+      print('[ScheduleList] ERROR loading schedules: $e');
       print('[ScheduleList] Error type: ${e.runtimeType}');
+      print('[ScheduleList] Stack trace: $stackTrace');
+      print('[ScheduleList] ========================================');
 
       // Handle specific error types - show empty state for most errors
       // since backend might not be fully set up yet
@@ -73,9 +120,17 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> {
         if (e is SocketException && mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('バックエンドサーバーに接続できません'),
+              content: const Text('バックエンドサーバーに接続できません。サーバーが起動しているか確認してください。'),
               backgroundColor: AppColors.textSecondary,
-              duration: const Duration(seconds: 2),
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        } else if (e is UnauthorizedException && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('認証エラー。再度ログインしてください。'),
+              backgroundColor: AppColors.error,
+              duration: const Duration(seconds: 3),
             ),
           );
         }
@@ -89,18 +144,17 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> {
     }
   }
 
-  /// Navigate to create schedule screen
+  /// Navigate to create schedule flow
   Future<void> _navigateToCreateSchedule() async {
-    final result = await Navigator.push(
+    await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => const CreateScheduleScreen(),
+        builder: (context) => const CreateScheduleFlow(),
       ),
     );
 
-    if (result == true) {
-      _loadSchedules();
-    }
+    // Reload schedules when returning
+    _loadSchedules();
   }
 
   /// Navigate to schedule detail screen
@@ -114,6 +168,68 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> {
 
     if (result == true) {
       _loadSchedules();
+    }
+  }
+
+  /// Delete schedule
+  Future<void> _deleteSchedule(LocationSchedule schedule) async {
+    // Show confirmation dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('予定を削除'),
+        content: Text('「${schedule.destinationName}」への予定を削除しますか?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('キャンセル'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.error,
+            ),
+            child: const Text('削除'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    try {
+      print('[ScheduleList] Deleting schedule: ${schedule.id}');
+      await _apiService.delete('/schedules/${schedule.id}');
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('予定を削除しました'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
+
+      // Reload schedules
+      _loadSchedules();
+    } catch (e) {
+      print('[ScheduleList] Error deleting schedule: $e');
+
+      if (!mounted) return;
+
+      String errorMessage = '予定の削除に失敗しました';
+      if (e is SocketException) {
+        errorMessage = 'バックエンドサーバーに接続できません';
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(errorMessage),
+          backgroundColor: AppColors.error,
+          duration: const Duration(seconds: 3),
+        ),
+      );
     }
   }
 
@@ -302,6 +418,7 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> {
           return _ScheduleCard(
             schedule: schedule,
             onTap: () => _navigateToScheduleDetail(schedule),
+            onDelete: () => _deleteSchedule(schedule),
           );
         },
       ),
@@ -358,153 +475,221 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> {
   }
 }
 
-/// Schedule card widget
+/// Schedule card widget matching Figma design
 class _ScheduleCard extends StatelessWidget {
   final LocationSchedule schedule;
   final VoidCallback onTap;
+  final VoidCallback onDelete;
 
   const _ScheduleCard({
     required this.schedule,
     required this.onTap,
+    required this.onDelete,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x1A000000),
+            offset: Offset(0, 1),
+            blurRadius: 3,
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: Color(0x1A000000),
+            offset: Offset(0, 1),
+            blurRadius: 2,
+            spreadRadius: -1,
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Date and time with primary background icon
+          _buildInfoRow(
+            label: '日時',
+            text: _formatDateTime(schedule.startTime),
+            icon: Icons.access_time,
+            isPrimary: true,
+          ),
+          const SizedBox(height: 12),
+          // Location with gray background icon
+          _buildInfoRow(
+            label: '目的地',
+            text: '${schedule.destinationName} - ${schedule.destinationAddress}',
+            icon: Icons.location_on,
+            isPrimary: false,
+          ),
+          const SizedBox(height: 12),
+          // Recipients with gray background icon
+          _buildInfoRow(
+            label: '通知先',
+            text: _getRecipientNames(schedule.notifyToUserIds),
+            icon: Icons.people,
+            isPrimary: false,
+          ),
+          const SizedBox(height: 8),
+          // Action buttons
+          Row(
             children: [
-              // Header: Name and Status
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      schedule.destinationName,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  _buildStatusChip(schedule.status),
-                ],
-              ),
-              const SizedBox(height: 8),
-
-              // Address
-              Row(
-                children: [
-                  const Icon(Icons.location_on, size: 16, color: Colors.grey),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      schedule.destinationAddress,
-                      style: const TextStyle(color: Colors.grey),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-
-              // Time range
-              Row(
-                children: [
-                  const Icon(Icons.access_time, size: 16, color: Colors.grey),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${_formatDateTime(schedule.startTime)} 〜 ${_formatDateTime(schedule.endTime)}',
-                    style: const TextStyle(color: Colors.grey),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-
-              // Notification recipients
-              Row(
-                children: [
-                  const Icon(Icons.people, size: 16, color: Colors.grey),
-                  const SizedBox(width: 4),
-                  Text(
-                    '通知先: ${schedule.notifyToUserIds.length}人',
-                    style: const TextStyle(color: Colors.grey),
-                  ),
-                ],
-              ),
-
-              // Arrival time (if arrived)
-              if (schedule.arrivedAt != null) ...[
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.green.shade50,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.check_circle, size: 16, color: Colors.green.shade700),
-                      const SizedBox(width: 4),
-                      Text(
-                        '到着: ${_formatDateTime(schedule.arrivedAt!)}',
-                        style: TextStyle(
-                          color: Colors.green.shade700,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
+              Expanded(
+                child: _buildActionButton(
+                  icon: Icons.edit,
+                  label: '編集',
+                  color: const Color(0xFF5A4A40),
+                  onPressed: onTap,
                 ),
-              ],
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildActionButton(
+                  icon: Icons.delete,
+                  label: '削除',
+                  color: AppColors.primary,
+                  onPressed: onDelete,
+                ),
+              ),
             ],
           ),
-        ),
+        ],
       ),
     );
   }
 
-  Widget _buildStatusChip(ScheduleStatus status) {
-    Color color;
-    switch (status) {
-      case ScheduleStatus.active:
-        color = Colors.blue;
-        break;
-      case ScheduleStatus.arrived:
-        color = Colors.green;
-        break;
-      case ScheduleStatus.completed:
-        color = Colors.grey;
-        break;
-      case ScheduleStatus.expired:
-        color = Colors.orange;
-        break;
-    }
+  Widget _buildInfoRow({
+    required String label,
+    required String text,
+    required IconData icon,
+    required bool isPrimary,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        // Icon container
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: isPrimary ? AppColors.primary : const Color(0xFFF5F5F5),
+            shape: BoxShape.circle,
+            boxShadow: isPrimary
+                ? const [
+                    BoxShadow(
+                      color: Color(0x1A000000),
+                      offset: Offset(0, 4),
+                      blurRadius: 6,
+                      spreadRadius: -1,
+                    ),
+                    BoxShadow(
+                      color: Color(0x1A000000),
+                      offset: Offset(0, 2),
+                      blurRadius: 4,
+                      spreadRadius: -2,
+                    ),
+                  ]
+                : null,
+          ),
+          child: Icon(
+            icon,
+            color: isPrimary ? Colors.white : AppColors.textSecondary,
+            size: 20,
+          ),
+        ),
+        const SizedBox(width: 12),
+        // Text content
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w400,
+                  color: Color(0xFF8B7969),
+                ),
+              ),
+              Text(
+                text,
+                style: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  color: Color(0xFF3D3D3D),
+                  letterSpacing: -0.1504,
+                ),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color),
-      ),
-      child: Text(
-        status.displayName,
-        style: TextStyle(
-          color: color,
-          fontWeight: FontWeight.bold,
-          fontSize: 12,
+  Widget _buildActionButton({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onPressed,
+  }) {
+    return SizedBox(
+      height: 40,
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFFF5F5F5),
+          foregroundColor: color,
+          elevation: 0,
+          shadowColor: Colors.black.withOpacity(0.1),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+        ).copyWith(
+          elevation: MaterialStateProperty.all(2),
+          shadowColor: MaterialStateProperty.all(
+            const Color(0x1A000000),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 16),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 16,
+                fontWeight: FontWeight.w400,
+                letterSpacing: -0.3125,
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
   String _formatDateTime(DateTime dateTime) {
-    return '${dateTime.month}/${dateTime.day} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+    return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+  }
+
+  String _getRecipientNames(List<String> recipientIds) {
+    // TODO: Get actual names from API
+    if (recipientIds.isEmpty) return '通知先なし';
+    if (recipientIds.length == 1) return '田中 太郎'; // Mock
+    return '田中 太郎 他${recipientIds.length - 1}人'; // Mock
   }
 }

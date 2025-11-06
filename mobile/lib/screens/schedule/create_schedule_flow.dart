@@ -1,0 +1,186 @@
+import 'package:flutter/material.dart';
+import '../../models/schedule.dart' show LocationSchedule, LatLng;
+import '../../services/api_service.dart';
+import 'steps/step1_datetime_screen.dart';
+import 'steps/step2_location_screen.dart';
+import 'steps/step3_recipients_screen.dart';
+import 'steps/step4_confirm_screen.dart';
+
+/// Create schedule flow - manages all 4 steps
+class CreateScheduleFlow extends StatefulWidget {
+  const CreateScheduleFlow({super.key});
+
+  @override
+  State<CreateScheduleFlow> createState() => _CreateScheduleFlowState();
+}
+
+class _CreateScheduleFlowState extends State<CreateScheduleFlow> {
+  final ApiService _apiService = ApiService();
+
+  // Data collected from each step
+  DateTime? _selectedDateTime;
+  LocationData? _selectedLocation;
+  List<String>? _selectedRecipientIds;
+
+  bool _isCreating = false;
+
+  void _navigateToStep2() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => Step2LocationScreen(
+          initialLocation: _selectedLocation,
+          onNext: (location) {
+            setState(() {
+              _selectedLocation = location;
+            });
+            _navigateToStep3();
+          },
+        ),
+      ),
+    );
+  }
+
+  void _navigateToStep3() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => Step3RecipientsScreen(
+          initialRecipients: _selectedRecipientIds,
+          onNext: (recipientIds) {
+            setState(() {
+              _selectedRecipientIds = recipientIds;
+            });
+            _navigateToStep4();
+          },
+        ),
+      ),
+    );
+  }
+
+  void _navigateToStep4() {
+    // Get recipient names (TODO: fetch from API)
+    final recipientNames = _selectedRecipientIds!.map((id) {
+      // Mock data - replace with actual API call
+      final mockNames = {
+        '1': '田中 太郎',
+        '2': '佐藤 花子',
+        '3': '鈴木 次郎',
+        '4': '高橋 美咲',
+        '5': '渡辺 健太',
+        '6': '伊藤 あゆみ',
+      };
+      return mockNames[id] ?? 'Unknown';
+    }).toList();
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => Step4ConfirmScreen(
+          dateTime: _selectedDateTime!,
+          location: _selectedLocation!,
+          recipientIds: _selectedRecipientIds!,
+          recipientNames: recipientNames,
+          onConfirm: _createSchedule,
+          isLoading: _isCreating,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _createSchedule() async {
+    if (_isCreating) return;
+
+    setState(() {
+      _isCreating = true;
+    });
+
+    try {
+      print('[CreateSchedule] Starting schedule creation...');
+      print('[CreateSchedule] DateTime: $_selectedDateTime');
+      print('[CreateSchedule] Location: ${_selectedLocation!.name}');
+      print('[CreateSchedule] Recipients: $_selectedRecipientIds');
+
+      // Create schedule object (backend will use current user from auth token)
+      final scheduleData = {
+        'destination_name': _selectedLocation!.name,
+        'destination_address': _selectedLocation!.address,
+        'destination_coords': {
+          'lat': _selectedLocation!.latitude ?? 35.6812,
+          'lng': _selectedLocation!.longitude ?? 139.7671,
+        },
+        'notify_to_user_ids': _selectedRecipientIds!,
+        'start_time': _selectedDateTime!.toIso8601String(),
+        'end_time': _selectedDateTime!.add(const Duration(hours: 2)).toIso8601String(),
+        'notify_on_arrival': true,
+        'notify_after_minutes': 60,
+        'notify_on_departure': true,
+        'favorite': false,
+      };
+
+      print('[CreateSchedule] Sending data: $scheduleData');
+      print('[CreateSchedule] Making POST request to /schedules...');
+
+      // Send to API
+      final response = await _apiService.post('/schedules', body: scheduleData);
+      print('[CreateSchedule] SUCCESS! Response: $response');
+      print('[CreateSchedule] Response type: ${response.runtimeType}');
+
+      if (!mounted) return;
+
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('予定を作成しました'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
+
+      // Wait a moment for the backend to process
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      // Return to schedule list screen - pop all screens in the flow
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    } catch (e, stackTrace) {
+      print('[CreateSchedule] ERROR: $e');
+      print('[CreateSchedule] Error type: ${e.runtimeType}');
+      print('[CreateSchedule] Stack trace: $stackTrace');
+
+      if (!mounted) return;
+
+      String errorMessage = 'エラー: $e';
+      if (e.toString().contains('SocketException')) {
+        errorMessage = 'バックエンドサーバーに接続できません。サーバーが起動しているか確認してください。';
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(errorMessage),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isCreating = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Step 1 is the entry point
+    return Step1DateTimeScreen(
+      initialDateTime: _selectedDateTime,
+      onNext: (dateTime) {
+        setState(() {
+          _selectedDateTime = dateTime;
+        });
+        _navigateToStep2();
+      },
+    );
+  }
+}
