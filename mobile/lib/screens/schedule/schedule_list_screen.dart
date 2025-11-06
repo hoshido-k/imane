@@ -3,7 +3,6 @@ import '../../models/schedule.dart';
 import '../../services/api_service.dart';
 import '../../core/constants/app_colors.dart';
 import 'create_schedule_flow.dart';
-import 'schedule_detail_screen.dart';
 import 'dart:io';
 
 /// Schedule list screen (Home screen)
