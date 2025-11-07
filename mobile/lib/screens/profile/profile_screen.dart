@@ -437,6 +437,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               keyboardType: keyboardType,
               readOnly: readOnly,
               enableInteractiveSelection: !readOnly,
+              contextMenuBuilder: readOnly
+                  ? (context, editableTextState) => const SizedBox.shrink()
+                  : null,
               decoration: const InputDecoration(
                 border: InputBorder.none,
                 contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
