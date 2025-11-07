@@ -295,7 +295,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                   Text(
                     _searchController.text.isEmpty
                         ? 'フレンドがいません'
-                        : '該当するフレンドが見つかりませんでした',
+                        : '該当するフレンドが見つかりません',
                     style: TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 16,
