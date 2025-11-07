@@ -84,12 +84,13 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
             height: 40,
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(100),
+              borderRadius: BorderRadius.circular(20),
               boxShadow: const [
                 BoxShadow(
                   color: Color(0x1A000000),
                   offset: Offset(0, 1),
                   blurRadius: 3,
+                  spreadRadius: 0,
                 ),
                 BoxShadow(
                   color: Color(0x1A000000),
@@ -103,25 +104,25 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
               icon: const Icon(Icons.arrow_back, size: 20),
               onPressed: () => Navigator.of(context).pop(),
               padding: EdgeInsets.zero,
+              color: AppColors.textSecondary,
             ),
           ),
-          const SizedBox(width: 16),
           // タイトル・サブタイトル
           Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
                   'フレンド申請',
                   style: TextStyle(
                     fontFamily: 'Inter',
-                    fontSize: 16,
+                    fontSize: 30,
                     fontWeight: FontWeight.w400,
                     color: AppColors.primary,
-                    height: 1.5,
-                    letterSpacing: 0.4875,
+                    height: 1.2,
+                    letterSpacing: 0.3955,
                   ),
                 ),
+                const SizedBox(height: 4),
                 Text(
                   '受信 ${_receivedRequests.length}件 / 送信 ${_sentRequests.length}件',
                   style: const TextStyle(
@@ -135,6 +136,8 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
               ],
             ),
           ),
+          // 右側スペーサー（左右対称）
+          const SizedBox(width: 40, height: 40),
         ],
       ),
     );
@@ -367,7 +370,7 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
             children: [
               Expanded(
                 child: SizedBox(
-                  height: 40,
+                  height: 48,
                   child: ElevatedButton(
                     onPressed: () {
                       // TODO: 承認処理
@@ -384,13 +387,13 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
                     child: const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.person_add_outlined, size: 16),
-                        SizedBox(width: 8),
+                        Icon(Icons.person_add_outlined, size: 14),
+                        SizedBox(width: 6),
                         Text(
                           '承認',
                           style: TextStyle(
                             fontFamily: 'Inter',
-                            fontSize: 16,
+                            fontSize: 14,
                             fontWeight: FontWeight.w400,
                             letterSpacing: -0.3125,
                           ),
@@ -403,7 +406,7 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
               const SizedBox(width: 8),
               Expanded(
                 child: SizedBox(
-                  height: 40,
+                  height: 48,
                   child: ElevatedButton(
                     onPressed: () {
                       // TODO: 拒否処理
@@ -420,13 +423,13 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
                     child: const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.person_remove_outlined, size: 16),
-                        SizedBox(width: 8),
+                        Icon(Icons.person_remove_outlined, size: 14),
+                        SizedBox(width: 6),
                         Text(
                           '拒否',
                           style: TextStyle(
                             fontFamily: 'Inter',
-                            fontSize: 16,
+                            fontSize: 14,
                             fontWeight: FontWeight.w400,
                             letterSpacing: -0.3125,
                           ),
@@ -590,7 +593,7 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
           // 申請を取り消すボタン
           SizedBox(
             width: double.infinity,
-            height: 40,
+            height: 48,
             child: ElevatedButton(
               onPressed: () {
                 // TODO: 申請取り消し処理
@@ -607,13 +610,13 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.close, size: 16),
-                  SizedBox(width: 8),
+                  Icon(Icons.close, size: 14),
+                  SizedBox(width: 6),
                   Text(
                     '申請を取り消す',
                     style: TextStyle(
                       fontFamily: 'Inter',
-                      fontSize: 16,
+                      fontSize: 14,
                       fontWeight: FontWeight.w400,
                       letterSpacing: -0.3125,
                     ),

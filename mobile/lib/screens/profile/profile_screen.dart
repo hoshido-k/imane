@@ -131,12 +131,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
             height: 40,
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(100),
+              borderRadius: BorderRadius.circular(20),
               boxShadow: const [
                 BoxShadow(
                   color: Color(0x1A000000),
                   offset: Offset(0, 1),
                   blurRadius: 3,
+                  spreadRadius: 0,
                 ),
                 BoxShadow(
                   color: Color(0x1A000000),
@@ -150,25 +151,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
               icon: const Icon(Icons.arrow_back, size: 20),
               onPressed: () => Navigator.of(context).pop(),
               padding: EdgeInsets.zero,
+              color: AppColors.textSecondary,
             ),
           ),
-          const SizedBox(width: 16),
           // タイトル・サブタイトル
           const Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'プロフィール設定',
                   style: TextStyle(
                     fontFamily: 'Inter',
-                    fontSize: 16,
+                    fontSize: 30,
                     fontWeight: FontWeight.w400,
                     color: AppColors.primary,
-                    height: 1.5,
-                    letterSpacing: 0.4875,
+                    height: 1.2,
+                    letterSpacing: 0.3955,
                   ),
                 ),
+                SizedBox(height: 4),
                 Text(
                   'あなたの情報を編集',
                   style: TextStyle(
@@ -182,6 +183,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ],
             ),
           ),
+          // 右側スペーサー（左右対称）
+          const SizedBox(width: 40, height: 40),
         ],
       ),
     );

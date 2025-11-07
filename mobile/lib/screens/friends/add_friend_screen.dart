@@ -63,12 +63,13 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
             height: 40,
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(100),
+              borderRadius: BorderRadius.circular(20),
               boxShadow: const [
                 BoxShadow(
                   color: Color(0x1A000000),
                   offset: Offset(0, 1),
                   blurRadius: 3,
+                  spreadRadius: 0,
                 ),
                 BoxShadow(
                   color: Color(0x1A000000),
@@ -82,25 +83,25 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
               icon: const Icon(Icons.arrow_back, size: 20),
               onPressed: () => Navigator.of(context).pop(),
               padding: EdgeInsets.zero,
+              color: AppColors.textSecondary,
             ),
           ),
-          const SizedBox(width: 16),
           // タイトル・サブタイトル
           const Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'フレンドを追加',
                   style: TextStyle(
                     fontFamily: 'Inter',
-                    fontSize: 16,
+                    fontSize: 30,
                     fontWeight: FontWeight.w400,
                     color: AppColors.primary,
-                    height: 1.5,
-                    letterSpacing: 0.4875,
+                    height: 1.2,
+                    letterSpacing: 0.3955,
                   ),
                 ),
+                SizedBox(height: 4),
                 Text(
                   'IDまたは名前で検索',
                   style: TextStyle(
@@ -114,6 +115,8 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
               ],
             ),
           ),
+          // 右側スペーサー（左右対称）
+          const SizedBox(width: 40, height: 40),
         ],
       ),
     );
@@ -196,56 +199,54 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
 
   /// 検索前の空状態
   Widget _buildEmptyState() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Container(
-        height: 176,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const SizedBox(height: 32),
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: AppColors.inputBackground,
-                borderRadius: BorderRadius.circular(100),
-              ),
-              child: const Icon(
-                Icons.person_add_outlined,
-                size: 24,
-                color: AppColors.textSecondary,
-              ),
+    return Align(
+      alignment: Alignment.topCenter,
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 32),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
             ),
-            const SizedBox(height: 16),
-            const Text(
-              'フレンドを検索',
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 16,
-                fontWeight: FontWeight.w400,
-                color: AppColors.textSecondary,
-                letterSpacing: -0.3125,
-              ),
-              textAlign: TextAlign.center,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Friend-add icon
+                Icon(
+                  Icons.person_add_outlined,
+                  size: 48,
+                  color: AppColors.textSecondary.withOpacity(0.3),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'フレンドを検索',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 16,
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.textSecondary,
+                    letterSpacing: -0.3125,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'ユーザーIDまたは名前を入力して検索してください',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.textSecondary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
             ),
-            const SizedBox(height: 8),
-            const Text(
-              'ユーザーIDまたは名前を入力して検索してください',
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 12,
-                fontWeight: FontWeight.w400,
-                color: AppColors.textSecondary,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 32),
-          ],
+          ),
         ),
       ),
     );
@@ -254,44 +255,50 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
   /// 検索結果表示
   Widget _buildSearchResults() {
     if (_searchResults.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: Container(
-          padding: const EdgeInsets.all(32),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.person_search,
-                size: 48,
-                color: AppColors.textSecondary.withOpacity(0.3),
+      return Align(
+        alignment: Alignment.topCenter,
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 32),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
               ),
-              const SizedBox(height: 16),
-              const Text(
-                '検索結果が見つかりませんでした',
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 16,
-                  fontWeight: FontWeight.w400,
-                  color: AppColors.textSecondary,
-                  letterSpacing: -0.3125,
-                ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.person_search,
+                    size: 48,
+                    color: AppColors.textSecondary.withOpacity(0.3),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    '検索結果が見つかりませんでした',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.textSecondary,
+                      letterSpacing: -0.3125,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    '別のIDまたは名前で検索してください',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 8),
-              const Text(
-                '別のIDまたは名前で検索してください',
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 12,
-                  fontWeight: FontWeight.w400,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       );

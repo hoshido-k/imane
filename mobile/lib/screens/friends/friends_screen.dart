@@ -47,74 +47,16 @@ class _FriendsScreenState extends State<FriendsScreen> {
     );
   }
 
-  /// ヘッダー部分（戻るボタン・タイトル・通知・追加ボタン）
+  /// ヘッダー部分（通知・タイトル・追加ボタン）
   Widget _buildHeader() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
       child: Row(
         children: [
-          // 戻るボタン
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(100),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x1A000000),
-                  offset: Offset(0, 1),
-                  blurRadius: 3,
-                ),
-                BoxShadow(
-                  color: Color(0x1A000000),
-                  offset: Offset(0, 1),
-                  blurRadius: 2,
-                  spreadRadius: -1,
-                ),
-              ],
-            ),
-            child: IconButton(
-              icon: const Icon(Icons.arrow_back, size: 20),
-              onPressed: () => Navigator.of(context).pop(),
-              padding: EdgeInsets.zero,
-            ),
-          ),
-          const SizedBox(width: 16),
-          // タイトル・サブタイトル
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'フレンド管理',
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 16,
-                    fontWeight: FontWeight.w400,
-                    color: AppColors.primary,
-                    height: 1.5,
-                    letterSpacing: 0.4875,
-                  ),
-                ),
-                Text(
-                  '${_friends.length}人のフレンド',
-                  style: const TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 12,
-                    fontWeight: FontWeight.w400,
-                    color: AppColors.textSecondary,
-                    height: 1.33,
-                  ),
-                ),
-              ],
-            ),
-          ),
           // 通知アイコン（ベルマーク・バッジ付き）
-          Container(
+          SizedBox(
             width: 40,
             height: 40,
-            margin: const EdgeInsets.only(right: 8),
             child: Stack(
               children: [
                 Container(
@@ -122,12 +64,13 @@ class _FriendsScreenState extends State<FriendsScreen> {
                   height: 40,
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(100),
+                    borderRadius: BorderRadius.circular(20),
                     boxShadow: const [
                       BoxShadow(
                         color: Color(0x1A000000),
                         offset: Offset(0, 1),
                         blurRadius: 3,
+                        spreadRadius: 0,
                       ),
                       BoxShadow(
                         color: Color(0x1A000000),
@@ -143,6 +86,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                       Navigator.of(context).pushNamed('/friends/requests');
                     },
                     padding: EdgeInsets.zero,
+                    color: AppColors.textSecondary,
                   ),
                 ),
                 // バッジ（通知数）
@@ -172,14 +116,56 @@ class _FriendsScreenState extends State<FriendsScreen> {
               ],
             ),
           ),
+          // タイトル・サブタイトル
+          Expanded(
+            child: Column(
+              children: [
+                const Text(
+                  'フレンド',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 30,
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.primary,
+                    height: 1.2,
+                    letterSpacing: 0.3955,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${_friends.length}人のフレンド',
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.textSecondary,
+                    height: 1.33,
+                  ),
+                ),
+              ],
+            ),
+          ),
           // 追加ボタン
           Container(
             width: 40,
             height: 40,
             decoration: BoxDecoration(
               color: AppColors.primary,
-              borderRadius: BorderRadius.circular(100),
-              boxShadow: AppColors.buttonShadow,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x1A000000),
+                  offset: Offset(0, 1),
+                  blurRadius: 3,
+                  spreadRadius: 0,
+                ),
+                BoxShadow(
+                  color: Color(0x1A000000),
+                  offset: Offset(0, 1),
+                  blurRadius: 2,
+                  spreadRadius: -1,
+                ),
+              ],
             ),
             child: IconButton(
               icon: const Icon(Icons.person_add, size: 20, color: Colors.white),
