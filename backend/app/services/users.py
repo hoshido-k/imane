@@ -3,7 +3,9 @@
 """
 
 from datetime import UTC, datetime
-from typing import Optional
+from typing import List, Optional
+
+from google.cloud.firestore_v1 import FieldFilter
 
 from app.core.firebase import get_firestore_client
 from app.schemas.user import UserInDB, UserUpdate
@@ -14,6 +16,52 @@ class UserService:
 
     def __init__(self):
         self.db = get_firestore_client()
+
+    async def search_users(
+        self, query: str, current_user_id: str, limit: int = 20
+    ) -> List[UserInDB]:
+        """
+        ユーザーを検索（表示名またはメールアドレス）
+
+        Args:
+            query: 検索クエリ
+            current_user_id: 現在のユーザーID（自分自身は除外）
+            limit: 取得件数の上限
+
+        Returns:
+            検索結果のユーザーリスト
+        """
+        if not query or len(query.strip()) == 0:
+            return []
+
+        query = query.strip().lower()
+        results = []
+
+        # 表示名で検索（部分一致）
+        # Firestoreは部分一致検索をサポートしていないため、全件取得してフィルタリング
+        # 本番環境ではAlgoliaやElasticsearchの使用を推奨
+        users_ref = self.db.collection("users").limit(100)
+        users = users_ref.get()
+
+        for user_doc in users:
+            user_data = user_doc.to_dict()
+            user = UserInDB(**user_data)
+
+            # 自分自身は除外
+            if user.uid == current_user_id:
+                continue
+
+            # 表示名またはメールアドレスに検索クエリが含まれるか
+            display_name_match = query in user.display_name.lower() if user.display_name else False
+            email_match = query in user.email.lower() if user.email else False
+
+            if display_name_match or email_match:
+                results.append(user)
+
+            if len(results) >= limit:
+                break
+
+        return results
 
     async def get_user_by_uid(self, uid: str) -> Optional[UserInDB]:
         """

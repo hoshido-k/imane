@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
+import '../../services/friend_service.dart';
+import '../../services/api_service.dart';
 
 /// フレンド追加画面
 class AddFriendScreen extends StatefulWidget {
@@ -11,8 +13,12 @@ class AddFriendScreen extends StatefulWidget {
 
 class _AddFriendScreenState extends State<AddFriendScreen> {
   final TextEditingController _searchController = TextEditingController();
+  final FriendService _friendService = FriendService();
+
   bool _hasSearched = false;
+  bool _isSearching = false;
   List<Map<String, dynamic>> _searchResults = [];
+  Set<String> _sendingRequests = {}; // 申請送信中のユーザーIDを管理
 
   @override
   void dispose() {
@@ -20,16 +26,83 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
     super.dispose();
   }
 
-  void _performSearch() {
+  Future<void> _performSearch() async {
     final query = _searchController.text.trim();
     if (query.isEmpty) return;
 
     setState(() {
       _hasSearched = true;
-      // TODO: 実際のAPI検索を実装
-      // 今はダミーで空の結果を表示
-      _searchResults = [];
+      _isSearching = true;
     });
+
+    try {
+      final results = await _friendService.searchUsers(query);
+      setState(() {
+        _searchResults = results;
+        _isSearching = false;
+      });
+    } catch (e) {
+      setState(() {
+        _searchResults = [];
+        _isSearching = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('検索に失敗しました: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _sendFriendRequest(String userId, String userName) async {
+    setState(() {
+      _sendingRequests.add(userId);
+    });
+
+    try {
+      await _friendService.sendFriendRequest(
+        toUserId: userId,
+        message: 'よろしくお願いします',
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('$userName さんにフレンド申請を送信しました'),
+            backgroundColor: AppColors.primary,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        String errorMessage = 'フレンド申請の送信に失敗しました';
+
+        if (e is BadRequestException) {
+          if (e.message.contains('既にフレンド')) {
+            errorMessage = '既にフレンドです';
+          } else if (e.message.contains('既にフレンドリクエストを送信済み')) {
+            errorMessage = '既にフレンド申請を送信済みです';
+          } else {
+            errorMessage = e.message;
+          }
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      setState(() {
+        _sendingRequests.remove(userId);
+      });
+    }
   }
 
   @override
@@ -254,6 +327,14 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
 
   /// 検索結果表示
   Widget _buildSearchResults() {
+    if (_isSearching) {
+      return const Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+        ),
+      );
+    }
+
     if (_searchResults.isEmpty) {
       return Align(
         alignment: Alignment.topCenter,
@@ -304,7 +385,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
       );
     }
 
-    // TODO: 検索結果がある場合のリスト表示
     return ListView.separated(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       itemCount: _searchResults.length,
@@ -318,6 +398,30 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
 
   /// ユーザーカード
   Widget _buildUserCard(Map<String, dynamic> user) {
+    final userId = user['uid'] ?? '';
+    final displayName = user['display_name'] ?? '';
+    final email = user['email'] ?? '';
+    final isSending = _sendingRequests.contains(userId);
+
+    // アバター画像またはイニシャル
+    Widget avatar;
+    if (user['profile_image_url'] != null && user['profile_image_url'].toString().isNotEmpty) {
+      avatar = ClipRRect(
+        borderRadius: BorderRadius.circular(100),
+        child: Image.network(
+          user['profile_image_url'],
+          width: 48,
+          height: 48,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return _buildDefaultAvatar(displayName);
+          },
+        ),
+      );
+    } else {
+      avatar = _buildDefaultAvatar(displayName);
+    }
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -340,27 +444,15 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
       child: Row(
         children: [
           // アバター
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: AppColors.inputBackground,
-              borderRadius: BorderRadius.circular(100),
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              user['emoji'] ?? '👤',
-              style: const TextStyle(fontSize: 24),
-            ),
-          ),
+          avatar,
           const SizedBox(width: 16),
-          // 名前とID
+          // 名前とメールアドレス
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  user['name'] ?? '',
+                  displayName,
                   style: const TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 14,
@@ -372,33 +464,71 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'ID: ${user['id']}',
+                  email,
                   style: const TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 12,
                     fontWeight: FontWeight.w400,
                     color: AppColors.textSecondary,
                   ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
           ),
           // 追加ボタン
           ElevatedButton(
-            onPressed: () {
-              // TODO: フレンド追加処理
-            },
+            onPressed: isSending
+                ? null
+                : () => _sendFriendRequest(userId, displayName),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
+              disabledBackgroundColor: AppColors.inputBackground,
+              disabledForegroundColor: AppColors.textSecondary,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(100),
               ),
             ),
-            child: const Text('追加'),
+            child: isSending
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : const Text('追加'),
           ),
         ],
+      ),
+    );
+  }
+
+  /// デフォルトアバター（イニシャル表示）
+  Widget _buildDefaultAvatar(String displayName) {
+    String initial = '?';
+    if (displayName.isNotEmpty) {
+      initial = displayName[0].toUpperCase();
+    }
+
+    return Container(
+      width: 48,
+      height: 48,
+      decoration: BoxDecoration(
+        color: AppColors.inputBackground,
+        borderRadius: BorderRadius.circular(100),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        initial,
+        style: const TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.w500,
+          color: AppColors.textSecondary,
+        ),
       ),
     );
   }

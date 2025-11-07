@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
+import '../../services/friend_service.dart';
 
 /// フレンド一覧画面
 class FriendsScreen extends StatefulWidget {
@@ -11,23 +12,73 @@ class FriendsScreen extends StatefulWidget {
 
 class _FriendsScreenState extends State<FriendsScreen> {
   final TextEditingController _searchController = TextEditingController();
+  final FriendService _friendService = FriendService();
 
-  // ダミーデータ（後でAPIから取得）
-  final List<Map<String, dynamic>> _friends = [
-    {'id': '1', 'name': '田中 太郎', 'emoji': '👨'},
-    {'id': '2', 'name': '佐藤 花子', 'emoji': '👩'},
-    {'id': '3', 'name': '鈴木 次郎', 'emoji': '👨‍💼'},
-    {'id': '4', 'name': '高橋 美咲', 'emoji': '👩‍💼'},
-    {'id': '5', 'name': '渡辺 健太', 'emoji': '👨‍🎓'},
-    {'id': '6', 'name': '伊藤 あゆみ', 'emoji': '👩‍🎓'},
-    {'id': '7', 'name': '山田 一郎', 'emoji': '👨‍💻'},
-    {'id': '8', 'name': '中村 舞', 'emoji': '👩‍🎨'},
-  ];
+  List<Map<String, dynamic>> _friends = [];
+  List<Map<String, dynamic>> _filteredFriends = [];
+  int _requestCount = 0;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
 
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadData() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // フレンド一覧と受信リクエスト数を取得
+      final friendsData = await _friendService.getFriends();
+      final requests = await _friendService.getReceivedRequests();
+
+      setState(() {
+        _friends = friendsData;
+        _filteredFriends = friendsData;
+        _requestCount = requests.length;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('データの取得に失敗しました: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  void _filterFriends(String query) {
+    if (query.isEmpty) {
+      setState(() {
+        _filteredFriends = _friends;
+      });
+      return;
+    }
+
+    final lowercaseQuery = query.toLowerCase();
+    setState(() {
+      _filteredFriends = _friends.where((friend) {
+        final name = (friend['friend_display_name'] ?? '').toLowerCase();
+        final email = (friend['friend_email'] ?? '').toLowerCase();
+        return name.contains(lowercaseQuery) || email.contains(lowercaseQuery);
+      }).toList();
+    });
   }
 
   @override
@@ -82,37 +133,40 @@ class _FriendsScreenState extends State<FriendsScreen> {
                   ),
                   child: IconButton(
                     icon: const Icon(Icons.notifications_outlined, size: 20),
-                    onPressed: () {
-                      Navigator.of(context).pushNamed('/friends/requests');
+                    onPressed: () async {
+                      await Navigator.of(context).pushNamed('/friends/requests');
+                      // 戻ってきたら再読み込み
+                      _loadData();
                     },
                     padding: EdgeInsets.zero,
                     color: AppColors.textSecondary,
                   ),
                 ),
                 // バッジ（通知数）
-                Positioned(
-                  right: 0,
-                  top: 0,
-                  child: Container(
-                    width: 20,
-                    height: 20,
-                    decoration: const BoxDecoration(
-                      color: AppColors.primary,
-                      shape: BoxShape.circle,
-                    ),
-                    alignment: Alignment.center,
-                    child: const Text(
-                      '3',
-                      style: TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
-                        color: Colors.white,
-                        height: 1.33,
+                if (_requestCount > 0)
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    child: Container(
+                      width: 20,
+                      height: 20,
+                      decoration: const BoxDecoration(
+                        color: AppColors.primary,
+                        shape: BoxShape.circle,
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        _requestCount > 9 ? '9+' : '$_requestCount',
+                        style: const TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
+                          color: Colors.white,
+                          height: 1.33,
+                        ),
                       ),
                     ),
                   ),
-                ),
               ],
             ),
           ),
@@ -206,10 +260,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
             border: InputBorder.none,
             contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           ),
-          onChanged: (value) {
-            // TODO: 検索処理を実装
-            setState(() {});
-          },
+          onChanged: _filterFriends,
         ),
       ),
     );
@@ -217,19 +268,91 @@ class _FriendsScreenState extends State<FriendsScreen> {
 
   /// フレンド一覧
   Widget _buildFriendsList() {
-    return ListView.separated(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      itemCount: _friends.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 12),
-      itemBuilder: (context, index) {
-        final friend = _friends[index];
-        return _buildFriendCard(friend);
-      },
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+        ),
+      );
+    }
+
+    if (_filteredFriends.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Container(
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.people_outline,
+                  size: 48,
+                  color: AppColors.textSecondary.withOpacity(0.3),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  _searchController.text.isEmpty
+                      ? 'フレンドがいません'
+                      : '該当するフレンドが見つかりませんでした',
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 16,
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _loadData,
+      color: AppColors.primary,
+      child: ListView.separated(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        itemCount: _filteredFriends.length,
+        separatorBuilder: (context, index) => const SizedBox(height: 12),
+        itemBuilder: (context, index) {
+          final friend = _filteredFriends[index];
+          return _buildFriendCard(friend);
+        },
+      ),
     );
   }
 
   /// フレンドカード
   Widget _buildFriendCard(Map<String, dynamic> friend) {
+    final displayName = friend['friend_display_name'] ?? '';
+    final email = friend['friend_email'] ?? '';
+
+    // アバター画像またはイニシャル
+    Widget avatar;
+    if (friend['friend_profile_image_url'] != null &&
+        friend['friend_profile_image_url'].toString().isNotEmpty) {
+      avatar = ClipRRect(
+        borderRadius: BorderRadius.circular(100),
+        child: Image.network(
+          friend['friend_profile_image_url'],
+          width: 48,
+          height: 48,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return _buildDefaultAvatar(displayName);
+          },
+        ),
+      );
+    } else {
+      avatar = _buildDefaultAvatar(displayName);
+    }
+
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
       decoration: BoxDecoration(
@@ -252,27 +375,15 @@ class _FriendsScreenState extends State<FriendsScreen> {
       child: Row(
         children: [
           // アバター
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: AppColors.inputBackground,
-              borderRadius: BorderRadius.circular(100),
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              friend['emoji'],
-              style: const TextStyle(fontSize: 24),
-            ),
-          ),
+          avatar,
           const SizedBox(width: 16),
-          // 名前とID
+          // 名前とメールアドレス
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  friend['name'],
+                  displayName,
                   style: const TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 14,
@@ -290,7 +401,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                     borderRadius: BorderRadius.circular(100),
                   ),
                   child: Text(
-                    'ID: ${friend['id']}',
+                    email,
                     style: const TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 12,
@@ -298,12 +409,39 @@ class _FriendsScreenState extends State<FriendsScreen> {
                       color: AppColors.textSecondary,
                       height: 1.33,
                     ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// デフォルトアバター（イニシャル表示）
+  Widget _buildDefaultAvatar(String displayName) {
+    String initial = '?';
+    if (displayName.isNotEmpty) {
+      initial = displayName[0].toUpperCase();
+    }
+
+    return Container(
+      width: 48,
+      height: 48,
+      decoration: BoxDecoration(
+        color: AppColors.inputBackground,
+        borderRadius: BorderRadius.circular(100),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        initial,
+        style: const TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.w500,
+          color: AppColors.textSecondary,
+        ),
       ),
     );
   }
