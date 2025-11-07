@@ -344,7 +344,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
   Widget _buildFriendCard(Map<String, dynamic> friend) {
     final displayName = friend['friend_display_name'] ?? '';
     final username = friend['friend_username'] ?? '';
-    final friendId = friend['friend_user_id'] ?? '';
+    final friendId = friend['friend_id'] ?? '';
 
     // アバター画像またはイニシャル
     Widget avatar;
@@ -634,8 +634,8 @@ class _FriendsScreenState extends State<FriendsScreen> {
 
       // リストから削除
       setState(() {
-        _friends.removeWhere((f) => f['friend_user_id'] == friendId);
-        _filteredFriends.removeWhere((f) => f['friend_user_id'] == friendId);
+        _friends.removeWhere((f) => f['friend_id'] == friendId);
+        _filteredFriends.removeWhere((f) => f['friend_id'] == friendId);
       });
 
       // スナックバーで通知（オプション）
