@@ -39,6 +39,9 @@ class ApiService {
     _accessToken = null;
   }
 
+  /// アクセストークンを取得
+  String? get accessToken => _accessToken;
+
   /// 共通ヘッダーを取得
   Map<String, String> _getHeaders({bool includeAuth = true}) {
     final headers = {

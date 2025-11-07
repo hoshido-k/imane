@@ -221,7 +221,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
 
       // 認証トークンを追加
-      final token = _authService.apiService._accessToken;
+      final token = _authService.apiService.accessToken;
       if (token != null) {
         request.headers['Authorization'] = 'Bearer $token';
       }
