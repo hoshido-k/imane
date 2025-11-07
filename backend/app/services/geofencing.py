@@ -175,7 +175,7 @@ class GeofencingService:
         位置情報更新時のジオフェンス判定処理
 
         Args:
-            user_id: ユーザーID
+            user_id: ユーザID
             current_coords: 現在の座標
             previous_coords: 前回の座標（オプション）
 
@@ -256,7 +256,7 @@ class GeofencingService:
         現在地の近くにあるスケジュールを取得
 
         Args:
-            user_id: ユーザーID
+            user_id: ユーザID
             current_coords: 現在の座標
             radius_meters: 検索半径（メートル）、Noneの場合はデフォルト値を使用
 

@@ -35,7 +35,7 @@ class LocationService:
         位置情報を記録
 
         Args:
-            user_id: ユーザーID
+            user_id: ユーザID
             location_data: 位置情報データ
             schedule_id: 関連するスケジュールID（オプション）
 
@@ -70,7 +70,7 @@ class LocationService:
         ユーザーの最新の位置情報を取得
 
         Args:
-            user_id: ユーザーID
+            user_id: ユーザID
 
         Returns:
             最新の位置情報、存在しない場合はNone
@@ -97,7 +97,7 @@ class LocationService:
         ユーザーの位置情報履歴を取得
 
         Args:
-            user_id: ユーザーID
+            user_id: ユーザID
             limit: 取得件数の上限
 
         Returns:
@@ -122,7 +122,7 @@ class LocationService:
         アクティブなスケジュールのステータス情報を取得
 
         Args:
-            user_id: ユーザーID
+            user_id: ユーザID
 
         Returns:
             スケジュールステータス情報のリスト

@@ -32,18 +32,18 @@ class AuthService:
             アクセストークンとユーザー情報
 
         Raises:
-            ValueError: メールアドレスまたはユーザーIDが既に使用されている場合
+            ValueError: メールアドレスまたはユーザIDが既に使用されている場合
             FirebaseError: Firebase関連のエラー
         """
         try:
-            # 1. ユーザーID（username）の重複チェック
+            # 1. ユーザID（username）の重複チェック
             from google.cloud.firestore_v1 import FieldFilter
             existing_users = self.db.collection('users').where(
                 filter=FieldFilter("username", "==", request.username)
             ).limit(1).get()
 
             if len(existing_users) > 0:
-                raise ValueError("このユーザーIDは既に使用されています")
+                raise ValueError("このユーザIDは既に使用されています")
 
             # 2. Firebase Authenticationでユーザー作成
             user_record = self.auth_client.create_user(
@@ -130,7 +130,7 @@ class AuthService:
         UIDからユーザー情報を取得
 
         Args:
-            uid: ユーザーID
+            uid: ユーザID
 
         Returns:
             ユーザー情報、存在しない場合はNone
@@ -149,7 +149,7 @@ class AuthService:
         ユーザーを削除
 
         Args:
-            uid: ユーザーID
+            uid: ユーザID
 
         Returns:
             削除成功時True
@@ -171,7 +171,7 @@ class AuthService:
         FCMトークンを追加・更新
 
         Args:
-            uid: ユーザーID
+            uid: ユーザID
             fcm_token: FCMトークン
 
         Returns:
@@ -195,7 +195,7 @@ class AuthService:
         FCMトークンを削除
 
         Args:
-            uid: ユーザーID
+            uid: ユーザID
             fcm_token: FCMトークン
 
         Returns:

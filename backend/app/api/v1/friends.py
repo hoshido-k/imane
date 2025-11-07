@@ -322,7 +322,7 @@ async def send_location_share_request(
     承認されると、あなたは相手の位置ステータスを見ることができます。
 
     Args:
-        request_data: リクエストデータ（対象ユーザーID）
+        request_data: リクエストデータ（対象ユーザID）
         current_user: 現在のユーザー
         friend_service: フレンドサービス
 

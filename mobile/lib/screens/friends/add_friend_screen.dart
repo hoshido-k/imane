@@ -18,7 +18,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
   bool _hasSearched = false;
   bool _isSearching = false;
   List<Map<String, dynamic>> _searchResults = [];
-  Set<String> _sendingRequests = {}; // 申請送信中のユーザーIDを管理
+  Set<String> _sendingRequests = {}; // 申請送信中のユーザIDを管理
 
   @override
   void dispose() {
@@ -176,7 +176,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                 ),
                 SizedBox(height: 4),
                 Text(
-                  'IDまたは名前で検索',
+                  'ユーザIDで検索',
                   style: TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 12,
@@ -212,7 +212,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
             child: TextField(
               controller: _searchController,
               decoration: const InputDecoration(
-                hintText: 'ユーザーIDまたは名前を入力',
+                hintText: 'ユーザIDを入力',
                 hintStyle: TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 16,
@@ -308,7 +308,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'ユーザーIDまたは名前を入力して検索してください',
+                  'ユーザIDを入力して検索してください',
                   style: TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 12,
@@ -369,7 +369,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    '別のIDまたは名前で検索してください',
+                    '別のユーザIDで検索してください',
                     style: TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 12,

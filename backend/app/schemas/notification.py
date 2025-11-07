@@ -55,7 +55,7 @@ class NotificationInDB(BaseModel):
     """データベース内の通知"""
 
     notification_id: str
-    user_id: str = Field(..., description="通知を受け取るユーザーID")
+    user_id: str = Field(..., description="通知を受け取るユーザID")
     type: NotificationType = Field(..., description="通知タイプ")
     title: str = Field(..., max_length=100, description="通知タイトル")
     body: str = Field(..., max_length=500, description="通知本文")
@@ -112,7 +112,7 @@ class FCMTokenRemoveRequest(BaseModel):
 class PushNotificationRequest(BaseModel):
     """プッシュ通知送信リクエスト（開発・テスト用）"""
 
-    user_id: str = Field(..., description="送信先ユーザーID")
+    user_id: str = Field(..., description="送信先ユーザID")
     title: str = Field(..., max_length=100, description="通知タイトル")
     body: str = Field(..., max_length=500, description="通知本文")
     data: dict[str, Any] = Field(default_factory=dict, description="追加データ")
@@ -122,8 +122,8 @@ class NotificationHistoryInDB(BaseModel):
     """通知履歴（imane用 - 24時間TTL）"""
 
     id: str = Field(..., description="通知履歴ID")
-    from_user_id: str = Field(..., description="送信元ユーザーID")
-    to_user_id: str = Field(..., description="送信先ユーザーID")
+    from_user_id: str = Field(..., description="送信元ユーザID")
+    to_user_id: str = Field(..., description="送信先ユーザID")
     schedule_id: str = Field(..., description="関連するスケジュールID")
     type: str = Field(..., description="通知タイプ (arrival/stay/departure)")
     message: str = Field(..., description="通知メッセージ")

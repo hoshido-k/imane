@@ -27,7 +27,7 @@ class FavoriteService:
         お気に入り場所を作成
 
         Args:
-            user_id: ユーザーID
+            user_id: ユーザID
             favorite_data: お気に入り場所作成データ
 
         Returns:
@@ -61,7 +61,7 @@ class FavoriteService:
 
         Args:
             favorite_id: お気に入りID
-            user_id: ユーザーID（権限チェック用）
+            user_id: ユーザID（権限チェック用）
 
         Returns:
             お気に入り場所情報、存在しない場合はNone
@@ -88,7 +88,7 @@ class FavoriteService:
         ユーザーのお気に入り場所一覧を取得
 
         Args:
-            user_id: ユーザーID
+            user_id: ユーザID
 
         Returns:
             お気に入り場所一覧
@@ -113,7 +113,7 @@ class FavoriteService:
 
         Args:
             favorite_id: お気に入りID
-            user_id: ユーザーID（権限チェック用）
+            user_id: ユーザID（権限チェック用）
 
         Raises:
             ValueError: お気に入りが見つからない、または権限がない場合

@@ -41,16 +41,16 @@ async def update_my_profile(
 
 @router.get("/check-username")
 async def check_username_availability(
-    username: str = Query(..., min_length=3, max_length=20, description="チェックするユーザーID"),
+    username: str = Query(..., min_length=3, max_length=20, description="チェックするユーザID"),
     user_service: UserService = Depends(lambda: UserService()),
 ):
     """
-    ユーザーIDの利用可否をチェック（認証不要）
+    ユーザIDの利用可否をチェック（認証不要）
 
-    サインアップ時にユーザーIDが既に使用されているかをチェックします。
+    サインアップ時にユーザIDが既に使用されているかをチェックします。
 
     Args:
-        username: チェックするユーザーID
+        username: チェックするユーザID
         user_service: ユーザーサービス
 
     Returns:
@@ -83,7 +83,7 @@ async def check_email_availability(
 
 @router.get("/search", response_model=List[UserResponse])
 async def search_users(
-    q: str = Query(..., min_length=1, description="検索クエリ（ユーザーID）"),
+    q: str = Query(..., min_length=1, description="検索クエリ（ユーザID）"),
     limit: int = Query(20, ge=1, le=50, description="取得件数の上限"),
     current_user: UserInDB = Depends(get_current_user),
     user_service: UserService = Depends(lambda: UserService()),
@@ -91,7 +91,7 @@ async def search_users(
     """
     ユーザーをIDで検索
 
-    ユーザーID（username）でユーザーを検索します。
+    ユーザID（username）でユーザーを検索します。
     自分自身は検索結果から除外されます。
 
     Args:
@@ -120,7 +120,7 @@ async def search_users(
 
 @router.get("/{uid}", response_model=UserResponse)
 async def get_user(
-    uid: str = Path(..., description="ユーザーID"),
+    uid: str = Path(..., description="ユーザID"),
     current_user: UserInDB = Depends(get_current_user),
     user_service: UserService = Depends(lambda: UserService()),
 ):

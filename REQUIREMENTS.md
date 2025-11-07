@@ -211,7 +211,7 @@
 
 **要件:**
 - 保存項目
-  - ユーザーID
+  - ユーザID
   - スケジュールID
   - 座標（緯度・経度）
   - 記録日時
@@ -434,12 +434,12 @@ https://maps.google.com/?q={緯度},{経度}
 | フィールド名 | 型 | 必須 | 説明 |
 |-------------|---|------|------|
 | id | string | ✓ | スケジュールID（自動生成） |
-| user_id | string | ✓ | 作成者のユーザーID |
+| user_id | string | ✓ | 作成者のユーザID |
 | destination_name | string | ✓ | 目的地名 |
 | destination_address | string | ✓ | 目的地住所 |
 | destination_coords | map | ✓ | {lat: float, lng: float} |
 | geofence_radius | int | ✓ | 到着判定半径（固定50m） |
-| notify_to_user_ids | array | ✓ | 通知先のユーザーID配列 |
+| notify_to_user_ids | array | ✓ | 通知先のユーザID配列 |
 | start_time | timestamp | ✓ | 開始時刻 |
 | end_time | timestamp | ✓ | 終了時刻 |
 | recurrence | string | - | 繰り返し設定（Phase 2） |
@@ -467,7 +467,7 @@ https://maps.google.com/?q={緯度},{経度}
 | フィールド名 | 型 | 必須 | 説明 |
 |-------------|---|------|------|
 | id | string | ✓ | お気に入りID（自動生成） |
-| user_id | string | ✓ | ユーザーID |
+| user_id | string | ✓ | ユーザID |
 | name | string | ✓ | 場所の名前 |
 | address | string | ✓ | 住所 |
 | coords | map | ✓ | {lat: float, lng: float} |
@@ -485,7 +485,7 @@ https://maps.google.com/?q={緯度},{経度}
 | フィールド名 | 型 | 必須 | 説明 |
 |-------------|---|------|------|
 | id | string | ✓ | 履歴ID（自動生成） |
-| user_id | string | ✓ | ユーザーID |
+| user_id | string | ✓ | ユーザID |
 | schedule_id | string | ✓ | 関連スケジュールID |
 | coords | map | ✓ | {lat: float, lng: float} |
 | recorded_at | timestamp | ✓ | 記録日時 |
@@ -506,8 +506,8 @@ https://maps.google.com/?q={緯度},{経度}
 | フィールド名 | 型 | 必須 | 説明 |
 |-------------|---|------|------|
 | id | string | ✓ | 通知ID（自動生成） |
-| from_user_id | string | ✓ | 送信元ユーザーID |
-| to_user_id | string | ✓ | 送信先ユーザーID |
+| from_user_id | string | ✓ | 送信元ユーザID |
+| to_user_id | string | ✓ | 送信先ユーザID |
 | schedule_id | string | ✓ | 関連スケジュールID |
 | type | string | ✓ | arrival/stay/departure |
 | message | string | ✓ | 通知メッセージ |

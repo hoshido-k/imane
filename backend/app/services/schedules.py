@@ -29,7 +29,7 @@ class ScheduleService:
         スケジュールを作成
 
         Args:
-            user_id: 作成者のユーザーID
+            user_id: 作成者のユーザID
             schedule_data: スケジュール作成データ
 
         Returns:
@@ -78,7 +78,7 @@ class ScheduleService:
 
         Args:
             schedule_id: スケジュールID
-            user_id: ユーザーID（権限チェック用）
+            user_id: ユーザID（権限チェック用）
 
         Returns:
             スケジュール情報、存在しない場合はNone
@@ -107,7 +107,7 @@ class ScheduleService:
         ユーザーのスケジュール一覧を取得
 
         Args:
-            user_id: ユーザーID
+            user_id: ユーザID
             status: フィルタリングするステータス（Noneの場合は全て取得）
 
         Returns:
@@ -136,7 +136,7 @@ class ScheduleService:
         ユーザーのアクティブなスケジュール一覧を取得
 
         Args:
-            user_id: ユーザーID
+            user_id: ユーザID
 
         Returns:
             アクティブなスケジュール一覧
@@ -151,7 +151,7 @@ class ScheduleService:
 
         Args:
             schedule_id: スケジュールID
-            user_id: ユーザーID（権限チェック用）
+            user_id: ユーザID（権限チェック用）
             update_data: 更新データ
 
         Returns:
@@ -241,7 +241,7 @@ class ScheduleService:
 
         Args:
             schedule_id: スケジュールID
-            user_id: ユーザーID（権限チェック用）
+            user_id: ユーザID（権限チェック用）
 
         Raises:
             ValueError: スケジュールが見つからない、または権限がない場合

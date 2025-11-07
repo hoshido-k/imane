@@ -94,7 +94,7 @@ class FriendService:
         受信したフレンドリクエスト一覧を取得
 
         Args:
-            user_id: ユーザーID
+            user_id: ユーザID
 
         Returns:
             リクエスト一覧
@@ -128,7 +128,7 @@ class FriendService:
         送信したフレンドリクエスト一覧を取得
 
         Args:
-            user_id: ユーザーID
+            user_id: ユーザID
 
         Returns:
             リクエスト一覧
@@ -155,7 +155,7 @@ class FriendService:
         フレンドリクエストを承認
 
         Args:
-            user_id: 承認するユーザーID（リクエスト受信者）
+            user_id: 承認するユーザID（リクエスト受信者）
             request_id: リクエストID
 
         Returns:
@@ -206,7 +206,7 @@ class FriendService:
         フレンドリクエストを拒否
 
         Args:
-            user_id: 拒否するユーザーID（リクエスト受信者）
+            user_id: 拒否するユーザID（リクエスト受信者）
             request_id: リクエストID
 
         Raises:
@@ -244,7 +244,7 @@ class FriendService:
         フレンド関係を作成（内部メソッド）
 
         Args:
-            user_id: ユーザーID
+            user_id: ユーザID
             friend_id: フレンドID
             can_see_friend_location: このユーザーがフレンドの位置を見られるか
             nickname: ニックネーム
@@ -275,7 +275,7 @@ class FriendService:
         フレンド一覧を取得
 
         Args:
-            user_id: ユーザーID
+            user_id: ユーザID
 
         Returns:
             フレンド一覧
@@ -307,7 +307,7 @@ class FriendService:
         特定のフレンド関係を取得
 
         Args:
-            user_id: ユーザーID
+            user_id: ユーザID
             friend_id: フレンドID
 
         Returns:
@@ -333,7 +333,7 @@ class FriendService:
         フレンドかどうか確認
 
         Args:
-            user_id: ユーザーID
+            user_id: ユーザID
             friend_id: フレンドID
 
         Returns:
@@ -349,7 +349,7 @@ class FriendService:
         フレンド関係を更新（信頼レベルやニックネーム）
 
         Args:
-            user_id: ユーザーID
+            user_id: ユーザID
             friend_id: フレンドID
             update_data: 更新データ
 
@@ -383,7 +383,7 @@ class FriendService:
         フレンド関係を削除（双方向）
 
         Args:
-            user_id: ユーザーID
+            user_id: ユーザID
             friend_id: フレンドID
 
         Raises:
@@ -409,8 +409,8 @@ class FriendService:
         ユーザーをブロック
 
         Args:
-            user_id: ユーザーID
-            friend_id: ブロックするユーザーID
+            user_id: ユーザID
+            friend_id: ブロックするユーザID
         """
         friendship = await self.get_friendship(user_id, friend_id)
         if friendship:
@@ -424,7 +424,7 @@ class FriendService:
         フレンドの信頼レベルを取得（後方互換性のため残す、非推奨）
 
         Args:
-            user_id: ユーザーID
+            user_id: ユーザID
             friend_id: フレンドID
 
         Returns:
@@ -444,8 +444,8 @@ class FriendService:
         位置情報を見る権限があるかチェック
 
         Args:
-            viewer_id: 位置を見たいユーザーID
-            target_id: 位置を見られるユーザーID
+            viewer_id: 位置を見たいユーザID
+            target_id: 位置を見られるユーザID
 
         Returns:
             位置情報を見られる場合True
@@ -522,7 +522,7 @@ class FriendService:
         受信した位置情報共有リクエスト一覧を取得
 
         Args:
-            user_id: ユーザーID
+            user_id: ユーザID
 
         Returns:
             リクエスト一覧
@@ -558,7 +558,7 @@ class FriendService:
         送信した位置情報共有リクエスト一覧を取得
 
         Args:
-            user_id: ユーザーID
+            user_id: ユーザID
 
         Returns:
             リクエスト一覧
@@ -585,7 +585,7 @@ class FriendService:
         位置情報共有リクエストを承認
 
         Args:
-            user_id: 承認するユーザーID（リクエスト受信者＝位置を見られる人）
+            user_id: 承認するユーザID（リクエスト受信者＝位置を見られる人）
             request_id: リクエストID
 
         Returns:
@@ -634,7 +634,7 @@ class FriendService:
         位置情報共有リクエストを拒否
 
         Args:
-            user_id: 拒否するユーザーID（リクエスト受信者）
+            user_id: 拒否するユーザID（リクエスト受信者）
             request_id: リクエストID
 
         Raises:

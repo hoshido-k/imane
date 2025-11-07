@@ -35,7 +35,7 @@ class LocationHistoryInDB(BaseModel):
     """データベース内の位置情報履歴"""
 
     id: str = Field(..., description="位置情報履歴ID")
-    user_id: str = Field(..., description="ユーザーID")
+    user_id: str = Field(..., description="ユーザID")
     schedule_id: Optional[str] = Field(None, description="関連するスケジュールID")
     coords: Coordinates = Field(..., description="座標")
     accuracy: Optional[float] = Field(None, description="位置情報の精度（メートル）")

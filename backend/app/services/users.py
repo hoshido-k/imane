@@ -19,10 +19,10 @@ class UserService:
 
     async def check_username_availability(self, username: str) -> bool:
         """
-        ユーザーIDの利用可否をチェック
+        ユーザIDの利用可否をチェック
 
         Args:
-            username: チェックするユーザーID
+            username: チェックするユーザID
 
         Returns:
             True: 利用可能、False: 既に使用されている
@@ -63,7 +63,7 @@ class UserService:
 
         Args:
             query: 検索クエリ（username）
-            current_user_id: 現在のユーザーID（自分自身は除外）
+            current_user_id: 現在のユーザID（自分自身は除外）
             limit: 取得件数の上限
 
         Returns:
@@ -105,7 +105,7 @@ class UserService:
         UIDからユーザー情報を取得
 
         Args:
-            uid: ユーザーID
+            uid: ユーザID
 
         Returns:
             ユーザー情報、存在しない場合はNone
@@ -124,7 +124,7 @@ class UserService:
         プロフィール情報を更新
 
         Args:
-            uid: ユーザーID
+            uid: ユーザID
             update_data: 更新データ
 
         Returns:
@@ -149,7 +149,7 @@ class UserService:
             # 自分以外のユーザーが同じusernameを持っている場合はエラー
             for existing_user in existing_users:
                 if existing_user.id != uid:
-                    raise ValueError("このユーザーIDは既に使用されています")
+                    raise ValueError("このユーザIDは既に使用されています")
 
         # 更新データの準備（Noneでない値のみ）
         update_dict = update_data.model_dump(exclude_unset=True, exclude_none=True)

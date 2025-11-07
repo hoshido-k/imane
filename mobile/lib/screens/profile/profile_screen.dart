@@ -214,10 +214,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             keyboardType: TextInputType.emailAddress,
           ),
           const SizedBox(height: 24),
-          // ユーザーID入力カード
+          // ユーザID入力カード
           _buildInputCard(
             icon: Icons.badge_outlined,
-            label: 'ユーザーID',
+            label: 'ユーザID',
             controller: _userIdController,
             helperText: 'フレンドがあなたを検索する際に使用されます',
           ),

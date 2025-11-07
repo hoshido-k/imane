@@ -111,8 +111,8 @@ class AutoNotificationService:
         通知履歴を保存（24時間TTL）
 
         Args:
-            from_user_id: 送信元ユーザーID
-            to_user_id: 送信先ユーザーID
+            from_user_id: 送信元ユーザID
+            to_user_id: 送信先ユーザID
             schedule_id: スケジュールID
             notification_type: 通知タイプ（arrival/stay/departure）
             message: メッセージ

@@ -8,7 +8,7 @@ from typing import Optional
 
 class SignupRequest(BaseModel):
     """ユーザー登録リクエスト"""
-    username: str = Field(..., min_length=3, max_length=20, pattern="^[a-zA-Z0-9_]+$", description="一意のユーザーID（英数字とアンダースコアのみ）")
+    username: str = Field(..., min_length=3, max_length=20, pattern="^[a-zA-Z0-9_]+$", description="一意のユーザID（英数字とアンダースコアのみ）")
     email: EmailStr
     password: str = Field(..., min_length=8, max_length=128)
     display_name: str = Field(..., min_length=1, max_length=50)
@@ -25,7 +25,7 @@ class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     expires_in: int = Field(..., description="有効期限（秒）")
-    uid: str = Field(..., description="ユーザーID")
+    uid: str = Field(..., description="ユーザID")
 
 
 class TokenData(BaseModel):
