@@ -295,6 +295,7 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> with WidgetsBin
                   ],
                 ),
               ),
+              // TODO: Settings buttonを削除する
               // Settings button
               Container(
                 width: 40,
@@ -436,6 +437,7 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> with WidgetsBin
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // Bell icon
             Icon(
