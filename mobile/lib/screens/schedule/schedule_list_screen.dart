@@ -192,11 +192,6 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> with WidgetsBin
     }
   }
 
-  /// Navigate to settings
-  void _navigateToSettings() {
-    // TODO: Implement settings screen
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -219,7 +214,7 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> with WidgetsBin
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
       child: Column(
         children: [
-          // Title row with settings button
+          // Title row
           Row(
             children: [
               const SizedBox(width: 40), // Left spacer
@@ -253,36 +248,7 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> with WidgetsBin
                   ],
                 ),
               ),
-              // TODO: Settings buttonを削除する
-              // Settings button
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x1A000000),
-                      offset: Offset(0, 1),
-                      blurRadius: 3,
-                      spreadRadius: 0,
-                    ),
-                    BoxShadow(
-                      color: Color(0x1A000000),
-                      offset: Offset(0, 1),
-                      blurRadius: 2,
-                      spreadRadius: -1,
-                    ),
-                  ],
-                ),
-                child: IconButton(
-                  onPressed: _navigateToSettings,
-                  icon: const Icon(Icons.settings_outlined, size: 20),
-                  padding: EdgeInsets.zero,
-                  color: AppColors.textSecondary,
-                ),
-              ),
+              const SizedBox(width: 40), // Right spacer
             ],
           ),
           const SizedBox(height: 24),
