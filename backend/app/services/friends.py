@@ -114,6 +114,7 @@ class FriendService:
             from_user = await self.user_service.get_user_by_uid(req_data["from_user_id"])
             if from_user:
                 req_data["from_user_display_name"] = from_user.display_name
+                req_data["from_user_username"] = from_user.username
                 req_data["from_user_profile_image_url"] = from_user.profile_image_url
 
             result.append(FriendRequestResponse(**req_data))
@@ -143,6 +144,14 @@ class FriendService:
         result = []
         for req in requests:
             req_data = req.to_dict()
+
+            # 送信先の情報を取得
+            to_user = await self.user_service.get_user_by_uid(req_data["to_user_id"])
+            if to_user:
+                req_data["to_user_display_name"] = to_user.display_name
+                req_data["to_user_username"] = to_user.username
+                req_data["to_user_profile_image_url"] = to_user.profile_image_url
+
             result.append(FriendRequestResponse(**req_data))
 
         # Python側でソート（created_atの降順）

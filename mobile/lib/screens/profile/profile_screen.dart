@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
+import '../../services/auth_service.dart';
 
 /// プロフィール設定画面
 class ProfileScreen extends StatefulWidget {
@@ -10,11 +11,19 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  final TextEditingController _nameController = TextEditingController(text: '山田 太郎');
-  final TextEditingController _emailController = TextEditingController(text: 'yamada@example.com');
-  final TextEditingController _userIdController = TextEditingController(text: 'yamada123');
+  final AuthService _authService = AuthService();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _userIdController = TextEditingController();
 
   String _selectedEmoji = '👨';
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
 
   @override
   void dispose() {
@@ -22,6 +31,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _emailController.dispose();
     _userIdController.dispose();
     super.dispose();
+  }
+
+  /// ユーザーデータを読み込む
+  Future<void> _loadUserData() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final userData = await _authService.getCurrentUser();
+
+      if (userData != null && mounted) {
+        setState(() {
+          _nameController.text = userData['display_name'] ?? '';
+          _emailController.text = userData['email'] ?? '';
+          _userIdController.text = userData['username'] ?? '';
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('[ProfileScreen] Error loading user data: $e');
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   void _showEmojiPicker() {
@@ -92,14 +130,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _saveProfile() {
-    // TODO: プロフィール保存処理を実装
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('プロフィールを保存しました'),
-        backgroundColor: AppColors.primary,
-      ),
-    );
+  Future<void> _saveProfile() async {
+    // 入力値のバリデーション
+    if (_nameController.text.trim().isEmpty) {
+      return;
+    }
+    if (_userIdController.text.trim().isEmpty) {
+      return;
+    }
+
+    try {
+      // プロフィールを更新
+      await _authService.apiService.patch(
+        '/users/me',
+        body: {
+          'display_name': _nameController.text.trim(),
+          'username': _userIdController.text.trim(),
+        },
+        requiresAuth: true,
+      );
+
+      // 更新成功後、ユーザーデータを再読み込み
+      await _loadUserData();
+    } catch (e) {
+      print('[ProfileScreen] Error saving profile: $e');
+      // エラーは静かに処理（ユーザーは再試行可能）
+    }
   }
 
   @override
@@ -107,14 +163,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              _buildHeader(),
-              _buildBody(),
-            ],
-          ),
-        ),
+        child: _isLoading
+            ? const Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                ),
+              )
+            : SingleChildScrollView(
+                child: Column(
+                  children: [
+                    _buildHeader(),
+                    _buildBody(),
+                  ],
+                ),
+              ),
       ),
     );
   }
@@ -214,12 +276,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
             helperText: 'フレンドがあなたを検索する際に使用されます',
           ),
           const SizedBox(height: 24),
-          // メールアドレス入力カード
+          // メールアドレス入力カード（読み取り専用）
           _buildInputCard(
             icon: Icons.email_outlined,
             label: 'メールアドレス',
             controller: _emailController,
             keyboardType: TextInputType.emailAddress,
+            readOnly: true,
           ),
           const SizedBox(height: 24),
           // 保存ボタン
@@ -319,6 +382,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     required TextEditingController controller,
     String? helperText,
     TextInputType? keyboardType,
+    bool readOnly = false,
   }) {
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
@@ -371,6 +435,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: TextField(
               controller: controller,
               keyboardType: keyboardType,
+              readOnly: readOnly,
+              enableInteractiveSelection: !readOnly,
+              contextMenuBuilder: readOnly
+                  ? (context, editableTextState) => const SizedBox.shrink()
+                  : null,
               decoration: const InputDecoration(
                 border: InputBorder.none,
                 contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
@@ -382,11 +451,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   letterSpacing: -0.3125,
                 ),
               ),
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 16,
                 fontWeight: FontWeight.w400,
-                color: AppColors.textPlaceholder,
+                color: readOnly ? AppColors.textSecondary : AppColors.textPlaceholder,
                 letterSpacing: -0.3125,
               ),
             ),

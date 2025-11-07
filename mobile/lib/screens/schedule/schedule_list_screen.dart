@@ -115,24 +115,7 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> with WidgetsBin
           _isLoading = false;
         });
 
-        // Only show notification for network errors
-        if (e is SocketException && mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('バックエンドサーバーに接続できません。サーバーが起動しているか確認してください。'),
-              backgroundColor: AppColors.textSecondary,
-              duration: const Duration(seconds: 3),
-            ),
-          );
-        } else if (e is UnauthorizedException && mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('認証エラー。再度ログインしてください。'),
-              backgroundColor: AppColors.error,
-              duration: const Duration(seconds: 3),
-            ),
-          );
-        }
+        // Network errors are handled silently - show empty state
       } else {
         // Show empty state for unexpected errors too
         setState(() {
@@ -201,42 +184,17 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> with WidgetsBin
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('予定を削除しました'),
-          backgroundColor: Colors.green,
-          duration: Duration(seconds: 2),
-        ),
-      );
-
       // Reload schedules
       _loadSchedules();
     } catch (e) {
       print('[ScheduleList] Error deleting schedule: $e');
-
-      if (!mounted) return;
-
-      String errorMessage = '予定の削除に失敗しました';
-      if (e is SocketException) {
-        errorMessage = 'バックエンドサーバーに接続できません';
-      }
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(errorMessage),
-          backgroundColor: AppColors.error,
-          duration: const Duration(seconds: 3),
-        ),
-      );
+      // Error is handled silently - user can retry if needed
     }
   }
 
   /// Navigate to settings
   void _navigateToSettings() {
     // TODO: Implement settings screen
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('設定画面は準備中です')),
-    );
   }
 
   @override

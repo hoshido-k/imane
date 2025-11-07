@@ -19,6 +19,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
   bool _isSearching = false;
   List<Map<String, dynamic>> _searchResults = [];
   Set<String> _sendingRequests = {}; // 申請送信中のユーザIDを管理
+  Set<String> _sentRequests = {}; // 申請済みのユーザIDを管理
 
   @override
   void dispose() {
@@ -46,15 +47,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
         _searchResults = [];
         _isSearching = false;
       });
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('検索に失敗しました: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
     }
   }
 
@@ -69,35 +61,14 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
         message: 'よろしくお願いします',
       );
 
+      // 申請成功後、申請済みリストに追加
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('$userName さんにフレンド申請を送信しました'),
-            backgroundColor: AppColors.primary,
-          ),
-        );
+        setState(() {
+          _sentRequests.add(userId);
+        });
       }
     } catch (e) {
-      if (mounted) {
-        String errorMessage = 'フレンド申請の送信に失敗しました';
-
-        if (e is BadRequestException) {
-          if (e.message.contains('既にフレンド')) {
-            errorMessage = '既にフレンドです';
-          } else if (e.message.contains('既にフレンドリクエストを送信済み')) {
-            errorMessage = '既にフレンド申請を送信済みです';
-          } else {
-            errorMessage = e.message;
-          }
-        }
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMessage),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      // Error is handled silently
     } finally {
       setState(() {
         _sendingRequests.remove(userId);
@@ -402,6 +373,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
     final displayName = user['display_name'] ?? '';
     final email = user['email'] ?? '';
     final isSending = _sendingRequests.contains(userId);
+    final isSent = _sentRequests.contains(userId);
 
     // アバター画像またはイニシャル
     Widget avatar;
@@ -476,14 +448,14 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
               ],
             ),
           ),
-          // 追加ボタン
+          // 申請ボタン
           ElevatedButton(
-            onPressed: isSending
+            onPressed: (isSending || isSent)
                 ? null
                 : () => _sendFriendRequest(userId, displayName),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
+              backgroundColor: isSent ? AppColors.inputBackground : AppColors.primary,
+              foregroundColor: isSent ? AppColors.textSecondary : Colors.white,
               disabledBackgroundColor: AppColors.inputBackground,
               disabledForegroundColor: AppColors.textSecondary,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -500,7 +472,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                       valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
                   )
-                : const Text('追加'),
+                : Text(isSent ? '申請済み' : '申請'),
           ),
         ],
       ),

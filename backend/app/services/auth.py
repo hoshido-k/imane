@@ -142,6 +142,25 @@ class AuthService:
             return None
 
         user_data = user_doc.to_dict()
+
+        # FirestoreのTimestampをdatetimeに変換
+        if "created_at" in user_data and hasattr(user_data["created_at"], "timestamp"):
+            from datetime import datetime
+            user_data["created_at"] = datetime.fromtimestamp(user_data["created_at"].timestamp())
+
+        if "updated_at" in user_data and hasattr(user_data["updated_at"], "timestamp"):
+            from datetime import datetime
+            user_data["updated_at"] = datetime.fromtimestamp(user_data["updated_at"].timestamp())
+
+        # usernameが存在しない場合はエラー
+        if "username" not in user_data or not user_data["username"]:
+            print(f"[AuthService] Error: User {uid} has no username")
+            print(f"[AuthService] User data: {user_data}")
+            raise ValueError(
+                f"User {uid} has incomplete data (missing username). "
+                "Please delete this user from Firebase Console and re-register."
+            )
+
         return UserInDB(**user_data)
 
     async def delete_user(self, uid: str) -> bool:
