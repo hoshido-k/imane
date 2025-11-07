@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'core/theme/app_theme.dart';
 import 'screens/auth/login_screen.dart';
+import 'screens/auth/signup_screen.dart';
 import 'screens/auth/password_reset_screen.dart';
 import 'screens/main_screen.dart';
 import 'screens/friends/friends_screen.dart';
@@ -56,6 +57,7 @@ class ImaneApp extends StatelessWidget {
       home: const AuthCheckScreen(),
       routes: {
         '/login': (context) => const LoginScreen(),
+        '/signup': (context) => const SignupScreen(),
         '/password-reset': (context) => const PasswordResetScreen(),
         '/home': (context) => const MainScreen(),
         '/friends': (context) => const FriendsScreen(),

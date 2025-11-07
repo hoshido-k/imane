@@ -16,6 +16,7 @@ class AuthService {
 
   /// 新規登録
   Future<AuthResult> signup({
+    required String username,
     required String email,
     required String password,
     required String displayName,
@@ -25,6 +26,7 @@ class AuthService {
       final response = await _apiService.post(
         '/auth/signup',
         body: {
+          'username': username,
           'email': email,
           'password': password,
           'display_name': displayName,

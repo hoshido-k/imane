@@ -13,10 +13,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _displayNameController = TextEditingController();
   bool _obscurePassword = true;
   bool _isLoading = false;
-  bool _isSignupMode = false; // false=ログイン, true=新規登録
 
   final AuthService _authService = AuthService();
 
@@ -24,7 +22,6 @@ class _LoginScreenState extends State<LoginScreen> {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
-    _displayNameController.dispose();
     super.dispose();
   }
 
@@ -61,40 +58,6 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  Future<void> _handleSignup() async {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      final result = await _authService.signup(
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-        displayName: _displayNameController.text.trim(),
-      );
-
-      if (!mounted) return;
-
-      if (result.success) {
-        // 登録成功
-        Navigator.of(context).pushReplacementNamed('/home');
-      } else {
-        // エラー表示
-        _showError(result.errorMessage ?? '登録に失敗しました');
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -117,7 +80,7 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Top spacing (reduced from 210 to 140)
+                  // Top spacing
                   const SizedBox(height: 140),
 
                   // Logo/Title
@@ -135,29 +98,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // Display Name Field (新規登録時のみ)
-                        if (_isSignupMode) ...[
-                          _buildLabel('表示名'),
-                          const SizedBox(height: 8),
-                          TextFormField(
-                            controller: _displayNameController,
-                            style: Theme.of(context).textTheme.bodyLarge,
-                            decoration: InputDecoration(
-                              hintText: 'あなたの名前',
-                              hintStyle: Theme.of(context)
-                                  .inputDecorationTheme
-                                  .hintStyle,
-                            ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return '表示名を入力してください';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 24),
-                        ],
-
                         // Email Field
                         _buildLabel('メールアドレス'),
                         const SizedBox(height: 8),
@@ -212,9 +152,6 @@ class _LoginScreenState extends State<LoginScreen> {
                             if (value == null || value.isEmpty) {
                               return 'パスワードを入力してください';
                             }
-                            if (_isSignupMode && value.length < 8) {
-                              return 'パスワードは8文字以上で入力してください';
-                            }
                             return null;
                           },
                         ),
@@ -229,9 +166,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               boxShadow: AppColors.buttonShadow,
                             ),
                             child: ElevatedButton(
-                              onPressed: _isLoading
-                                  ? null
-                                  : (_isSignupMode ? _handleSignup : _handleLogin),
+                              onPressed: _isLoading ? null : _handleLogin,
                               child: _isLoading
                                   ? const SizedBox(
                                       height: 20,
@@ -242,9 +177,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                             AppColors.textWhite),
                                       ),
                                     )
-                                  : Text(
-                                      _isSignupMode ? 'Sign Up' : 'Sign in',
-                                      style: const TextStyle(
+                                  : const Text(
+                                      'Sign in',
+                                      style: TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.w400,
                                         letterSpacing: -0.31,
@@ -261,20 +196,16 @@ class _LoginScreenState extends State<LoginScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              _isSignupMode
-                                  ? 'Already have an account?'
-                                  : "Don't have an account?",
+                              "Don't have an account?",
                               style: Theme.of(context).textTheme.bodyMedium,
                             ),
                             const SizedBox(width: 4),
                             GestureDetector(
                               onTap: () {
-                                setState(() {
-                                  _isSignupMode = !_isSignupMode;
-                                });
+                                Navigator.of(context).pushNamed('/signup');
                               },
                               child: Text(
-                                _isSignupMode ? 'Sign In' : 'Sign Up',
+                                'Sign Up',
                                 style: Theme.of(context)
                                     .textTheme
                                     .bodyMedium
@@ -287,26 +218,25 @@ class _LoginScreenState extends State<LoginScreen> {
                           ],
                         ),
 
-                        // Forgot Password Link (ログインモード時のみ)
-                        if (!_isSignupMode) ...[
-                          const SizedBox(height: 12),
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.of(context).pushNamed('/password-reset');
-                            },
-                            child: Text(
-                              'Forgot password?',
-                              textAlign: TextAlign.center,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium
-                                  ?.copyWith(
-                                    color: AppColors.primary,
-                                    fontWeight: FontWeight.w400,
-                                  ),
-                            ),
+                        const SizedBox(height: 12),
+
+                        // Forgot Password Link
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.of(context).pushNamed('/password-reset');
+                          },
+                          child: Text(
+                            'Forgot password?',
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w400,
+                                ),
                           ),
-                        ],
+                        ),
                       ],
                     ),
                   ),
