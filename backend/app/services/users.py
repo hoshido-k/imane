@@ -36,6 +36,25 @@ class UserService:
         # ユーザーが存在しない場合は利用可能
         return len(existing_users) == 0
 
+    async def check_email_availability(self, email: str) -> bool:
+        """
+        メールアドレスの利用可否をチェック
+
+        Args:
+            email: チェックするメールアドレス
+
+        Returns:
+            True: 利用可能、False: 既に使用されている
+        """
+        from google.cloud.firestore_v1 import FieldFilter
+
+        existing_users = self.db.collection("users").where(
+            filter=FieldFilter("email", "==", email)
+        ).limit(1).get()
+
+        # ユーザーが存在しない場合は利用可能
+        return len(existing_users) == 0
+
     async def search_users(
         self, query: str, current_user_id: str, limit: int = 20
     ) -> List[UserInDB]:

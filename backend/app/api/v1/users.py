@@ -60,6 +60,27 @@ async def check_username_availability(
     return {"available": is_available}
 
 
+@router.get("/check-email")
+async def check_email_availability(
+    email: str = Query(..., description="チェックするメールアドレス"),
+    user_service: UserService = Depends(lambda: UserService()),
+):
+    """
+    メールアドレスの利用可否をチェック（認証不要）
+
+    サインアップ時にメールアドレスが既に使用されているかをチェックします。
+
+    Args:
+        email: チェックするメールアドレス
+        user_service: ユーザーサービス
+
+    Returns:
+        available: 利用可能かどうか（True=利用可能、False=既に使用されている）
+    """
+    is_available = await user_service.check_email_availability(email)
+    return {"available": is_available}
+
+
 @router.get("/search", response_model=List[UserResponse])
 async def search_users(
     q: str = Query(..., min_length=1, description="検索クエリ（ユーザーID）"),

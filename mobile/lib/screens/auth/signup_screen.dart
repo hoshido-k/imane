@@ -31,6 +31,11 @@ class _SignupScreenState extends State<SignupScreen> {
   bool? _isUsernameAvailable; // null=未チェック, true=利用可能, false=既に使用されている
   Timer? _usernameCheckTimer;
 
+  // Email重複チェック用
+  bool _isCheckingEmail = false;
+  bool? _isEmailAvailable; // null=未チェック, true=利用可能, false=既に使用されている
+  Timer? _emailCheckTimer;
+
   final AuthService _authService = AuthService();
   final ApiService _apiService = ApiService();
 
@@ -42,6 +47,7 @@ class _SignupScreenState extends State<SignupScreen> {
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     _usernameCheckTimer?.cancel();
+    _emailCheckTimer?.cancel();
     super.dispose();
   }
 
@@ -56,7 +62,8 @@ class _SignupScreenState extends State<SignupScreen> {
            RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(username) &&
            _isUsernameAvailable == true && // 重複チェックOKの場合のみ
            email.isNotEmpty &&
-           email.contains('@');
+           email.contains('@') &&
+           _isEmailAvailable == true; // メール重複チェックOKの場合のみ
   }
 
   bool get _isStep2Valid {
@@ -117,6 +124,51 @@ class _SignupScreenState extends State<SignupScreen> {
           setState(() {
             _isUsernameAvailable = null;
             _isCheckingUsername = false;
+          });
+        }
+      }
+    });
+  }
+
+  /// Email重複チェック（デバウンス処理付き）
+  void _checkEmailAvailability(String email) {
+    // タイマーをキャンセル
+    _emailCheckTimer?.cancel();
+
+    // メールアドレス形式でない場合はチェックしない
+    if (!email.contains('@')) {
+      setState(() {
+        _isEmailAvailable = null;
+        _isCheckingEmail = false;
+      });
+      return;
+    }
+
+    setState(() {
+      _isCheckingEmail = true;
+    });
+
+    // 500ms後にAPIを呼び出す（デバウンス）
+    _emailCheckTimer = Timer(const Duration(milliseconds: 500), () async {
+      try {
+        final response = await _apiService.get(
+          '/users/check-email',
+          queryParams: {'email': email},
+          requiresAuth: false,
+        );
+
+        if (mounted) {
+          setState(() {
+            _isEmailAvailable = response['available'] as bool;
+            _isCheckingEmail = false;
+          });
+        }
+      } catch (e) {
+        print('[SignupScreen] Email check error: $e');
+        if (mounted) {
+          setState(() {
+            _isEmailAvailable = null;
+            _isCheckingEmail = false;
           });
         }
       }
@@ -279,7 +331,7 @@ class _SignupScreenState extends State<SignupScreen> {
               decoration: InputDecoration(
                 hintText: 'tanaka_taro',
                 hintStyle: Theme.of(context).inputDecorationTheme.hintStyle,
-                helperText: 'フレンドがあなたを検索する際に使用されます\n英数字とアンダースコアのみ（3〜20文字）',
+                helperText: 'フレンド検索時に使用されます\n英数字とアンダースコアのみ（3〜20文字）',
                 helperStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: AppColors.textSecondary,
                 ),
@@ -340,8 +392,28 @@ class _SignupScreenState extends State<SignupScreen> {
               decoration: InputDecoration(
                 hintText: 'your@email.com',
                 hintStyle: Theme.of(context).inputDecorationTheme.hintStyle,
+                suffixIcon: _isCheckingEmail
+                    ? const Padding(
+                        padding: EdgeInsets.all(12.0),
+                        child: SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation(AppColors.primary),
+                          ),
+                        ),
+                      )
+                    : _isEmailAvailable == true
+                        ? const Icon(Icons.check_circle, color: Colors.green, size: 20)
+                        : _isEmailAvailable == false
+                            ? const Icon(Icons.error, color: Colors.red, size: 20)
+                            : null,
               ),
-              onChanged: (_) => setState(() {}),
+              onChanged: (value) {
+                setState(() {});
+                _checkEmailAvailability(value.trim());
+              },
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
                   return 'メールアドレスを入力してください';
@@ -352,6 +424,15 @@ class _SignupScreenState extends State<SignupScreen> {
                 return null;
               },
             ),
+            if (_isEmailAvailable == false) ...[
+              const SizedBox(height: 4),
+              Text(
+                'このメールアドレスは既に使用されています',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Colors.red,
+                ),
+              ),
+            ],
             const SizedBox(height: 32),
 
             // Next Button
