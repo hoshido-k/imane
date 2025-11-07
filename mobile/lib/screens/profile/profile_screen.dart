@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'dart:convert';
 import '../../core/constants/app_colors.dart';
 import '../../services/auth_service.dart';
@@ -233,9 +234,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
 
       // 画像ファイルを追加
+      // ファイル拡張子からContent-Typeを決定
+      String contentTypeStr = 'image/jpeg'; // デフォルト
+      final path = _selectedImage!.path.toLowerCase();
+      if (path.endsWith('.png')) {
+        contentTypeStr = 'image/png';
+      } else if (path.endsWith('.jpg') || path.endsWith('.jpeg')) {
+        contentTypeStr = 'image/jpeg';
+      } else if (path.endsWith('.gif')) {
+        contentTypeStr = 'image/gif';
+      } else if (path.endsWith('.webp')) {
+        contentTypeStr = 'image/webp';
+      }
+
       final multipartFile = await http.MultipartFile.fromPath(
         'file',
         _selectedImage!.path,
+        contentType: MediaType.parse(contentTypeStr),
       );
       print('[ProfileScreen] File field name: file');
       print('[ProfileScreen] File path: ${multipartFile.filename}');
