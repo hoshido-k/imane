@@ -42,7 +42,7 @@ class NotifyToUser(BaseModel):
 
     user_id: str = Field(..., description="ユーザID")
     display_name: str = Field(..., description="表示名")
-    avatar_url: Optional[str] = Field(None, description="アバターURL")
+    profile_image_url: Optional[str] = Field(None, description="プロフィール画像URL")
 
 
 class ScheduleStatus(str, Enum):

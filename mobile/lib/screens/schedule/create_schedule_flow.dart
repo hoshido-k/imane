@@ -179,18 +179,20 @@ class _CreateScheduleFlowState extends State<CreateScheduleFlow> {
 
       if (!mounted) return;
 
-      String errorMessage = 'エラー: $e';
-      if (e.toString().contains('SocketException')) {
-        errorMessage = 'バックエンドサーバーに接続できません。サーバーが起動しているか確認してください。';
-      }
+      // Error message is logged to console for debugging
+      // Snackbar display is commented out to avoid UI disruption during development
+      // String errorMessage = 'エラー: $e';
+      // if (e.toString().contains('SocketException')) {
+      //   errorMessage = 'バックエンドサーバーに接続できません。サーバーが起動しているか確認してください。';
+      // }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(errorMessage),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 4),
-        ),
-      );
+      // ScaffoldMessenger.of(context).showSnackBar(
+      //   SnackBar(
+      //     content: Text(errorMessage),
+      //     backgroundColor: Colors.red,
+      //     duration: const Duration(seconds: 4),
+      //   ),
+      // );
     } finally {
       if (mounted) {
         setState(() {
