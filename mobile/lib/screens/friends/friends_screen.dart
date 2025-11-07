@@ -51,15 +51,6 @@ class _FriendsScreenState extends State<FriendsScreen> {
       setState(() {
         _isLoading = false;
       });
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('データの取得に失敗しました: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
     }
   }
 
@@ -277,36 +268,57 @@ class _FriendsScreenState extends State<FriendsScreen> {
     }
 
     if (_filteredFriends.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Container(
-            padding: const EdgeInsets.all(32),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.people_outline,
-                  size: 48,
-                  color: AppColors.textSecondary.withOpacity(0.3),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  _searchController.text.isEmpty
-                      ? 'フレンドがいません'
-                      : '該当するフレンドが見つかりませんでした',
-                  style: const TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 16,
-                    fontWeight: FontWeight.w400,
-                    color: AppColors.textSecondary,
+      return Align(
+        alignment: Alignment.topCenter,
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 32),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Icon
+                  Icon(
+                    Icons.people_outline,
+                    size: 48,
+                    color: AppColors.textSecondary.withOpacity(0.3),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 16),
+                  // Main message
+                  Text(
+                    _searchController.text.isEmpty
+                        ? 'フレンドがいません'
+                        : '該当するフレンドが見つかりませんでした',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.textSecondary,
+                      letterSpacing: -0.3125,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  // Subtitle
+                  Text(
+                    _searchController.text.isEmpty
+                        ? 'フレンドを追加して通知を送ろう'
+                        : '別のキーワードで検索してみてください',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
