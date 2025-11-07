@@ -106,6 +106,37 @@ async def get_notifications(
     )
 
 
+@router.get("/history", response_model=NotificationListResponse)
+async def get_notification_history(
+    limit: int = Query(50, ge=1, le=100, description="取得件数"),
+    current_user: UserInDB = Depends(get_current_user),
+    notification_service: NotificationService = Depends(lambda: NotificationService()),
+):
+    """
+    通知履歴を取得（24時間以内）
+
+    自分宛の通知履歴を取得します。
+    新しい順に並びます。
+
+    Args:
+        limit: 取得件数（1-100、デフォルト50）
+        current_user: 現在のユーザー
+        notification_service: 通知サービス
+
+    Returns:
+        通知履歴一覧
+    """
+    notifications = await notification_service.get_user_notifications(
+        current_user.uid, limit=limit, unread_only=False
+    )
+
+    unread_count = await notification_service.get_unread_count(current_user.uid)
+
+    return NotificationListResponse(
+        notifications=notifications, total=len(notifications), unread_count=unread_count
+    )
+
+
 @router.get("/unread-count", response_model=dict)
 async def get_unread_count(
     current_user: UserInDB = Depends(get_current_user),

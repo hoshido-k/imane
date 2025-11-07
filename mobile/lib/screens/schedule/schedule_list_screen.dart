@@ -3,6 +3,7 @@ import '../../models/schedule.dart';
 import '../../services/api_service.dart';
 import '../../core/constants/app_colors.dart';
 import 'create_schedule_flow.dart';
+import '../notification/notification_history_screen.dart';
 import 'dart:io';
 
 /// Schedule list screen (Home screen)
@@ -217,7 +218,7 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> with WidgetsBin
           // Title row
           Row(
             children: [
-              const SizedBox(width: 40), // Left spacer
+              const SizedBox(width: 40), // Left spacer for symmetry
               Expanded(
                 child: Column(
                   children: [
@@ -248,7 +249,39 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> with WidgetsBin
                   ],
                 ),
               ),
-              const SizedBox(width: 40), // Right spacer
+              // 通知履歴ボタン
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x1A000000),
+                      offset: Offset(0, 2),
+                      blurRadius: 4,
+                      spreadRadius: 0,
+                    ),
+                  ],
+                ),
+                child: IconButton(
+                  icon: Icon(
+                    Icons.notifications_outlined,
+                    color: AppColors.primary,
+                    size: 20,
+                  ),
+                  padding: EdgeInsets.zero,
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const NotificationHistoryScreen(),
+                      ),
+                    );
+                  },
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 24),

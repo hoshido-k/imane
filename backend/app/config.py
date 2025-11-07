@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     # Firebase設定
     FIREBASE_PROJECT_ID: str
     FIREBASE_CREDENTIALS_PATH: Optional[str] = None
+    STORAGE_BUCKET: Optional[str] = None  # カスタムバケット名（省略時は自動生成）
 
     # JWT設定
     SECRET_KEY: str
