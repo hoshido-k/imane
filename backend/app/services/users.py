@@ -93,13 +93,25 @@ class UserService:
             更新後のユーザー情報
 
         Raises:
-            ValueError: ユーザーが見つからない場合
+            ValueError: ユーザーが見つからない場合、またはusernameが重複している場合
         """
         user_ref = self.db.collection("users").document(uid)
         user_doc = user_ref.get()
 
         if not user_doc.exists:
             raise ValueError("ユーザーが見つかりません")
+
+        # username変更の場合は重複チェック
+        if update_data.username is not None:
+            from google.cloud.firestore_v1 import FieldFilter
+            existing_users = self.db.collection("users").where(
+                filter=FieldFilter("username", "==", update_data.username)
+            ).limit(1).get()
+
+            # 自分以外のユーザーが同じusernameを持っている場合はエラー
+            for existing_user in existing_users:
+                if existing_user.id != uid:
+                    raise ValueError("このユーザーIDは既に使用されています")
 
         # 更新データの準備（Noneでない値のみ）
         update_dict = update_data.model_dump(exclude_unset=True, exclude_none=True)

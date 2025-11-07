@@ -74,6 +74,7 @@ class UserCreate(UserBase):
 
 class UserUpdate(BaseModel):
     """ユーザー情報更新"""
+    username: Optional[str] = Field(None, min_length=3, max_length=20, pattern="^[a-zA-Z0-9_]+$", description="一意のユーザーID（英数字とアンダースコアのみ）")
     display_name: Optional[str] = Field(None, min_length=1, max_length=50)
     profile_image_url: Optional[str] = None
 
