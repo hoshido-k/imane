@@ -156,6 +156,7 @@ class FriendshipResponse(BaseModel):
 
     # フレンドのユーザー情報（JOIN用）
     friend_display_name: Optional[str] = None
+    friend_username: Optional[str] = None
     friend_email: Optional[str] = None
     friend_profile_image_url: Optional[str] = None
 

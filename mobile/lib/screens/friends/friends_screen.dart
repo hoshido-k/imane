@@ -343,7 +343,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
   /// フレンドカード
   Widget _buildFriendCard(Map<String, dynamic> friend) {
     final displayName = friend['friend_display_name'] ?? '';
-    final email = friend['friend_email'] ?? '';
+    final username = friend['friend_username'] ?? '';
 
     // アバター画像またはイニシャル
     Widget avatar;
@@ -389,7 +389,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
           // アバター
           avatar,
           const SizedBox(width: 16),
-          // 名前とメールアドレス
+          // 名前とusername
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -413,7 +413,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                     borderRadius: BorderRadius.circular(100),
                   ),
                   child: Text(
-                    email,
+                    username,
                     style: const TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 12,

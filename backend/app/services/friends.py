@@ -304,6 +304,7 @@ class FriendService:
             friend = await self.user_service.get_user_by_uid(friendship_data["friend_id"])
             if friend:
                 friendship_data["friend_display_name"] = friend.display_name
+                friendship_data["friend_username"] = friend.username
                 friendship_data["friend_email"] = friend.email
                 friendship_data["friend_profile_image_url"] = friend.profile_image_url
 
