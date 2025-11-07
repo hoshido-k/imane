@@ -2,19 +2,19 @@
 class NotifyToUser {
   final String userId;
   final String displayName;
-  final String? avatarUrl;
+  final String? profileImageUrl;
 
   NotifyToUser({
     required this.userId,
     required this.displayName,
-    this.avatarUrl,
+    this.profileImageUrl,
   });
 
   factory NotifyToUser.fromJson(Map<String, dynamic> json) {
     return NotifyToUser(
       userId: json['user_id'],
       displayName: json['display_name'],
-      avatarUrl: json['avatar_url'],
+      profileImageUrl: json['profile_image_url'],
     );
   }
 
@@ -22,7 +22,7 @@ class NotifyToUser {
     return {
       'user_id': userId,
       'display_name': displayName,
-      if (avatarUrl != null) 'avatar_url': avatarUrl,
+      if (profileImageUrl != null) 'profile_image_url': profileImageUrl,
     };
   }
 }
