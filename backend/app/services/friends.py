@@ -103,7 +103,6 @@ class FriendService:
             self.db.collection("friend_requests")
             .where(filter=FieldFilter("to_user_id", "==", user_id))
             .where(filter=FieldFilter("status", "==", FriendRequestStatus.PENDING.value))
-            .order_by("created_at", direction="DESCENDING")
             .get()
         )
 
@@ -118,6 +117,9 @@ class FriendService:
                 req_data["from_user_profile_image_url"] = from_user.profile_image_url
 
             result.append(FriendRequestResponse(**req_data))
+
+        # Python側でソート（created_atの降順）
+        result.sort(key=lambda x: x.created_at, reverse=True)
 
         return result
 
@@ -135,7 +137,6 @@ class FriendService:
             self.db.collection("friend_requests")
             .where(filter=FieldFilter("from_user_id", "==", user_id))
             .where(filter=FieldFilter("status", "==", FriendRequestStatus.PENDING.value))
-            .order_by("created_at", direction="DESCENDING")
             .get()
         )
 
@@ -143,6 +144,9 @@ class FriendService:
         for req in requests:
             req_data = req.to_dict()
             result.append(FriendRequestResponse(**req_data))
+
+        # Python側でソート（created_atの降順）
+        result.sort(key=lambda x: x.created_at, reverse=True)
 
         return result
 
@@ -527,7 +531,6 @@ class FriendService:
             self.db.collection("location_share_requests")
             .where(filter=FieldFilter("target_id", "==", user_id))
             .where(filter=FieldFilter("status", "==", FriendRequestStatus.PENDING.value))
-            .order_by("created_at", direction="DESCENDING")
             .get()
         )
 
@@ -542,6 +545,9 @@ class FriendService:
                 req_data["requester_profile_image_url"] = requester.profile_image_url
 
             result.append(LocationShareRequestResponse(**req_data))
+
+        # Python側でソート（created_atの降順）
+        result.sort(key=lambda x: x.created_at, reverse=True)
 
         return result
 
@@ -561,7 +567,6 @@ class FriendService:
             self.db.collection("location_share_requests")
             .where(filter=FieldFilter("requester_id", "==", user_id))
             .where(filter=FieldFilter("status", "==", FriendRequestStatus.PENDING.value))
-            .order_by("created_at", direction="DESCENDING")
             .get()
         )
 
@@ -569,6 +574,9 @@ class FriendService:
         for req in requests:
             req_data = req.to_dict()
             result.append(LocationShareRequestResponse(**req_data))
+
+        # Python側でソート（created_atの降順）
+        result.sort(key=lambda x: x.created_at, reverse=True)
 
         return result
 
