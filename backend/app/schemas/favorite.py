@@ -46,7 +46,7 @@ class FavoriteLocationInDB(FavoriteLocationBase):
     """データベース内のお気に入り場所"""
 
     id: str = Field(..., description="お気に入りID")
-    user_id: str = Field(..., description="ユーザーID")
+    user_id: str = Field(..., description="ユーザID")
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
     model_config = ConfigDict(from_attributes=True)

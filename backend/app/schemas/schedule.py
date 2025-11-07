@@ -40,7 +40,7 @@ from app.schemas.common import Coordinates
 class NotifyToUser(BaseModel):
     """通知先ユーザー情報"""
 
-    user_id: str = Field(..., description="ユーザーID")
+    user_id: str = Field(..., description="ユーザID")
     display_name: str = Field(..., description="表示名")
     avatar_url: Optional[str] = Field(None, description="アバターURL")
 
@@ -69,7 +69,7 @@ class LocationScheduleBase(BaseModel):
     destination_address: str = Field(..., min_length=1, max_length=200, description="目的地住所")
     destination_coords: Coordinates = Field(..., description="目的地の座標")
     geofence_radius: int = Field(default=50, ge=10, le=500, description="ジオフェンス半径（メートル）")
-    notify_to_user_ids: List[str] = Field(..., min_length=1, description="通知先ユーザーIDリスト")
+    notify_to_user_ids: List[str] = Field(..., min_length=1, description="通知先ユーザIDリスト")
     start_time: datetime = Field(..., description="開始時刻")
     end_time: datetime = Field(..., description="終了時刻")
     recurrence: Optional[RecurrenceType] = Field(None, description="繰り返し設定")
@@ -104,7 +104,7 @@ class LocationScheduleInDB(LocationScheduleBase):
     """データベース内のスケジュール"""
 
     id: str = Field(..., description="スケジュールID")
-    user_id: str = Field(..., description="作成者のユーザーID")
+    user_id: str = Field(..., description="作成者のユーザID")
     status: ScheduleStatus = Field(default=ScheduleStatus.ACTIVE, description="スケジュールステータス")
     arrived_at: Optional[datetime] = Field(None, description="到着日時")
     departed_at: Optional[datetime] = Field(None, description="退出日時")

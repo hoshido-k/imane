@@ -42,7 +42,7 @@ class NotificationService:
         プッシュ通知を送信
 
         Args:
-            user_id: 送信先ユーザーID
+            user_id: 送信先ユーザID
             title: 通知タイトル
             body: 通知本文
             notification_type: 通知タイプ
@@ -163,7 +163,7 @@ class NotificationService:
         通知をFirestoreに保存（内部メソッド）
 
         Args:
-            user_id: ユーザーID
+            user_id: ユーザID
             title: タイトル
             body: 本文
             notification_type: 通知タイプ
@@ -194,7 +194,7 @@ class NotificationService:
         無効なFCMトークンを削除（内部メソッド）
 
         Args:
-            user_id: ユーザーID
+            user_id: ユーザID
             invalid_tokens: 削除するトークンのリスト
         """
         user_ref = self.db.collection("users").document(user_id)
@@ -217,7 +217,7 @@ class NotificationService:
         FCMトークンを登録
 
         Args:
-            user_id: ユーザーID
+            user_id: ユーザID
             fcm_token: FCMトークン
 
         Raises:
@@ -247,7 +247,7 @@ class NotificationService:
         FCMトークンを削除
 
         Args:
-            user_id: ユーザーID
+            user_id: ユーザID
             fcm_token: 削除するFCMトークン
 
         Raises:
@@ -277,7 +277,7 @@ class NotificationService:
         ユーザーの通知一覧を取得
 
         Args:
-            user_id: ユーザーID
+            user_id: ユーザID
             limit: 取得件数（デフォルト50件）
             unread_only: 未読のみ取得するかどうか
 
@@ -309,7 +309,7 @@ class NotificationService:
         未読通知数を取得
 
         Args:
-            user_id: ユーザーID
+            user_id: ユーザID
 
         Returns:
             未読通知数
@@ -328,7 +328,7 @@ class NotificationService:
         通知を既読にする
 
         Args:
-            user_id: ユーザーID
+            user_id: ユーザID
             notification_ids: 既読にする通知IDのリスト
 
         Returns:
@@ -349,7 +349,7 @@ class NotificationService:
 
             notification_data = notification_doc.to_dict()
 
-            # ユーザーIDが一致するかチェック
+            # ユーザIDが一致するかチェック
             if notification_data["user_id"] != user_id:
                 raise ValueError("この通知を既読にする権限がありません")
 
@@ -368,7 +368,7 @@ class NotificationService:
         通知を削除
 
         Args:
-            user_id: ユーザーID
+            user_id: ユーザID
             notification_id: 削除する通知ID
 
         Raises:
@@ -382,7 +382,7 @@ class NotificationService:
 
         notification_data = notification_doc.to_dict()
 
-        # ユーザーIDが一致するかチェック
+        # ユーザIDが一致するかチェック
         if notification_data["user_id"] != user_id:
             raise ValueError("この通知を削除する権限がありません")
 

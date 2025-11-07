@@ -160,7 +160,7 @@ class PopService:
         ユーザーが投稿したポップ一覧を取得
 
         Args:
-            user_id: ユーザーID
+            user_id: ユーザID
             include_expired: 期限切れポップも含めるか
 
         Returns:
@@ -190,7 +190,7 @@ class PopService:
 
         Args:
             pop_id: ポップID
-            user_id: ユーザーID（投稿者確認用）
+            user_id: ユーザID（投稿者確認用）
             update_data: 更新データ
 
         Returns:
@@ -227,7 +227,7 @@ class PopService:
 
         Args:
             pop_id: ポップID
-            user_id: ユーザーID（投稿者確認用）
+            user_id: ユーザID（投稿者確認用）
 
         Returns:
             削除成功時True

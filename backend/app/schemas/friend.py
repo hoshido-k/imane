@@ -80,7 +80,7 @@ class TrustLevel(int, Enum):
 class FriendRequestCreate(BaseModel):
     """フレンドリクエスト送信"""
 
-    to_user_id: str = Field(..., description="リクエスト送信先のユーザーID")
+    to_user_id: str = Field(..., description="リクエスト送信先のユーザID")
     message: Optional[str] = Field(None, max_length=200, description="メッセージ")
 
 
@@ -186,7 +186,7 @@ class FriendRequestListResponse(BaseModel):
 class LocationShareRequestCreate(BaseModel):
     """位置情報共有リクエスト送信"""
 
-    target_user_id: str = Field(..., description="位置を見たい相手のユーザーID")
+    target_user_id: str = Field(..., description="位置を見たい相手のユーザID")
 
 
 class LocationShareRequestResponse(BaseModel):

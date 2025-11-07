@@ -4,6 +4,7 @@
 Firestoreのusersコレクション構造:
 {
     "uid": "firebase_auth_uid",  # Firebase AuthのUID（ドキュメントID）
+    "username": "user123",  # ユーザーが設定する一意のID（フレンド検索用）
     "email": "user@example.com",
     "display_name": "ユーザー名",
     "profile_image_url": "https://...",  # オプション
@@ -60,6 +61,7 @@ class CustomLocation(AddressBase):
 
 class UserBase(BaseModel):
     """ユーザーの基本情報"""
+    username: str = Field(..., min_length=3, max_length=20, pattern="^[a-zA-Z0-9_]+$", description="一意のユーザID（英数字とアンダースコアのみ）")
     email: EmailStr
     display_name: str = Field(..., min_length=1, max_length=50)
 
@@ -72,6 +74,7 @@ class UserCreate(UserBase):
 
 class UserUpdate(BaseModel):
     """ユーザー情報更新"""
+    username: Optional[str] = Field(None, min_length=3, max_length=20, pattern="^[a-zA-Z0-9_]+$", description="一意のユーザID（英数字とアンダースコアのみ）")
     display_name: Optional[str] = Field(None, min_length=1, max_length=50)
     profile_image_url: Optional[str] = None
 
@@ -93,6 +96,7 @@ class UserInDB(UserBase):
 class UserResponse(BaseModel):
     """ユーザー情報のレスポンス（公開情報のみ）"""
     uid: str
+    username: str
     email: EmailStr
     display_name: str
     profile_image_url: Optional[str] = None

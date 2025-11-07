@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
+import '../../services/friend_service.dart';
 
 /// フレンド申請画面
 class FriendRequestsScreen extends StatefulWidget {
@@ -10,45 +12,136 @@ class FriendRequestsScreen extends StatefulWidget {
 }
 
 class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
+  final FriendService _friendService = FriendService();
+
   int _selectedTab = 0; // 0: 受信, 1: 送信
+  bool _isLoading = true;
 
-  // ダミーデータ（受信した申請）
-  final List<Map<String, dynamic>> _receivedRequests = [
-    {
-      'id': '201',
-      'name': '佐々木 優',
-      'emoji': '👨‍💼',
-      'date': '11月5日',
-    },
-    {
-      'id': '202',
-      'name': '中川 舞',
-      'emoji': '👩‍🎨',
-      'date': '11月4日',
-    },
-    {
-      'id': '203',
-      'name': '林 健太',
-      'emoji': '👨‍🎓',
-      'date': '11月3日',
-    },
-  ];
+  List<Map<String, dynamic>> _receivedRequests = [];
+  List<Map<String, dynamic>> _sentRequests = [];
+  Set<String> _processingRequests = {}; // 処理中のリクエストIDを管理
 
-  // ダミーデータ（送信した申請）
-  final List<Map<String, dynamic>> _sentRequests = [
-    {
-      'id': '301',
-      'name': '斎藤 美咲',
-      'emoji': '👩‍💼',
-      'date': '11月5日',
-    },
-    {
-      'id': '302',
-      'name': '森田 大輔',
-      'emoji': '👨‍💻',
-      'date': '11月2日',
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final received = await _friendService.getReceivedRequests();
+      final sent = await _friendService.getSentRequests();
+
+      setState(() {
+        _receivedRequests = received;
+        _sentRequests = sent;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('データの取得に失敗しました: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _acceptRequest(String requestId, String userName) async {
+    setState(() {
+      _processingRequests.add(requestId);
+    });
+
+    try {
+      await _friendService.acceptFriendRequest(requestId);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('$userName さんからのフレンド申請を承認しました'),
+            backgroundColor: AppColors.primary,
+          ),
+        );
+
+        // リストから削除
+        setState(() {
+          _receivedRequests.removeWhere((r) => r['request_id'] == requestId);
+          _processingRequests.remove(requestId);
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _processingRequests.remove(requestId);
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('承認に失敗しました: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _rejectRequest(String requestId, String userName) async {
+    setState(() {
+      _processingRequests.add(requestId);
+    });
+
+    try {
+      await _friendService.rejectFriendRequest(requestId);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('$userName さんからのフレンド申請を拒否しました'),
+            backgroundColor: AppColors.textSecondary,
+          ),
+        );
+
+        // リストから削除
+        setState(() {
+          _receivedRequests.removeWhere((r) => r['request_id'] == requestId);
+          _processingRequests.remove(requestId);
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _processingRequests.remove(requestId);
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('拒否に失敗しました: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  String _formatDate(String dateString) {
+    try {
+      final date = DateTime.parse(dateString);
+      final formatter = DateFormat('M月d日');
+      return formatter.format(date);
+    } catch (e) {
+      return '';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -251,19 +344,92 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
 
   /// 受信した申請リスト
   Widget _buildReceivedRequestsList() {
-    return ListView.separated(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      itemCount: _receivedRequests.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 12),
-      itemBuilder: (context, index) {
-        final request = _receivedRequests[index];
-        return _buildReceivedRequestCard(request);
-      },
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+        ),
+      );
+    }
+
+    if (_receivedRequests.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Container(
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.person_add_disabled,
+                  size: 48,
+                  color: AppColors.textSecondary.withOpacity(0.3),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  '受信したフレンド申請はありません',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 16,
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _loadData,
+      color: AppColors.primary,
+      child: ListView.separated(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        itemCount: _receivedRequests.length,
+        separatorBuilder: (context, index) => const SizedBox(height: 12),
+        itemBuilder: (context, index) {
+          final request = _receivedRequests[index];
+          return _buildReceivedRequestCard(request);
+        },
+      ),
     );
   }
 
   /// 受信した申請カード
   Widget _buildReceivedRequestCard(Map<String, dynamic> request) {
+    final requestId = request['request_id'] ?? '';
+    final userName = request['from_user_display_name'] ?? '';
+    final fromUserId = request['from_user_id'] ?? '';
+    final createdAt = request['created_at'] ?? '';
+    final isProcessing = _processingRequests.contains(requestId);
+
+    // アバター画像またはイニシャル
+    Widget avatar;
+    if (request['from_user_profile_image_url'] != null &&
+        request['from_user_profile_image_url'].toString().isNotEmpty) {
+      avatar = ClipRRect(
+        borderRadius: BorderRadius.circular(100),
+        child: Image.network(
+          request['from_user_profile_image_url'],
+          width: 48,
+          height: 48,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return _buildDefaultAvatar(userName);
+          },
+        ),
+      );
+    } else {
+      avatar = _buildDefaultAvatar(userName);
+    }
+
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
       decoration: BoxDecoration(
@@ -290,19 +456,7 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // アバター
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: AppColors.inputBackground,
-                  borderRadius: BorderRadius.circular(100),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  request['emoji'],
-                  style: const TextStyle(fontSize: 24),
-                ),
-              ),
+              avatar,
               const SizedBox(width: 12),
               // 名前・ID・日付
               Expanded(
@@ -310,7 +464,7 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      request['name'],
+                      userName,
                       style: const TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 14,
@@ -328,7 +482,7 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
                         borderRadius: BorderRadius.circular(100),
                       ),
                       child: Text(
-                        'ID: ${request['id']}',
+                        fromUserId,
                         style: const TextStyle(
                           fontFamily: 'Inter',
                           fontSize: 12,
@@ -336,6 +490,7 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
                           color: AppColors.textSecondary,
                           height: 1.33,
                         ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -348,7 +503,7 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          request['date'],
+                          _formatDate(createdAt),
                           style: const TextStyle(
                             fontFamily: 'Inter',
                             fontSize: 12,
@@ -372,32 +527,45 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
                 child: SizedBox(
                   height: 48,
                   child: ElevatedButton(
-                    onPressed: () {
-                      // TODO: 承認処理
-                    },
+                    onPressed:
+                        isProcessing ? null : () => _acceptRequest(requestId, userName),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
+                      disabledBackgroundColor: AppColors.inputBackground,
+                      disabledForegroundColor: AppColors.textSecondary,
                       elevation: 0,
                       shadowColor: Colors.transparent,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(100),
                       ),
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.person_add_outlined, size: 14),
-                        SizedBox(width: 6),
-                        Text(
-                          '承認',
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 14,
-                            fontWeight: FontWeight.w400,
-                            letterSpacing: -0.3125,
+                        if (!isProcessing) ...[
+                          const Icon(Icons.person_add_outlined, size: 14),
+                          const SizedBox(width: 6),
+                        ],
+                        if (isProcessing)
+                          const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                        else
+                          const Text(
+                            '承認',
+                            style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 14,
+                              fontWeight: FontWeight.w400,
+                              letterSpacing: -0.3125,
+                            ),
                           ),
-                        ),
                       ],
                     ),
                   ),
@@ -408,12 +576,13 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
                 child: SizedBox(
                   height: 48,
                   child: ElevatedButton(
-                    onPressed: () {
-                      // TODO: 拒否処理
-                    },
+                    onPressed:
+                        isProcessing ? null : () => _rejectRequest(requestId, userName),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.inputBackground,
                       foregroundColor: const Color(0xFF5A4A40),
+                      disabledBackgroundColor: AppColors.inputBackground,
+                      disabledForegroundColor: AppColors.textSecondary,
                       elevation: 0,
                       shadowColor: Colors.transparent,
                       shape: RoundedRectangleBorder(
@@ -448,19 +617,70 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
 
   /// 送信した申請リスト
   Widget _buildSentRequestsList() {
-    return ListView.separated(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      itemCount: _sentRequests.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 12),
-      itemBuilder: (context, index) {
-        final request = _sentRequests[index];
-        return _buildSentRequestCard(request);
-      },
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+        ),
+      );
+    }
+
+    if (_sentRequests.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Container(
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.send_outlined,
+                  size: 48,
+                  color: AppColors.textSecondary.withOpacity(0.3),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  '送信したフレンド申請はありません',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 16,
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _loadData,
+      color: AppColors.primary,
+      child: ListView.separated(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        itemCount: _sentRequests.length,
+        separatorBuilder: (context, index) => const SizedBox(height: 12),
+        itemBuilder: (context, index) {
+          final request = _sentRequests[index];
+          return _buildSentRequestCard(request);
+        },
+      ),
     );
   }
 
   /// 送信した申請カード
   Widget _buildSentRequestCard(Map<String, dynamic> request) {
+    final toUserId = request['to_user_id'] ?? '';
+    final createdAt = request['created_at'] ?? '';
+
+    // 送信先のユーザー情報を取得（現在のAPIでは取得できないため、代替表示）
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
       decoration: BoxDecoration(
@@ -486,29 +706,17 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // アバター
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: AppColors.inputBackground,
-                  borderRadius: BorderRadius.circular(100),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  request['emoji'],
-                  style: const TextStyle(fontSize: 24),
-                ),
-              ),
+              // アバター（送信先の情報がないのでデフォルト）
+              _buildDefaultAvatar('?'),
               const SizedBox(width: 12),
               // 名前・ID・日付
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      request['name'],
-                      style: const TextStyle(
+                    const Text(
+                      '送信先ユーザー',
+                      style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 14,
                         fontWeight: FontWeight.w400,
@@ -525,7 +733,7 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
                         borderRadius: BorderRadius.circular(100),
                       ),
                       child: Text(
-                        'ID: ${request['id']}',
+                        toUserId,
                         style: const TextStyle(
                           fontFamily: 'Inter',
                           fontSize: 12,
@@ -533,6 +741,7 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
                           color: AppColors.textSecondary,
                           height: 1.33,
                         ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -545,7 +754,7 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          '${request['date']} に送信',
+                          '${_formatDate(createdAt)} に送信',
                           style: const TextStyle(
                             fontFamily: 'Inter',
                             fontSize: 12,
@@ -589,43 +798,33 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          // 申請を取り消すボタン
-          SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: ElevatedButton(
-              onPressed: () {
-                // TODO: 申請取り消し処理
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.inputBackground,
-                foregroundColor: const Color(0xFF5A4A40),
-                elevation: 0,
-                shadowColor: Colors.transparent,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(100),
-                ),
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.close, size: 14),
-                  SizedBox(width: 6),
-                  Text(
-                    '申請を取り消す',
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400,
-                      letterSpacing: -0.3125,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
         ],
+      ),
+    );
+  }
+
+  /// デフォルトアバター（イニシャル表示）
+  Widget _buildDefaultAvatar(String displayName) {
+    String initial = '?';
+    if (displayName.isNotEmpty) {
+      initial = displayName[0].toUpperCase();
+    }
+
+    return Container(
+      width: 48,
+      height: 48,
+      decoration: BoxDecoration(
+        color: AppColors.inputBackground,
+        borderRadius: BorderRadius.circular(100),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        initial,
+        style: const TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.w500,
+          color: AppColors.textSecondary,
+        ),
       ),
     );
   }

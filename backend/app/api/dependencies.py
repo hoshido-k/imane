@@ -46,7 +46,7 @@ async def get_current_user(
     if uid is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="トークンにユーザーIDが含まれていません",
+            detail="トークンにユーザIDが含まれていません",
             headers={"WWW-Authenticate": "Bearer"},
         )
 

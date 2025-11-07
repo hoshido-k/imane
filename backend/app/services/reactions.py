@@ -118,7 +118,7 @@ class ReactionService:
         受信したリアクション一覧を取得
 
         Args:
-            user_id: ユーザーID
+            user_id: ユーザID
             status_filter: ステータスフィルター（None=全て）
 
         Returns:
@@ -148,7 +148,7 @@ class ReactionService:
         送信したリアクション一覧を取得
 
         Args:
-            user_id: ユーザーID
+            user_id: ユーザID
             status_filter: ステータスフィルター（None=全て）
 
         Returns:
@@ -203,7 +203,7 @@ class ReactionService:
 
         Args:
             reaction_id: リアクションID
-            user_id: ユーザーID（受信者確認用）
+            user_id: ユーザID（受信者確認用）
 
         Returns:
             承認成功時True
@@ -238,7 +238,7 @@ class ReactionService:
 
         Args:
             reaction_id: リアクションID
-            user_id: ユーザーID（受信者確認用）
+            user_id: ユーザID（受信者確認用）
 
         Returns:
             拒否成功時True
@@ -277,7 +277,7 @@ class ReactionService:
 
         Args:
             reaction_id: リアクションID
-            user_id: ユーザーID（送信者確認用）
+            user_id: ユーザID（送信者確認用）
 
         Returns:
             キャンセル成功時True
@@ -315,7 +315,7 @@ class ReactionService:
         未読リアクション数を取得
 
         Args:
-            user_id: ユーザーID
+            user_id: ユーザID
 
         Returns:
             未読（pending）リアクション数

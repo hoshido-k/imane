@@ -92,6 +92,7 @@ async def get_current_user_info(
     """
     return UserDetailResponse(
         uid=current_user.uid,
+        username=current_user.username,
         email=current_user.email,
         display_name=current_user.display_name,
         profile_image_url=current_user.profile_image_url,

@@ -206,20 +206,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
             controller: _nameController,
           ),
           const SizedBox(height: 24),
+          // ユーザID入力カード
+          _buildInputCard(
+            icon: Icons.badge_outlined,
+            label: 'ユーザID',
+            controller: _userIdController,
+            helperText: 'フレンドがあなたを検索する際に使用されます',
+          ),
+          const SizedBox(height: 24),
           // メールアドレス入力カード
           _buildInputCard(
             icon: Icons.email_outlined,
             label: 'メールアドレス',
             controller: _emailController,
             keyboardType: TextInputType.emailAddress,
-          ),
-          const SizedBox(height: 24),
-          // ユーザーID入力カード
-          _buildInputCard(
-            icon: Icons.badge_outlined,
-            label: 'ユーザーID',
-            controller: _userIdController,
-            helperText: 'フレンドがあなたを検索する際に使用されます',
           ),
           const SizedBox(height: 24),
           // 保存ボタン
