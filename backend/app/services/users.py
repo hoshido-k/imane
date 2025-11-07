@@ -21,10 +21,10 @@ class UserService:
         self, query: str, current_user_id: str, limit: int = 20
     ) -> List[UserInDB]:
         """
-        ユーザーを検索（表示名またはメールアドレス）
+        ユーザーをusernameで検索
 
         Args:
-            query: 検索クエリ
+            query: 検索クエリ（username）
             current_user_id: 現在のユーザーID（自分自身は除外）
             limit: 取得件数の上限
 
@@ -37,7 +37,7 @@ class UserService:
         query = query.strip().lower()
         results = []
 
-        # 表示名で検索（部分一致）
+        # usernameで検索（部分一致）
         # Firestoreは部分一致検索をサポートしていないため、全件取得してフィルタリング
         # 本番環境ではAlgoliaやElasticsearchの使用を推奨
         users_ref = self.db.collection("users").limit(100)
@@ -51,11 +51,10 @@ class UserService:
             if user.uid == current_user_id:
                 continue
 
-            # 表示名またはメールアドレスに検索クエリが含まれるか
-            display_name_match = query in user.display_name.lower() if user.display_name else False
-            email_match = query in user.email.lower() if user.email else False
+            # usernameに検索クエリが含まれるか
+            username_match = query in user.username.lower() if user.username else False
 
-            if display_name_match or email_match:
+            if username_match:
                 results.append(user)
 
             if len(results) >= limit:

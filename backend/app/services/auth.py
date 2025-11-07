@@ -32,20 +32,30 @@ class AuthService:
             アクセストークンとユーザー情報
 
         Raises:
-            ValueError: メールアドレスが既に使用されている場合
+            ValueError: メールアドレスまたはユーザーIDが既に使用されている場合
             FirebaseError: Firebase関連のエラー
         """
         try:
-            # 1. Firebase Authenticationでユーザー作成
+            # 1. ユーザーID（username）の重複チェック
+            from google.cloud.firestore_v1 import FieldFilter
+            existing_users = self.db.collection('users').where(
+                filter=FieldFilter("username", "==", request.username)
+            ).limit(1).get()
+
+            if len(existing_users) > 0:
+                raise ValueError("このユーザーIDは既に使用されています")
+
+            # 2. Firebase Authenticationでユーザー作成
             user_record = self.auth_client.create_user(
                 email=request.email,
                 password=request.password,
                 display_name=request.display_name
             )
 
-            # 2. Firestoreにユーザー情報を保存
+            # 3. Firestoreにユーザー情報を保存
             user_data = UserInDB(
                 uid=user_record.uid,
+                username=request.username,
                 email=request.email,
                 display_name=request.display_name,
                 created_at=datetime.now(UTC),
@@ -55,7 +65,7 @@ class AuthService:
             user_ref = self.db.collection('users').document(user_record.uid)
             user_ref.set(user_data.model_dump(mode='json'))
 
-            # 3. JWTトークンを生成
+            # 4. JWTトークンを生成
             access_token = create_access_token(
                 data={"uid": user_record.uid, "email": request.email}
             )

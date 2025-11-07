@@ -39,59 +39,21 @@ async def update_my_profile(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
-@router.get("/debug/all", response_model=List[UserResponse])
-async def debug_list_all_users(
-    limit: int = Query(100, ge=1, le=200, description="取得件数の上限"),
-    current_user: UserInDB = Depends(get_current_user),
-    user_service: UserService = Depends(lambda: UserService()),
-):
-    """
-    【デバッグ用】全ユーザーをリスト表示
-
-    Firestoreに登録されている全ユーザーを確認するためのエンドポイント。
-    本番環境では削除すること。
-
-    Args:
-        limit: 取得件数の上限（デフォルト: 100、最大: 200）
-        current_user: 現在のユーザー
-        user_service: ユーザーサービス
-
-    Returns:
-        全ユーザーリスト（詳細情報含む）
-    """
-    # Firestoreから全ユーザーを取得
-    users_ref = user_service.db.collection("users").limit(limit)
-    users_docs = users_ref.get()
-
-    users = []
-    for user_doc in users_docs:
-        user_data = user_doc.to_dict()
-        users.append(UserResponse(
-            uid=user_data.get("uid"),
-            email=user_data.get("email"),
-            display_name=user_data.get("display_name"),
-            profile_image_url=user_data.get("profile_image_url"),
-            created_at=user_data.get("created_at"),
-        ))
-
-    return users
-
-
 @router.get("/search", response_model=List[UserResponse])
 async def search_users(
-    q: str = Query(..., min_length=1, description="検索クエリ（名前またはメールアドレス）"),
+    q: str = Query(..., min_length=1, description="検索クエリ（ユーザーID）"),
     limit: int = Query(20, ge=1, le=50, description="取得件数の上限"),
     current_user: UserInDB = Depends(get_current_user),
     user_service: UserService = Depends(lambda: UserService()),
 ):
     """
-    ユーザーを検索
+    ユーザーをIDで検索
 
-    表示名またはメールアドレスでユーザーを検索します。
+    ユーザーID（username）でユーザーを検索します。
     自分自身は検索結果から除外されます。
 
     Args:
-        q: 検索クエリ
+        q: 検索クエリ（username）
         limit: 取得件数の上限（デフォルト: 20、最大: 50）
         current_user: 現在のユーザー
         user_service: ユーザーサービス
@@ -104,6 +66,7 @@ async def search_users(
     return [
         UserResponse(
             uid=user.uid,
+            username=user.username,
             email=user.email,
             display_name=user.display_name,
             profile_image_url=user.profile_image_url,
@@ -140,6 +103,7 @@ async def get_user(
 
     return UserResponse(
         uid=user.uid,
+        username=user.username,
         email=user.email,
         display_name=user.display_name,
         profile_image_url=user.profile_image_url,
