@@ -381,7 +381,7 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
   Widget _buildReceivedRequestCard(Map<String, dynamic> request) {
     final requestId = request['request_id'] ?? '';
     final userName = request['from_user_display_name'] ?? '';
-    final fromUserId = request['from_user_id'] ?? '';
+    final username = request['from_user_username'] ?? '';
     final createdAt = request['created_at'] ?? '';
     final isProcessing = _processingRequests.contains(requestId);
 
@@ -457,7 +457,7 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
                         borderRadius: BorderRadius.circular(100),
                       ),
                       child: Text(
-                        fromUserId,
+                        username,
                         style: const TextStyle(
                           fontFamily: 'Inter',
                           fontSize: 12,

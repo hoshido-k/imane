@@ -114,6 +114,7 @@ class FriendService:
             from_user = await self.user_service.get_user_by_uid(req_data["from_user_id"])
             if from_user:
                 req_data["from_user_display_name"] = from_user.display_name
+                req_data["from_user_username"] = from_user.username
                 req_data["from_user_profile_image_url"] = from_user.profile_image_url
 
             result.append(FriendRequestResponse(**req_data))
