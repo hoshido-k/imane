@@ -284,25 +284,30 @@ class NotificationService:
         Returns:
             通知一覧
         """
-        query = (
-            self.db.collection("notifications")
-            .where(filter=FieldFilter("user_id", "==", user_id))
-            .order_by("created_at", direction="DESCENDING")
-            .limit(limit)
-        )
+        try:
+            query = (
+                self.db.collection("notifications")
+                .where(filter=FieldFilter("user_id", "==", user_id))
+                .order_by("created_at", direction="DESCENDING")
+                .limit(limit)
+            )
 
-        # 未読のみフィルタ
-        if unread_only:
-            query = query.where(filter=FieldFilter("is_read", "==", False))
+            # 未読のみフィルタ
+            if unread_only:
+                query = query.where(filter=FieldFilter("is_read", "==", False))
 
-        notifications = query.get()
+            notifications = query.get()
 
-        result = []
-        for notif in notifications:
-            notif_data = notif.to_dict()
-            result.append(NotificationResponse(**notif_data))
+            result = []
+            for notif in notifications:
+                notif_data = notif.to_dict()
+                result.append(NotificationResponse(**notif_data))
 
-        return result
+            return result
+        except Exception as e:
+            # インデックスがない場合や通知がない場合は空のリストを返す
+            print(f"[NotificationService] Error getting notifications: {e}")
+            return []
 
     async def get_unread_count(self, user_id: str) -> int:
         """
@@ -314,14 +319,19 @@ class NotificationService:
         Returns:
             未読通知数
         """
-        unread_notifications = (
-            self.db.collection("notifications")
-            .where(filter=FieldFilter("user_id", "==", user_id))
-            .where(filter=FieldFilter("is_read", "==", False))
-            .get()
-        )
+        try:
+            unread_notifications = (
+                self.db.collection("notifications")
+                .where(filter=FieldFilter("user_id", "==", user_id))
+                .where(filter=FieldFilter("is_read", "==", False))
+                .get()
+            )
 
-        return len(list(unread_notifications))
+            return len(list(unread_notifications))
+        except Exception as e:
+            # インデックスがない場合は0を返す
+            print(f"[NotificationService] Error getting unread count: {e}")
+            return 0
 
     async def mark_notifications_as_read(self, user_id: str, notification_ids: List[str]) -> int:
         """
