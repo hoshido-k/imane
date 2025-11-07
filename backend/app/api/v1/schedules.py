@@ -44,7 +44,7 @@ async def _enrich_schedule_with_user_info(
                 NotifyToUser(
                     user_id=user.uid,
                     display_name=user.display_name,
-                    avatar_url=user.avatar_url,
+                    avatar_url=user.profile_image_url,
                 )
             )
 
