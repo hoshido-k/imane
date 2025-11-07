@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'firebase_options.dart';
 import 'core/theme/app_theme.dart';
 import 'screens/auth/login_screen.dart';
@@ -12,6 +13,16 @@ import 'screens/friends/add_friend_screen.dart';
 import 'screens/friends/friend_requests_screen.dart';
 import 'screens/profile/profile_screen.dart';
 import 'services/auth_service.dart';
+import 'services/fcm_service.dart';
+import 'services/location_service.dart';
+
+/// Background message handler (must be top-level function)
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  print('[Main] Background message received: ${message.messageId}');
+  await firebaseMessagingBackgroundHandler(message);
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -33,6 +44,9 @@ void main() async {
       rethrow;
     }
   }
+
+  // Register background message handler
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
   // Set system UI overlay style
   SystemChrome.setSystemUIOverlayStyle(
@@ -95,7 +109,13 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
       if (!mounted) return;
 
       if (isLoggedIn) {
-        print('[AuthCheck] Auto-login successful, navigating to home');
+        print('[AuthCheck] Auto-login successful');
+
+        // Initialize services after successful login
+        await _initializeServices();
+
+        if (!mounted) return;
+        print('[AuthCheck] Navigating to home');
         Navigator.of(context).pushReplacementNamed('/home');
       } else {
         print('[AuthCheck] No valid token found, navigating to login');
@@ -105,6 +125,28 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
       print('[AuthCheck] Error during auth check: $e');
       if (!mounted) return;
       Navigator.of(context).pushReplacementNamed('/login');
+    }
+  }
+
+  /// Initialize FCM and Location services after login
+  Future<void> _initializeServices() async {
+    try {
+      print('[AuthCheck] Initializing services...');
+
+      // Initialize FCM service
+      final fcmService = FCMService();
+      await fcmService.initialize();
+      print('[AuthCheck] FCM service initialized');
+
+      // Initialize Location service (resume tracking if needed)
+      final locationService = LocationService();
+      await locationService.resumeTrackingIfNeeded();
+      print('[AuthCheck] Location service initialized');
+
+      print('[AuthCheck] All services initialized successfully');
+    } catch (e) {
+      print('[AuthCheck] Error initializing services: $e');
+      // Don't block login if services fail to initialize
     }
   }
 

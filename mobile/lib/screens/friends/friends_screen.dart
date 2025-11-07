@@ -344,6 +344,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
   Widget _buildFriendCard(Map<String, dynamic> friend) {
     final displayName = friend['friend_display_name'] ?? '';
     final username = friend['friend_username'] ?? '';
+    final friendId = friend['friend_user_id'] ?? '';
 
     // アバター画像またはイニシャル
     Widget avatar;
@@ -365,71 +366,302 @@ class _FriendsScreenState extends State<FriendsScreen> {
       avatar = _buildDefaultAvatar(displayName);
     }
 
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x1A000000),
-            offset: Offset(0, 1),
-            blurRadius: 3,
-          ),
-          BoxShadow(
-            color: Color(0x1A000000),
-            offset: Offset(0, 1),
-            blurRadius: 2,
-            spreadRadius: -1,
-          ),
-        ],
+    return Dismissible(
+      key: Key(friendId),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 24),
+        decoration: BoxDecoration(
+          color: Colors.red,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: const Icon(
+          Icons.delete_outline,
+          color: Colors.white,
+          size: 28,
+        ),
       ),
-      child: Row(
-        children: [
-          // アバター
-          avatar,
-          const SizedBox(width: 16),
-          // 名前とusername
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  displayName,
-                  style: const TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 14,
-                    fontWeight: FontWeight.w400,
-                    color: Color(0xFF3D3D3D),
-                    height: 1.43,
-                    letterSpacing: -0.1504,
-                  ),
-                ),
-                const SizedBox(height: 7.5),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: AppColors.inputBackground,
-                    borderRadius: BorderRadius.circular(100),
-                  ),
-                  child: Text(
-                    username,
+      confirmDismiss: (direction) async {
+        return await _confirmDeleteFriend(displayName);
+      },
+      onDismissed: (direction) async {
+        await _deleteFriend(friendId, displayName);
+      },
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x1A000000),
+              offset: Offset(0, 1),
+              blurRadius: 3,
+            ),
+            BoxShadow(
+              color: Color(0x1A000000),
+              offset: Offset(0, 1),
+              blurRadius: 2,
+              spreadRadius: -1,
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            // アバター
+            avatar,
+            const SizedBox(width: 16),
+            // 名前とusername
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    displayName,
                     style: const TextStyle(
                       fontFamily: 'Inter',
-                      fontSize: 12,
+                      fontSize: 14,
                       fontWeight: FontWeight.w400,
-                      color: AppColors.textSecondary,
-                      height: 1.33,
+                      color: Color(0xFF3D3D3D),
+                      height: 1.43,
+                      letterSpacing: -0.1504,
                     ),
-                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-              ],
+                  const SizedBox(height: 7.5),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: AppColors.inputBackground,
+                      borderRadius: BorderRadius.circular(100),
+                    ),
+                    child: Text(
+                      username,
+                      style: const TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.textSecondary,
+                        height: 1.33,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+            // 削除ボタン
+            IconButton(
+              icon: const Icon(
+                Icons.more_vert,
+                size: 20,
+                color: AppColors.textSecondary,
+              ),
+              onPressed: () => _showFriendOptions(friendId, displayName),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(
+                minWidth: 40,
+                minHeight: 40,
+              ),
+            ),
+          ],
+        ),
       ),
     );
+  }
+
+  /// フレンドオプションを表示
+  void _showFriendOptions(String friendId, String displayName) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // ハンドル
+              Container(
+                margin: const EdgeInsets.only(top: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.inputBorder,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 24),
+              // 表示名
+              Text(
+                displayName,
+                style: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 24),
+              // 削除ボタン
+              ListTile(
+                leading: const Icon(
+                  Icons.person_remove,
+                  color: Colors.red,
+                ),
+                title: const Text(
+                  'フレンドを削除',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 16,
+                    color: Colors.red,
+                    letterSpacing: -0.3125,
+                  ),
+                ),
+                onTap: () async {
+                  Navigator.pop(context);
+                  final confirmed = await _confirmDeleteFriend(displayName);
+                  if (confirmed == true) {
+                    await _deleteFriend(friendId, displayName);
+                  }
+                },
+              ),
+              const SizedBox(height: 8),
+              // キャンセルボタン
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.inputBackground,
+                      foregroundColor: AppColors.textSecondary,
+                      elevation: 0,
+                      shadowColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(100),
+                      ),
+                    ),
+                    child: const Text(
+                      'キャンセル',
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 16,
+                        fontWeight: FontWeight.w400,
+                        letterSpacing: -0.3125,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  /// フレンド削除の確認ダイアログ
+  Future<bool?> _confirmDeleteFriend(String displayName) async {
+    return await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text(
+            'フレンドを削除',
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          content: Text(
+            '$displayNameさんをフレンドから削除しますか？',
+            style: const TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+              color: AppColors.textSecondary,
+              letterSpacing: -0.1504,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text(
+                'キャンセル',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.textSecondary,
+                  letterSpacing: -0.3125,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text(
+                '削除',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.red,
+                  letterSpacing: -0.3125,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  /// フレンドを削除
+  Future<void> _deleteFriend(String friendId, String displayName) async {
+    try {
+      await _friendService.removeFriend(friendId);
+
+      // リストから削除
+      setState(() {
+        _friends.removeWhere((f) => f['friend_user_id'] == friendId);
+        _filteredFriends.removeWhere((f) => f['friend_user_id'] == friendId);
+      });
+
+      // スナックバーで通知（オプション）
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('$displayNameさんをフレンドから削除しました'),
+            backgroundColor: AppColors.textSecondary,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      print('[FriendsScreen] Error deleting friend: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('フレンドの削除に失敗しました'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 2),
+          ),
+        );
+        // リロードして状態を復元
+        _loadData();
+      }
+    }
   }
 
   /// デフォルトアバター（イニシャル表示）
