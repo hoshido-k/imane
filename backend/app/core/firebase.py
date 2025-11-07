@@ -11,9 +11,12 @@ def initialize_firebase():
             # Cloud Runの場合、デフォルト認証情報を使用
             cred = credentials.ApplicationDefault()
 
+        # Storage バケット名を決定（環境変数で指定されていればそれを使用）
+        storage_bucket = settings.STORAGE_BUCKET or f'{settings.FIREBASE_PROJECT_ID}.appspot.com'
+
         firebase_admin.initialize_app(cred, {
             'projectId': settings.FIREBASE_PROJECT_ID,
-            'storageBucket': f'{settings.FIREBASE_PROJECT_ID}.appspot.com',
+            'storageBucket': storage_bucket,
         })
 
 def get_firestore_client():
