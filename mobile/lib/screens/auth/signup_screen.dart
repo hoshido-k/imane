@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../services/auth_service.dart';
+import '../../services/api_service.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -24,7 +26,13 @@ class _SignupScreenState extends State<SignupScreen> {
   bool _isLoading = false;
   int _currentStep = 0; // 0=ステップ1, 1=ステップ2
 
+  // Username重複チェック用
+  bool _isCheckingUsername = false;
+  bool? _isUsernameAvailable; // null=未チェック, true=利用可能, false=既に使用されている
+  Timer? _usernameCheckTimer;
+
   final AuthService _authService = AuthService();
+  final ApiService _apiService = ApiService();
 
   @override
   void dispose() {
@@ -33,6 +41,7 @@ class _SignupScreenState extends State<SignupScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _usernameCheckTimer?.cancel();
     super.dispose();
   }
 
@@ -45,6 +54,7 @@ class _SignupScreenState extends State<SignupScreen> {
            username.isNotEmpty &&
            username.length >= 3 &&
            RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(username) &&
+           _isUsernameAvailable == true && // 重複チェックOKの場合のみ
            email.isNotEmpty &&
            email.contains('@');
   }
@@ -57,6 +67,60 @@ class _SignupScreenState extends State<SignupScreen> {
            password.length >= 8 &&
            confirmPassword.isNotEmpty &&
            password == confirmPassword;
+  }
+
+  /// Username重複チェック（デバウンス処理付き）
+  void _checkUsernameAvailability(String username) {
+    // タイマーをキャンセル
+    _usernameCheckTimer?.cancel();
+
+    // 3文字未満の場合はチェックしない
+    if (username.length < 3) {
+      setState(() {
+        _isUsernameAvailable = null;
+        _isCheckingUsername = false;
+      });
+      return;
+    }
+
+    // 英数字とアンダースコアのみかチェック
+    if (!RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(username)) {
+      setState(() {
+        _isUsernameAvailable = null;
+        _isCheckingUsername = false;
+      });
+      return;
+    }
+
+    setState(() {
+      _isCheckingUsername = true;
+    });
+
+    // 500ms後にAPIを呼び出す（デバウンス）
+    _usernameCheckTimer = Timer(const Duration(milliseconds: 500), () async {
+      try {
+        final response = await _apiService.get(
+          '/users/check-username',
+          queryParams: {'username': username},
+          requiresAuth: false,
+        );
+
+        if (mounted) {
+          setState(() {
+            _isUsernameAvailable = response['available'] as bool;
+            _isCheckingUsername = false;
+          });
+        }
+      } catch (e) {
+        print('[SignupScreen] Username check error: $e');
+        if (mounted) {
+          setState(() {
+            _isUsernameAvailable = null;
+            _isCheckingUsername = false;
+          });
+        }
+      }
+    });
   }
 
   void _goToStep2() {
@@ -207,7 +271,7 @@ class _SignupScreenState extends State<SignupScreen> {
             const SizedBox(height: 24),
 
             // Username Field
-            _buildLabel('ユーザーID'),
+            _buildLabel('ユーザID'),
             const SizedBox(height: 8),
             TextFormField(
               controller: _usernameController,
@@ -215,18 +279,39 @@ class _SignupScreenState extends State<SignupScreen> {
               decoration: InputDecoration(
                 hintText: 'tanaka_taro',
                 hintStyle: Theme.of(context).inputDecorationTheme.hintStyle,
-                helperText: '英数字とアンダースコアのみ（3〜20文字）',
+                helperText: 'フレンドがあなたを検索する際に使用されます\n英数字とアンダースコアのみ（3〜20文字）',
                 helperStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: AppColors.textSecondary,
                 ),
+                helperMaxLines: 2,
+                suffixIcon: _isCheckingUsername
+                    ? const Padding(
+                        padding: EdgeInsets.all(12.0),
+                        child: SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation(AppColors.primary),
+                          ),
+                        ),
+                      )
+                    : _isUsernameAvailable == true
+                        ? const Icon(Icons.check_circle, color: Colors.green, size: 20)
+                        : _isUsernameAvailable == false
+                            ? const Icon(Icons.error, color: Colors.red, size: 20)
+                            : null,
               ),
-              onChanged: (_) => setState(() {}),
+              onChanged: (value) {
+                setState(() {});
+                _checkUsernameAvailability(value.trim());
+              },
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
-                  return 'ユーザーIDを入力してください';
+                  return 'ユーザIDを入力してください';
                 }
                 if (value.trim().length < 3 || value.trim().length > 20) {
-                  return 'ユーザーIDは3〜20文字で入力してください';
+                  return 'ユーザIDは3〜20文字で入力してください';
                 }
                 if (!RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(value.trim())) {
                   return '英数字とアンダースコアのみ使用できます';
@@ -234,6 +319,15 @@ class _SignupScreenState extends State<SignupScreen> {
                 return null;
               },
             ),
+            if (_isUsernameAvailable == false) ...[
+              const SizedBox(height: 4),
+              Text(
+                'このユーザIDは既に使用されています',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Colors.red,
+                ),
+              ),
+            ],
             const SizedBox(height: 24),
 
             // Email Field

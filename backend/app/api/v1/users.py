@@ -39,6 +39,27 @@ async def update_my_profile(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
+@router.get("/check-username")
+async def check_username_availability(
+    username: str = Query(..., min_length=3, max_length=20, description="チェックするユーザーID"),
+    user_service: UserService = Depends(lambda: UserService()),
+):
+    """
+    ユーザーIDの利用可否をチェック（認証不要）
+
+    サインアップ時にユーザーIDが既に使用されているかをチェックします。
+
+    Args:
+        username: チェックするユーザーID
+        user_service: ユーザーサービス
+
+    Returns:
+        available: 利用可能かどうか（True=利用可能、False=既に使用されている）
+    """
+    is_available = await user_service.check_username_availability(username)
+    return {"available": is_available}
+
+
 @router.get("/search", response_model=List[UserResponse])
 async def search_users(
     q: str = Query(..., min_length=1, description="検索クエリ（ユーザーID）"),

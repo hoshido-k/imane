@@ -17,6 +17,25 @@ class UserService:
     def __init__(self):
         self.db = get_firestore_client()
 
+    async def check_username_availability(self, username: str) -> bool:
+        """
+        ユーザーIDの利用可否をチェック
+
+        Args:
+            username: チェックするユーザーID
+
+        Returns:
+            True: 利用可能、False: 既に使用されている
+        """
+        from google.cloud.firestore_v1 import FieldFilter
+
+        existing_users = self.db.collection("users").where(
+            filter=FieldFilter("username", "==", username)
+        ).limit(1).get()
+
+        # ユーザーが存在しない場合は利用可能
+        return len(existing_users) == 0
+
     async def search_users(
         self, query: str, current_user_id: str, limit: int = 20
     ) -> List[UserInDB]:
