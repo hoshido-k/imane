@@ -16,7 +16,8 @@ from app.core.firebase import initialize_firebase
 app = FastAPI(
     title="imane API",
     description="imane - 位置情報ベース自動通知アプリのバックエンドAPI",
-    version="1.0.0"
+    version="1.0.0",
+    redirect_slashes=False  # 307リダイレクトを無効化
 )
 
 # CORS設定

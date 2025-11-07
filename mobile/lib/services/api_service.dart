@@ -18,6 +18,7 @@ class ApiConfig {
 class ApiService {
   final String baseUrl;
   String? _accessToken;
+  late final http.Client _client;
 
   // Singleton pattern
   static final ApiService _instance = ApiService._internal();
@@ -27,7 +28,10 @@ class ApiService {
   }
 
   ApiService._internal({String? baseUrl})
-      : baseUrl = baseUrl ?? ApiConfig.baseUrl;
+      : baseUrl = baseUrl ?? ApiConfig.baseUrl {
+    // リダイレクトを自動で追従するHTTPクライアントを作成
+    _client = http.Client();
+  }
 
   /// アクセストークンを設定
   void setAccessToken(String token) {
@@ -72,7 +76,7 @@ class ApiService {
       print('[ApiService] Auth required: $requiresAuth');
       print('[ApiService] Has token: ${_accessToken != null}');
 
-      final response = await http.get(
+      final response = await _client.get(
         uri,
         headers: _getHeaders(includeAuth: requiresAuth),
       );
@@ -101,7 +105,7 @@ class ApiService {
         print('[ApiService] Request body: ${jsonEncode(body)}');
       }
 
-      final response = await http.post(
+      final response = await _client.post(
         Uri.parse('$baseUrl$endpoint'),
         headers: _getHeaders(includeAuth: requiresAuth),
         body: body != null ? jsonEncode(body) : null,
@@ -124,7 +128,7 @@ class ApiService {
     bool requiresAuth = true,
   }) async {
     try {
-      final response = await http.put(
+      final response = await _client.put(
         Uri.parse('$baseUrl$endpoint'),
         headers: _getHeaders(includeAuth: requiresAuth),
         body: body != null ? jsonEncode(body) : null,
@@ -143,7 +147,7 @@ class ApiService {
     bool requiresAuth = true,
   }) async {
     try {
-      final response = await http.patch(
+      final response = await _client.patch(
         Uri.parse('$baseUrl$endpoint'),
         headers: _getHeaders(includeAuth: requiresAuth),
         body: body != null ? jsonEncode(body) : null,
@@ -161,13 +165,21 @@ class ApiService {
     bool requiresAuth = true,
   }) async {
     try {
-      final response = await http.delete(
+      print('[ApiService] DELETE $baseUrl$endpoint');
+      print('[ApiService] Auth required: $requiresAuth');
+      print('[ApiService] Has token: ${_accessToken != null}');
+
+      final response = await _client.delete(
         Uri.parse('$baseUrl$endpoint'),
         headers: _getHeaders(includeAuth: requiresAuth),
       );
 
+      print('[ApiService] Response status: ${response.statusCode}');
+      print('[ApiService] Response body: ${response.body}');
+
       return _handleResponse(response);
     } catch (e) {
+      print('[ApiService] DELETE request error: $e');
       throw ApiException('DELETE request failed: $e');
     }
   }

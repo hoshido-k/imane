@@ -141,7 +141,12 @@ class FriendService {
   /// DELETE /friends/{friend_id}
   Future<void> removeFriend(String friendId) async {
     try {
+      if (friendId.isEmpty) {
+        throw Exception('Friend ID cannot be empty');
+      }
+      print('[FriendService] Removing friend with ID: $friendId');
       await _apiService.delete('/friends/$friendId');
+      print('[FriendService] Friend removed successfully');
     } catch (e) {
       print('[FriendService] removeFriend error: $e');
       rethrow;
