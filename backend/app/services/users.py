@@ -154,16 +154,14 @@ class UserService:
             from datetime import datetime
             user_data["updated_at"] = datetime.fromtimestamp(user_data["updated_at"].timestamp())
 
-        # usernameが存在しない場合は自動生成
+        # usernameが存在しない場合はエラー
         if "username" not in user_data or not user_data["username"]:
-            print(f"[UserService] Warning: User {uid} has no username. Auto-generating...")
-            email = user_data.get("email", "")
-            base_username = email.split("@")[0] if email else f"user_{uid[:8]}"
-            import random
-            username = f"{base_username}_{random.randint(1000, 9999)}"
-            user_data["username"] = username
-            user_ref.update({"username": username})
-            print(f"[UserService] Generated username: {username} for user {uid}")
+            print(f"[UserService] Error: User {uid} has no username")
+            print(f"[UserService] User data: {user_data}")
+            raise ValueError(
+                f"User {uid} has incomplete data (missing username). "
+                "Please delete this user from Firebase Console and re-register."
+            )
 
         return UserInDB(**user_data)
 
