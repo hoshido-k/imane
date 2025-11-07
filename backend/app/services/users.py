@@ -78,27 +78,54 @@ class UserService:
         # usernameで検索（部分一致）
         # Firestoreは部分一致検索をサポートしていないため、全件取得してフィルタリング
         # 本番環境ではAlgoliaやElasticsearchの使用を推奨
-        users_ref = self.db.collection("users").limit(100)
-        users = users_ref.get()
+        try:
+            users_ref = self.db.collection("users").limit(100)
+            users = users_ref.get()
 
-        for user_doc in users:
-            user_data = user_doc.to_dict()
-            user = UserInDB(**user_data)
+            for user_doc in users:
+                try:
+                    user_data = user_doc.to_dict()
 
-            # 自分自身は除外
-            if user.uid == current_user_id:
-                continue
+                    # デバッグログ
+                    print(f"[UserService] Processing user: {user_doc.id}")
+                    print(f"[UserService] User data keys: {user_data.keys() if user_data else 'None'}")
 
-            # usernameに検索クエリが含まれるか
-            username_match = query in user.username.lower() if user.username else False
+                    # FirestoreのTimestampをdatetimeに変換
+                    if "created_at" in user_data and hasattr(user_data["created_at"], "timestamp"):
+                        from datetime import datetime
+                        user_data["created_at"] = datetime.fromtimestamp(user_data["created_at"].timestamp())
 
-            if username_match:
-                results.append(user)
+                    if "updated_at" in user_data and hasattr(user_data["updated_at"], "timestamp"):
+                        from datetime import datetime
+                        user_data["updated_at"] = datetime.fromtimestamp(user_data["updated_at"].timestamp())
 
-            if len(results) >= limit:
-                break
+                    # UserInDBに変換
+                    user = UserInDB(**user_data)
 
-        return results
+                    # 自分自身は除外
+                    if user.uid == current_user_id:
+                        continue
+
+                    # usernameに検索クエリが含まれるか
+                    username_match = query in user.username.lower() if user.username else False
+
+                    if username_match:
+                        results.append(user)
+
+                    if len(results) >= limit:
+                        break
+
+                except Exception as e:
+                    # 個別のユーザーデータのエラーはスキップ
+                    print(f"[UserService] Error parsing user {user_doc.id}: {e}")
+                    print(f"[UserService] User data: {user_data}")
+                    continue
+
+            return results
+
+        except Exception as e:
+            print(f"[UserService] Error in search_users: {e}")
+            raise
 
     async def get_user_by_uid(self, uid: str) -> Optional[UserInDB]:
         """
