@@ -214,6 +214,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
 
     try {
+      print('[ProfileScreen] Starting image upload...');
+      print('[ProfileScreen] Image path: ${_selectedImage!.path}');
+
       // マルチパートリクエストを作成
       final request = http.MultipartRequest(
         'POST',
@@ -224,19 +227,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final token = _authService.apiService.accessToken;
       if (token != null) {
         request.headers['Authorization'] = 'Bearer $token';
+        print('[ProfileScreen] Authorization header added');
+      } else {
+        print('[ProfileScreen] WARNING: No access token available');
       }
 
       // 画像ファイルを追加
-      request.files.add(
-        await http.MultipartFile.fromPath(
-          'file',
-          _selectedImage!.path,
-        ),
+      final multipartFile = await http.MultipartFile.fromPath(
+        'file',
+        _selectedImage!.path,
       );
+      print('[ProfileScreen] File field name: file');
+      print('[ProfileScreen] File path: ${multipartFile.filename}');
+      print('[ProfileScreen] File content type: ${multipartFile.contentType}');
+      print('[ProfileScreen] File length: ${multipartFile.length} bytes');
+
+      request.files.add(multipartFile);
 
       // リクエストを送信
+      print('[ProfileScreen] Sending request...');
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
+
+      print('[ProfileScreen] Response status: ${response.statusCode}');
+      print('[ProfileScreen] Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);

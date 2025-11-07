@@ -172,8 +172,13 @@ async def upload_profile_image(
     Returns:
         アップロードされた画像のURL
     """
+    print(f"[upload_profile_image] User: {current_user.uid}")
+    print(f"[upload_profile_image] Filename: {file.filename}")
+    print(f"[upload_profile_image] Content-Type: {file.content_type}")
+
     # Validate file type
     if not file.content_type or not file.content_type.startswith("image/"):
+        print(f"[upload_profile_image] Invalid content type: {file.content_type}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="画像ファイルのみアップロード可能です",
@@ -182,7 +187,10 @@ async def upload_profile_image(
     # Validate file size (max 5MB)
     MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
     contents = await file.read()
+    print(f"[upload_profile_image] File size: {len(contents)} bytes")
+
     if len(contents) > MAX_FILE_SIZE:
+        print(f"[upload_profile_image] File too large: {len(contents)} > {MAX_FILE_SIZE}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="ファイルサイズは5MB以下にしてください",
@@ -190,17 +198,21 @@ async def upload_profile_image(
 
     try:
         # Upload to Firebase Storage and update user profile
+        print(f"[upload_profile_image] Uploading to Firebase Storage...")
         image_url = await user_service.upload_profile_image(
             current_user.uid, contents, file.content_type
         )
+        print(f"[upload_profile_image] Upload successful: {image_url}")
 
         return {
             "profile_image_url": image_url,
             "message": "プロフィール画像を更新しました",
         }
     except ValueError as e:
+        print(f"[upload_profile_image] ValueError: {e}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
+        print(f"[upload_profile_image] Exception: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"画像のアップロードに失敗しました: {str(e)}",
