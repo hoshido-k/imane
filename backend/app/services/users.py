@@ -2,12 +2,13 @@
 ユーザー管理サービス
 """
 
+import uuid
 from datetime import UTC, datetime
 from typing import List, Optional
 
 from google.cloud.firestore_v1 import FieldFilter
 
-from app.core.firebase import get_firestore_client
+from app.core.firebase import get_firestore_client, get_storage_bucket
 from app.schemas.user import UserInDB, UserUpdate
 
 
@@ -206,3 +207,71 @@ class UserService:
 
         # 更新後のユーザー情報を取得
         return await self.get_user_by_uid(uid)
+
+    async def upload_profile_image(
+        self, uid: str, image_data: bytes, content_type: str
+    ) -> str:
+        """
+        プロフィール画像をFirebase Storageにアップロード
+
+        Args:
+            uid: ユーザID
+            image_data: 画像データ（バイト列）
+            content_type: ファイルのMIMEタイプ
+
+        Returns:
+            アップロードされた画像の公開URL
+
+        Raises:
+            ValueError: ユーザーが見つからない場合
+        """
+        # ユーザーの存在確認
+        user = await self.get_user_by_uid(uid)
+        if not user:
+            raise ValueError("ユーザーが見つかりません")
+
+        # ファイル拡張子の決定
+        extension_map = {
+            "image/jpeg": "jpg",
+            "image/jpg": "jpg",
+            "image/png": "png",
+            "image/gif": "gif",
+            "image/webp": "webp",
+        }
+        extension = extension_map.get(content_type, "jpg")
+
+        # ファイル名を生成（ユーザIDとUUIDを使用）
+        filename = f"profile_images/{uid}/{uuid.uuid4()}.{extension}"
+
+        try:
+            # Firebase Storageにアップロード
+            bucket = get_storage_bucket()
+            blob = bucket.blob(filename)
+
+            # メタデータを設定
+            blob.metadata = {
+                "user_id": uid,
+                "uploaded_at": datetime.now(UTC).isoformat(),
+            }
+
+            # アップロード
+            blob.upload_from_string(image_data, content_type=content_type)
+
+            # 公開URLを取得するために公開設定
+            blob.make_public()
+
+            # 公開URLを取得
+            public_url = blob.public_url
+
+            # ユーザーのprofile_image_urlを更新
+            user_ref = self.db.collection("users").document(uid)
+            user_ref.update({
+                "profile_image_url": public_url,
+                "updated_at": datetime.now(UTC)
+            })
+
+            return public_url
+
+        except Exception as e:
+            print(f"[UserService] Error uploading profile image: {e}")
+            raise ValueError(f"画像のアップロードに失敗しました: {str(e)}")

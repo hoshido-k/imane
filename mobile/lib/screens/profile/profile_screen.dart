@@ -1,4 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../../core/constants/app_colors.dart';
 import '../../services/auth_service.dart';
 
@@ -15,9 +19,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _userIdController = TextEditingController();
+  final ImagePicker _imagePicker = ImagePicker();
 
   String _selectedEmoji = '👨';
+  String? _profileImageUrl;
+  File? _selectedImage;
   bool _isLoading = true;
+  bool _isUploadingImage = false;
 
   @override
   void initState() {
@@ -47,6 +55,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _nameController.text = userData['display_name'] ?? '';
           _emailController.text = userData['email'] ?? '';
           _userIdController.text = userData['username'] ?? '';
+          _profileImageUrl = userData['profile_image_url'];
           _isLoading = false;
         });
       } else {
@@ -62,7 +71,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  void _showEmojiPicker() {
+  /// 画像選択のオプションを表示
+  void _showImageSourceOptions() {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -70,64 +80,199 @@ class _ProfileScreenState extends State<ProfileScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (context) {
-        return Container(
-          padding: const EdgeInsets.all(24),
+        return SafeArea(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              // ハンドル
+              Container(
+                margin: const EdgeInsets.only(top: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.inputBorder,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 24),
               const Text(
-                'アバターを選択',
+                'プロフィール画像を選択',
                 style: TextStyle(
+                  fontFamily: 'Inter',
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 24),
-              Wrap(
-                spacing: 16,
-                runSpacing: 16,
-                children: [
-                  '👨', '👩', '👨‍💼', '👩‍💼', '👨‍🎓', '👩‍🎓', '👨‍💻', '👩‍🎨',
-                  '👦', '👧', '🧑', '👴', '👵', '🧔', '👱‍♀️', '👱‍♂️',
-                ].map((emoji) {
-                  return InkWell(
-                    onTap: () {
-                      setState(() {
-                        _selectedEmoji = emoji;
-                      });
-                      Navigator.pop(context);
-                    },
-                    child: Container(
-                      width: 56,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        color: _selectedEmoji == emoji
-                            ? AppColors.primary.withOpacity(0.1)
-                            : AppColors.inputBackground,
+              // カメラで撮影
+              ListTile(
+                leading: const Icon(Icons.camera_alt, color: AppColors.primary),
+                title: const Text(
+                  'カメラで撮影',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 16,
+                    letterSpacing: -0.3125,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImage(ImageSource.camera);
+                },
+              ),
+              // ギャラリーから選択
+              ListTile(
+                leading: const Icon(Icons.photo_library, color: AppColors.primary),
+                title: const Text(
+                  'ギャラリーから選択',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 16,
+                    letterSpacing: -0.3125,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImage(ImageSource.gallery);
+                },
+              ),
+              const SizedBox(height: 8),
+              // キャンセル
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.inputBackground,
+                      foregroundColor: AppColors.textSecondary,
+                      elevation: 0,
+                      shadowColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(100),
-                        border: Border.all(
-                          color: _selectedEmoji == emoji
-                              ? AppColors.primary
-                              : Colors.transparent,
-                          width: 2,
-                        ),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        emoji,
-                        style: const TextStyle(fontSize: 32),
                       ),
                     ),
-                  );
-                }).toList(),
+                    child: const Text(
+                      'キャンセル',
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 16,
+                        fontWeight: FontWeight.w400,
+                        letterSpacing: -0.3125,
+                      ),
+                    ),
+                  ),
+                ),
               ),
-              const SizedBox(height: 16),
             ],
           ),
         );
       },
     );
+  }
+
+  /// 画像を選択
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final XFile? pickedFile = await _imagePicker.pickImage(
+        source: source,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 85,
+      );
+
+      if (pickedFile != null) {
+        setState(() {
+          _selectedImage = File(pickedFile.path);
+        });
+
+        // 画像をアップロード
+        await _uploadProfileImage();
+      }
+    } catch (e) {
+      print('[ProfileScreen] Error picking image: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('画像の選択に失敗しました'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  /// プロフィール画像をアップロード
+  Future<void> _uploadProfileImage() async {
+    if (_selectedImage == null) return;
+
+    setState(() {
+      _isUploadingImage = true;
+    });
+
+    try {
+      // マルチパートリクエストを作成
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse('http://localhost:8000/api/v1/users/me/profile-image'),
+      );
+
+      // 認証トークンを追加
+      final token = _authService.apiService._accessToken;
+      if (token != null) {
+        request.headers['Authorization'] = 'Bearer $token';
+      }
+
+      // 画像ファイルを追加
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'file',
+          _selectedImage!.path,
+        ),
+      );
+
+      // リクエストを送信
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        setState(() {
+          _profileImageUrl = responseData['profile_image_url'];
+          _selectedImage = null;
+          _isUploadingImage = false;
+        });
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('プロフィール画像を更新しました'),
+              backgroundColor: AppColors.primary,
+            ),
+          );
+        }
+      } else {
+        throw Exception('Upload failed: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('[ProfileScreen] Error uploading image: $e');
+      setState(() {
+        _isUploadingImage = false;
+        _selectedImage = null;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('画像のアップロードに失敗しました'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _saveProfile() async {
@@ -318,7 +463,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         children: [
           // アバター
           GestureDetector(
-            onTap: _showEmojiPicker,
+            onTap: _showImageSourceOptions,
             child: Stack(
               children: [
                 // アバター本体
@@ -330,39 +475,77 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     borderRadius: BorderRadius.circular(100),
                     boxShadow: AppColors.buttonShadow,
                   ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    _selectedEmoji,
-                    style: const TextStyle(fontSize: 48),
-                  ),
+                  child: _isUploadingImage
+                      ? const Center(
+                          child: CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                          ),
+                        )
+                      : _selectedImage != null
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(100),
+                              child: Image.file(
+                                _selectedImage!,
+                                width: 96,
+                                height: 96,
+                                fit: BoxFit.cover,
+                              ),
+                            )
+                          : _profileImageUrl != null && _profileImageUrl!.isNotEmpty
+                              ? ClipRRect(
+                                  borderRadius: BorderRadius.circular(100),
+                                  child: Image.network(
+                                    _profileImageUrl!,
+                                    width: 96,
+                                    height: 96,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Container(
+                                        alignment: Alignment.center,
+                                        child: Text(
+                                          _selectedEmoji,
+                                          style: const TextStyle(fontSize: 48),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                )
+                              : Container(
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    _selectedEmoji,
+                                    style: const TextStyle(fontSize: 48),
+                                  ),
+                                ),
                 ),
                 // 編集ボタン
-                Positioned(
-                  right: 0,
-                  bottom: 0,
-                  child: Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(100),
-                      boxShadow: AppColors.buttonShadow,
-                    ),
-                    child: const Icon(
-                      Icons.photo_camera,
-                      size: 16,
-                      color: Colors.white,
+                if (!_isUploadingImage)
+                  Positioned(
+                    right: 0,
+                    bottom: 0,
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(100),
+                        boxShadow: AppColors.buttonShadow,
+                      ),
+                      child: const Icon(
+                        Icons.photo_camera,
+                        size: 16,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
-                ),
               ],
             ),
           ),
           const SizedBox(height: 16),
           // 説明文
-          const Text(
-            'アバターをタップして変更',
-            style: TextStyle(
+          Text(
+            _isUploadingImage ? 'アップロード中...' : 'アバターをタップして変更',
+            style: const TextStyle(
               fontFamily: 'Inter',
               fontSize: 12,
               fontWeight: FontWeight.w400,

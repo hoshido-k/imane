@@ -4,7 +4,7 @@
 
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
+from fastapi import APIRouter, Depends, File, HTTPException, Path, Query, UploadFile, status
 
 from app.api.dependencies import get_current_user
 from app.schemas.user import UserDetailResponse, UserInDB, UserResponse, UserUpdate
@@ -151,3 +151,57 @@ async def get_user(
         profile_image_url=user.profile_image_url,
         created_at=user.created_at,
     )
+
+
+@router.post("/me/profile-image")
+async def upload_profile_image(
+    file: UploadFile = File(...),
+    current_user: UserInDB = Depends(get_current_user),
+    user_service: UserService = Depends(lambda: UserService()),
+):
+    """
+    プロフィール画像をアップロード
+
+    画像ファイルをFirebase Storageにアップロードし、プロフィール画像URLを更新します。
+
+    Args:
+        file: アップロードする画像ファイル（JPEG, PNG, GIF）
+        current_user: 現在のユーザー
+        user_service: ユーザーサービス
+
+    Returns:
+        アップロードされた画像のURL
+    """
+    # Validate file type
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="画像ファイルのみアップロード可能です",
+        )
+
+    # Validate file size (max 5MB)
+    MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+    contents = await file.read()
+    if len(contents) > MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="ファイルサイズは5MB以下にしてください",
+        )
+
+    try:
+        # Upload to Firebase Storage and update user profile
+        image_url = await user_service.upload_profile_image(
+            current_user.uid, contents, file.content_type
+        )
+
+        return {
+            "profile_image_url": image_url,
+            "message": "プロフィール画像を更新しました",
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"画像のアップロードに失敗しました: {str(e)}",
+        )
