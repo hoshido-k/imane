@@ -130,8 +130,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _saveProfile() {
-    // TODO: プロフィール保存処理を実装
+  Future<void> _saveProfile() async {
+    // 入力値のバリデーション
+    if (_nameController.text.trim().isEmpty) {
+      return;
+    }
+    if (_userIdController.text.trim().isEmpty) {
+      return;
+    }
+
+    try {
+      // プロフィールを更新
+      await _authService.apiService.patch(
+        '/users/me',
+        body: {
+          'display_name': _nameController.text.trim(),
+          'username': _userIdController.text.trim(),
+        },
+        requiresAuth: true,
+      );
+
+      // 更新成功後、ユーザーデータを再読み込み
+      await _loadUserData();
+    } catch (e) {
+      print('[ProfileScreen] Error saving profile: $e');
+      // エラーは静かに処理（ユーザーは再試行可能）
+    }
   }
 
   @override
@@ -252,12 +276,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
             helperText: 'フレンドがあなたを検索する際に使用されます',
           ),
           const SizedBox(height: 24),
-          // メールアドレス入力カード
+          // メールアドレス入力カード（読み取り専用）
           _buildInputCard(
             icon: Icons.email_outlined,
             label: 'メールアドレス',
             controller: _emailController,
             keyboardType: TextInputType.emailAddress,
+            readOnly: true,
           ),
           const SizedBox(height: 24),
           // 保存ボタン
@@ -357,6 +382,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     required TextEditingController controller,
     String? helperText,
     TextInputType? keyboardType,
+    bool readOnly = false,
   }) {
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
@@ -409,6 +435,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: TextField(
               controller: controller,
               keyboardType: keyboardType,
+              readOnly: readOnly,
               decoration: const InputDecoration(
                 border: InputBorder.none,
                 contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
@@ -420,11 +447,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   letterSpacing: -0.3125,
                 ),
               ),
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 16,
                 fontWeight: FontWeight.w400,
-                color: AppColors.textPlaceholder,
+                color: readOnly ? AppColors.textSecondary : AppColors.textPlaceholder,
                 letterSpacing: -0.3125,
               ),
             ),

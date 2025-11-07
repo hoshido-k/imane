@@ -46,15 +46,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
         _searchResults = [];
         _isSearching = false;
       });
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('検索に失敗しました: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
     }
   }
 
@@ -68,36 +59,8 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
         toUserId: userId,
         message: 'よろしくお願いします',
       );
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('$userName さんにフレンド申請を送信しました'),
-            backgroundColor: AppColors.primary,
-          ),
-        );
-      }
     } catch (e) {
-      if (mounted) {
-        String errorMessage = 'フレンド申請の送信に失敗しました';
-
-        if (e is BadRequestException) {
-          if (e.message.contains('既にフレンド')) {
-            errorMessage = '既にフレンドです';
-          } else if (e.message.contains('既にフレンドリクエストを送信済み')) {
-            errorMessage = '既にフレンド申請を送信済みです';
-          } else {
-            errorMessage = e.message;
-          }
-        }
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMessage),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      // Error is handled silently
     } finally {
       setState(() {
         _sendingRequests.remove(userId);
