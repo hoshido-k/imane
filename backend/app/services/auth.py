@@ -142,6 +142,31 @@ class AuthService:
             return None
 
         user_data = user_doc.to_dict()
+
+        # FirestoreのTimestampをdatetimeに変換
+        if "created_at" in user_data and hasattr(user_data["created_at"], "timestamp"):
+            from datetime import datetime
+            user_data["created_at"] = datetime.fromtimestamp(user_data["created_at"].timestamp())
+
+        if "updated_at" in user_data and hasattr(user_data["updated_at"], "timestamp"):
+            from datetime import datetime
+            user_data["updated_at"] = datetime.fromtimestamp(user_data["updated_at"].timestamp())
+
+        # usernameが存在しない場合は自動生成
+        if "username" not in user_data or not user_data["username"]:
+            print(f"[AuthService] Warning: User {uid} has no username. Auto-generating...")
+            # メールアドレスの@より前の部分をベースにusernameを生成
+            email = user_data.get("email", "")
+            base_username = email.split("@")[0] if email else f"user_{uid[:8]}"
+            # 数字を追加してユニークにする
+            import random
+            username = f"{base_username}_{random.randint(1000, 9999)}"
+            user_data["username"] = username
+
+            # Firestoreを更新
+            user_ref.update({"username": username})
+            print(f"[AuthService] Generated username: {username} for user {uid}")
+
         return UserInDB(**user_data)
 
     async def delete_user(self, uid: str) -> bool:
