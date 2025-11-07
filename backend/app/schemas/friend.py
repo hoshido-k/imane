@@ -97,7 +97,13 @@ class FriendRequestResponse(BaseModel):
 
     # リクエスト送信者の情報（JOIN用）
     from_user_display_name: Optional[str] = None
+    from_user_username: Optional[str] = None
     from_user_profile_image_url: Optional[str] = None
+
+    # リクエスト送信先の情報（JOIN用）
+    to_user_display_name: Optional[str] = None
+    to_user_username: Optional[str] = None
+    to_user_profile_image_url: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 
