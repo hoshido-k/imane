@@ -436,6 +436,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               controller: controller,
               keyboardType: keyboardType,
               readOnly: readOnly,
+              enableInteractiveSelection: !readOnly,
               decoration: const InputDecoration(
                 border: InputBorder.none,
                 contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
