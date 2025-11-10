@@ -142,14 +142,21 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
 
       // Initialize Location service - always start tracking on login
       final locationService = LocationService();
-      print('[AuthCheck] Starting location tracking...');
+
+      // Start background tracking (may not work on iOS)
+      print('[AuthCheck] Starting background location tracking...');
       final trackingStarted = await locationService.startTracking();
 
       if (trackingStarted) {
-        print('[AuthCheck] ✓ Location tracking started successfully');
+        print('[AuthCheck] ✓ Background location tracking started');
       } else {
-        print('[AuthCheck] ✗ Failed to start location tracking (permission may not be granted)');
+        print('[AuthCheck] ✗ Failed to start background location tracking');
       }
+
+      // Start foreground auto-update as backup (works on both iOS and Android)
+      print('[AuthCheck] Starting foreground auto-update...');
+      await locationService.startForegroundAutoUpdate();
+      print('[AuthCheck] ✓ Foreground auto-update started (5 second interval)');
 
       print('[AuthCheck] All services initialized successfully');
     } catch (e) {
