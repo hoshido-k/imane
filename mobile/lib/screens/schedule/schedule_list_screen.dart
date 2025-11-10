@@ -448,8 +448,8 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> with WidgetsBin
           builder: (context, constraints) {
             return SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
-              child: SizedBox(
-                height: constraints.maxHeight,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
                 child: _buildEmptyState(),
               ),
             );
