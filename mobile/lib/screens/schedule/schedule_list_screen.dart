@@ -297,7 +297,8 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> with WidgetsBin
               child: ElevatedButton(
                 onPressed: _navigateToCreateSchedule,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
+                  // Lighter color between primary and background
+                  backgroundColor: const Color(0xFFD0A196), // Midpoint between #B85D4D and #E8E4DF
                   foregroundColor: Colors.white,
                   elevation: 0,
                   shadowColor: Colors.black.withOpacity(0.1),
@@ -305,9 +306,9 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> with WidgetsBin
                     borderRadius: BorderRadius.circular(28),
                   ),
                 ).copyWith(
-                  elevation: MaterialStateProperty.all(4),
+                  elevation: MaterialStateProperty.all(3),
                   shadowColor: MaterialStateProperty.all(
-                    Colors.black.withOpacity(0.1),
+                    Colors.black.withOpacity(0.08),
                   ),
                 ),
                 child: Row(

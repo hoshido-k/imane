@@ -141,7 +141,8 @@ class PlacesService {
     }
   }
 
-  /// Get detailed information about a place by place ID using Places API (New)
+  /// Get detailed information about a place by place ID
+  /// Uses Geocoding API with place_id for better Japanese language support
   ///
   /// [placeId] - The place ID from autocomplete prediction
   /// [language] - Language code (default: 'ja' for Japanese)
@@ -150,37 +151,68 @@ class PlacesService {
     String language = 'ja',
   }) async {
     try {
-      final url = Uri.parse('$_placesBaseUrl/places/$placeId');
-
-      final response = await http.get(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Goog-Api-Key': _apiKey,
-          'X-Goog-FieldMask': 'id,displayName,formattedAddress,location',
-          'X-Goog-LanguageCode': language,
-        },
+      // Use Geocoding API with place_id parameter for better Japanese language support
+      final url = Uri.parse(
+        '$_geocodingBaseUrl/geocode/json'
+        '?place_id=$placeId'
+        '&language=$language'
+        '&key=$_apiKey',
       );
+
+      final response = await http.get(url);
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        final placeDetails = PlaceDetails.fromJsonNew(data, placeId);
-        print('[PlaceDetails API] Formatted address: ${placeDetails.formattedAddress}');
-        return placeDetails;
+        print('[PlaceDetails Geocoding] Response status: ${data['status']}');
+
+        if (data['status'] == 'OK' && data['results'].isNotEmpty) {
+          final result = data['results'][0];
+          final location = result['geometry']['location'];
+          final formattedAddress = result['formatted_address'] as String;
+
+          print('[PlaceDetails Geocoding] Formatted address: $formattedAddress');
+
+          // Try to find a more specific name
+          String name = formattedAddress;
+          if (result['address_components'] != null && (result['address_components'] as List).isNotEmpty) {
+            // Look for establishment, point_of_interest, or locality name
+            for (var component in result['address_components']) {
+              if (component['types'] != null) {
+                final types = component['types'] as List;
+                if (types.contains('establishment') ||
+                    types.contains('point_of_interest') ||
+                    types.contains('locality')) {
+                  name = component['long_name'] as String;
+                  print('[PlaceDetails Geocoding] Found name: $name');
+                  break;
+                }
+              }
+            }
+          }
+
+          return PlaceDetails(
+            placeId: placeId,
+            name: name,
+            formattedAddress: formattedAddress,
+            latitude: (location['lat'] as num).toDouble(),
+            longitude: (location['lng'] as num).toDouble(),
+          );
+        } else {
+          print('[PlaceDetails Geocoding] No results or error status: ${data['status']}');
+          throw Exception('Geocoding API error: ${data['status']}');
+        }
       } else {
-        final errorData = json.decode(response.body);
-        final errorMessage = errorData['error']?['message'] ?? 'Unknown error';
-        print('[PlaceDetails API] Error: ${response.statusCode} - $errorMessage');
-        throw Exception('Places API error: ${response.statusCode} - $errorMessage');
+        print('[PlaceDetails Geocoding] HTTP error: ${response.statusCode}');
+        throw Exception('HTTP error: ${response.statusCode}');
       }
     } catch (e) {
-      print('[PlaceDetails API] Error fetching place details: $e');
+      print('[PlaceDetails Geocoding] Error fetching place details: $e');
       return null;
     }
   }
 
   /// Search address by postal code (郵便番号→住所)
-  /// Uses Geocoding API
+  /// Uses Geocoding API with components parameter for better results
   ///
   /// [postalCode] - Japanese postal code (e.g., "1000001")
   /// [language] - Language code (default: 'ja' for Japanese)
@@ -189,9 +221,16 @@ class PlacesService {
     String language = 'ja',
   }) async {
     try {
+      // Format postal code with hyphen for better results (XXX-XXXX)
+      String formattedPostalCode = postalCode;
+      if (postalCode.length == 7 && !postalCode.contains('-')) {
+        formattedPostalCode = '${postalCode.substring(0, 3)}-${postalCode.substring(3)}';
+      }
+
+      // Use components parameter for more detailed address results
       final url = Uri.parse(
         '$_geocodingBaseUrl/geocode/json'
-        '?address=$postalCode,Japan'
+        '?components=postal_code:$formattedPostalCode|country:JP'
         '&language=$language'
         '&key=$_apiKey',
       );
@@ -201,13 +240,16 @@ class PlacesService {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         print('[PostalCode API] Response status: ${data['status']}');
+        print('[PostalCode API] Results count: ${data['results']?.length ?? 0}');
 
         if (data['status'] == 'OK' && data['results'].isNotEmpty) {
+          // Get the most detailed result (usually results[0])
           final result = data['results'][0];
           final location = result['geometry']['location'];
           final formattedAddress = result['formatted_address'] as String;
 
           print('[PostalCode API] Formatted address: $formattedAddress');
+          print('[PostalCode API] Address components: ${result['address_components']}');
 
           return PlaceDetails(
             placeId: result['place_id'] as String,
