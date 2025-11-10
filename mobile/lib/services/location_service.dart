@@ -370,40 +370,64 @@ class LocationService {
   /// Start foreground auto-update (for debugging)
   /// This sends location updates every 5 seconds while the app is in foreground
   Future<void> startForegroundAutoUpdate() async {
+    final timestamp = DateTime.now().toIso8601String();
+
     if (_isForegroundAutoUpdateEnabled) {
-      print('[LocationService] Foreground auto-update is already running');
+      print('[$timestamp] [LocationService] Foreground auto-update is already running');
       return;
     }
 
-    print('[LocationService] Starting foreground auto-update...');
+    print('[$timestamp] [LocationService] === Starting foreground auto-update ===');
+    print('[$timestamp] [LocationService] Update interval: ${_updateIntervalMs}ms (${_updateIntervalMs / 1000}s)');
     _isForegroundAutoUpdateEnabled = true;
+
+    // Send location immediately on start
+    try {
+      print('[$timestamp] [LocationService] Sending initial location...');
+      final position = await getCurrentLocation();
+
+      if (position != null) {
+        print('[$timestamp] [LocationService] Initial location fetched, sending to API...');
+        await _apiService.updateLocation(
+          latitude: position.latitude,
+          longitude: position.longitude,
+          accuracy: position.accuracy,
+        );
+        print('[$timestamp] [LocationService] ✓ Initial location sent successfully');
+      } else {
+        print('[$timestamp] [LocationService] ✗ Failed to get initial location');
+      }
+    } catch (e) {
+      print('[$timestamp] [LocationService] ✗ Initial location error: $e');
+    }
 
     // Start timer to send location every 5 seconds
     _foregroundTimer = Timer.periodic(
       Duration(milliseconds: _updateIntervalMs),
       (timer) async {
+        final timerTimestamp = DateTime.now().toIso8601String();
         try {
-          print('[LocationService] [Timer] Fetching location...');
+          print('[$timerTimestamp] [LocationService] [Timer] Fetching location...');
           final position = await getCurrentLocation();
 
           if (position != null) {
-            print('[LocationService] [Timer] Location fetched, sending to API...');
+            print('[$timerTimestamp] [LocationService] [Timer] Location fetched, sending to API...');
             await _apiService.updateLocation(
               latitude: position.latitude,
               longitude: position.longitude,
               accuracy: position.accuracy,
             );
-            print('[LocationService] [Timer] ✓ Location sent successfully');
+            print('[$timerTimestamp] [LocationService] [Timer] ✓ Location sent successfully');
           } else {
-            print('[LocationService] [Timer] ✗ Failed to get location');
+            print('[$timerTimestamp] [LocationService] [Timer] ✗ Failed to get location');
           }
         } catch (e) {
-          print('[LocationService] [Timer] ✗ Error: $e');
+          print('[$timerTimestamp] [LocationService] [Timer] ✗ Error: $e');
         }
       },
     );
 
-    print('[LocationService] Foreground auto-update started');
+    print('[$timestamp] [LocationService] ✓ Foreground auto-update started successfully');
   }
 
   /// Stop foreground auto-update

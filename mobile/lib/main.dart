@@ -140,23 +140,8 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
       await fcmService.initialize();
       print('[AuthCheck] FCM service initialized');
 
-      // Initialize Location service - always start tracking on login
-      final locationService = LocationService();
-
-      // Start background tracking (may not work on iOS)
-      print('[AuthCheck] Starting background location tracking...');
-      final trackingStarted = await locationService.startTracking();
-
-      if (trackingStarted) {
-        print('[AuthCheck] ✓ Background location tracking started');
-      } else {
-        print('[AuthCheck] ✗ Failed to start background location tracking');
-      }
-
-      // Start foreground auto-update as backup (works on both iOS and Android)
-      print('[AuthCheck] Starting foreground auto-update...');
-      await locationService.startForegroundAutoUpdate();
-      print('[AuthCheck] ✓ Foreground auto-update started (5 second interval)');
+      // Note: Location tracking will be started when user creates a schedule
+      // (see create_schedule_flow.dart)
 
       print('[AuthCheck] All services initialized successfully');
     } catch (e) {
