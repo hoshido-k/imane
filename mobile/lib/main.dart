@@ -138,10 +138,16 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
       await fcmService.initialize();
       print('[AuthCheck] FCM service initialized');
 
-      // Initialize Location service (resume tracking if needed)
+      // Initialize Location service - always start tracking on login
       final locationService = LocationService();
-      await locationService.resumeTrackingIfNeeded();
-      print('[AuthCheck] Location service initialized');
+      print('[AuthCheck] Starting location tracking...');
+      final trackingStarted = await locationService.startTracking();
+
+      if (trackingStarted) {
+        print('[AuthCheck] ✓ Location tracking started successfully');
+      } else {
+        print('[AuthCheck] ✗ Failed to start location tracking (permission may not be granted)');
+      }
 
       print('[AuthCheck] All services initialized successfully');
     } catch (e) {

@@ -167,7 +167,7 @@ class _CreateScheduleFlowState extends State<CreateScheduleFlow> {
         'start_time': _selectedDateTime!.toIso8601String(),
         'end_time': _selectedDateTime!.add(const Duration(hours: 2)).toIso8601String(),
         'notify_on_arrival': true,
-        'notify_after_minutes': 60,
+        'notify_after_minutes': 1,  // テスト用に1分に設定
         'notify_on_departure': true,
         'favorite': false,
       };
