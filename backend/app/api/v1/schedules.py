@@ -309,3 +309,67 @@ async def delete_schedule(
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
         else:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+
+
+@router.post("/{schedule_id}/test-arrival", status_code=status.HTTP_200_OK)
+async def test_arrival_notification(
+    schedule_id: str = Path(..., description="スケジュールID"),
+    current_user: UserInDB = Depends(get_current_user),
+    schedule_service: ScheduleService = Depends(lambda: ScheduleService()),
+):
+    """
+    到着通知をテスト送信（開発・デバッグ用）
+
+    指定したスケジュールに対して、到着通知を手動で送信します。
+    実際の位置情報を送らなくても通知をテストできます。
+
+    注意: このエンドポイントは、スケジュールの作成者のみが使用できます。
+    本番環境では無効化することを推奨します。
+
+    Args:
+        schedule_id: スケジュールID
+        current_user: 現在のユーザー
+        schedule_service: スケジュールサービス
+
+    Returns:
+        送信した通知の情報
+
+    Raises:
+        HTTPException: スケジュールが見つからない、または権限がない場合
+    """
+    try:
+        from app.services.auto_notification import AutoNotificationService
+
+        # スケジュールを取得
+        schedule = await schedule_service.get_schedule_by_id(schedule_id, current_user.uid)
+
+        if not schedule:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="スケジュールが見つかりません"
+            )
+
+        # スケジュールの作成者のみがテスト通知を送信できる
+        if schedule.user_id != current_user.uid:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="このスケジュールのテスト通知を送信する権限がありません",
+            )
+
+        # 到着通知を送信
+        auto_notification_service = AutoNotificationService()
+        notification_ids = await auto_notification_service.send_arrival_notification(
+            schedule=schedule,
+            current_coords=schedule.destination_coords,  # 目的地の座標を使用
+        )
+
+        return {
+            "message": "到着通知をテスト送信しました",
+            "schedule_id": schedule_id,
+            "destination_name": schedule.destination_name,
+            "notify_to_user_ids": schedule.notify_to_user_ids,
+            "notification_ids": notification_ids,
+            "count": len(notification_ids),
+        }
+
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
