@@ -164,15 +164,17 @@ class PlacesService {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        return PlaceDetails.fromJsonNew(data, placeId);
+        final placeDetails = PlaceDetails.fromJsonNew(data, placeId);
+        print('[PlaceDetails API] Formatted address: ${placeDetails.formattedAddress}');
+        return placeDetails;
       } else {
         final errorData = json.decode(response.body);
         final errorMessage = errorData['error']?['message'] ?? 'Unknown error';
-        print('Places API error: ${response.statusCode} - $errorMessage');
+        print('[PlaceDetails API] Error: ${response.statusCode} - $errorMessage');
         throw Exception('Places API error: ${response.statusCode} - $errorMessage');
       }
     } catch (e) {
-      print('Error fetching place details: $e');
+      print('[PlaceDetails API] Error fetching place details: $e');
       return null;
     }
   }
@@ -198,26 +200,32 @@ class PlacesService {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
+        print('[PostalCode API] Response status: ${data['status']}');
 
         if (data['status'] == 'OK' && data['results'].isNotEmpty) {
           final result = data['results'][0];
           final location = result['geometry']['location'];
+          final formattedAddress = result['formatted_address'] as String;
+
+          print('[PostalCode API] Formatted address: $formattedAddress');
 
           return PlaceDetails(
             placeId: result['place_id'] as String,
-            name: result['formatted_address'] as String,
-            formattedAddress: result['formatted_address'] as String,
+            name: formattedAddress,
+            formattedAddress: formattedAddress,
             latitude: (location['lat'] as num).toDouble(),
             longitude: (location['lng'] as num).toDouble(),
           );
         } else {
+          print('[PostalCode API] No results or error status: ${data['status']}');
           throw Exception('Geocoding API error: ${data['status']}');
         }
       } else {
+        print('[PostalCode API] HTTP error: ${response.statusCode}');
         throw Exception('HTTP error: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error searching by postal code: $e');
+      print('[PostalCode API] Error searching by postal code: $e');
       return null;
     }
   }
@@ -246,18 +254,24 @@ class PlacesService {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
 
+        print('[ReverseGeocode API] Response status: ${data['status']}');
+
         if (data['status'] == 'OK' && data['results'].isNotEmpty) {
           final result = data['results'][0];
           final location = result['geometry']['location'];
+          final formattedAddress = result['formatted_address'] as String;
+
+          print('[ReverseGeocode API] Formatted address: $formattedAddress');
 
           // Try to find a more specific name (e.g., building, landmark)
-          String name = result['formatted_address'] as String;
+          String name = formattedAddress;
           if (result['address_components'] != null && (result['address_components'] as List).isNotEmpty) {
             // Check for establishment or point_of_interest
             for (var component in result['address_components']) {
               if (component['types'] != null &&
                   (component['types'] as List).contains('establishment')) {
                 name = component['long_name'] as String;
+                print('[ReverseGeocode API] Found establishment name: $name');
                 break;
               }
             }
@@ -266,18 +280,20 @@ class PlacesService {
           return PlaceDetails(
             placeId: result['place_id'] as String,
             name: name,
-            formattedAddress: result['formatted_address'] as String,
+            formattedAddress: formattedAddress,
             latitude: (location['lat'] as num).toDouble(),
             longitude: (location['lng'] as num).toDouble(),
           );
         } else {
+          print('[ReverseGeocode API] No results or error status: ${data['status']}');
           throw Exception('Reverse Geocoding API error: ${data['status']}');
         }
       } else {
+        print('[ReverseGeocode API] HTTP error: ${response.statusCode}');
         throw Exception('HTTP error: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error reverse geocoding: $e');
+      print('[ReverseGeocode API] Error reverse geocoding: $e');
       return null;
     }
   }

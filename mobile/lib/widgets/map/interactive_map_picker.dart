@@ -213,6 +213,7 @@ class _InteractiveMapPickerState extends State<InteractiveMapPicker> {
     );
 
     if (placeDetails != null && mounted) {
+      print('[MapPicker] Place details: name=${placeDetails.name}, address=${placeDetails.formattedAddress}');
       final latLng = LatLng(placeDetails.latitude, placeDetails.longitude);
 
       setState(() {

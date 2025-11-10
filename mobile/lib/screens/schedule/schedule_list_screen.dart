@@ -209,115 +209,71 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> with WidgetsBin
   Widget _buildHeader() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
-      child: Column(
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+      child: Row(
         children: [
-          // Title row
-          Row(
-            children: [
-              const SizedBox(width: 40), // Left spacer for symmetry
-              Expanded(
-                child: Column(
-                  children: [
-                    // imane title
-                    Text(
-                      'imane',
-                      style: TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 30,
-                        fontWeight: FontWeight.w400,
-                        color: AppColors.primary,
-                        height: 1.2,
-                        letterSpacing: 0.3955,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    // Subtitle
-                    Text(
-                      '到着通知スケジュール',
-                      style: TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
-                        color: AppColors.textSecondary,
-                        height: 1.33,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              // 通知履歴ボタン
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x1A000000),
-                      offset: Offset(0, 2),
-                      blurRadius: 4,
-                      spreadRadius: 0,
-                    ),
-                  ],
-                ),
-                child: IconButton(
-                  icon: Icon(
-                    Icons.notifications_outlined,
+          const SizedBox(width: 40), // Left spacer for symmetry
+          Expanded(
+            child: Column(
+              children: [
+                // imane title
+                Text(
+                  'imane',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 30,
+                    fontWeight: FontWeight.w400,
                     color: AppColors.primary,
-                    size: 20,
+                    height: 1.2,
+                    letterSpacing: 0.3955,
                   ),
-                  padding: EdgeInsets.zero,
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const NotificationHistoryScreen(),
-                      ),
-                    );
-                  },
                 ),
-              ),
-            ],
+                const SizedBox(height: 4),
+                // Subtitle
+                Text(
+                  '到着通知スケジュール',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.textSecondary,
+                    height: 1.33,
+                  ),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 24),
-          // Create new schedule button
-          SizedBox(
-            width: double.infinity,
-            height: 56,
-            child: ElevatedButton(
-              onPressed: _navigateToCreateSchedule,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shadowColor: Colors.black.withOpacity(0.1),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(28),
+          // 通知履歴ボタン
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x1A000000),
+                  offset: Offset(0, 2),
+                  blurRadius: 4,
+                  spreadRadius: 0,
                 ),
-              ).copyWith(
-                elevation: MaterialStateProperty.all(4),
-                shadowColor: MaterialStateProperty.all(
-                  Colors.black.withOpacity(0.1),
-                ),
+              ],
+            ),
+            child: IconButton(
+              icon: Icon(
+                Icons.notifications_outlined,
+                color: AppColors.primary,
+                size: 20,
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
-                  Icon(Icons.add, size: 20),
-                  SizedBox(width: 8),
-                  Text(
-                    '新しい予定を作成',
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 16,
-                      fontWeight: FontWeight.w400,
-                      letterSpacing: -0.3125,
-                    ),
+              padding: EdgeInsets.zero,
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const NotificationHistoryScreen(),
                   ),
-                ],
-              ),
+                );
+              },
             ),
           ),
         ],
@@ -330,6 +286,50 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> with WidgetsBin
       children: [
         // Tab bar
         _buildTabBar(),
+        // Create new schedule button (only show for "My Schedules" tab)
+        if (_currentTabIndex == 0) ...[
+          const SizedBox(height: 16),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: SizedBox(
+              width: double.infinity,
+              height: 56,
+              child: ElevatedButton(
+                onPressed: _navigateToCreateSchedule,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shadowColor: Colors.black.withOpacity(0.1),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(28),
+                  ),
+                ).copyWith(
+                  elevation: MaterialStateProperty.all(4),
+                  shadowColor: MaterialStateProperty.all(
+                    Colors.black.withOpacity(0.1),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const [
+                    Icon(Icons.add, size: 20),
+                    SizedBox(width: 8),
+                    Text(
+                      '新しい予定を作成',
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 16,
+                        fontWeight: FontWeight.w400,
+                        letterSpacing: -0.3125,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
         const SizedBox(height: 16),
         // Content
         Expanded(child: _buildTabContent()),

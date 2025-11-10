@@ -279,19 +279,25 @@ class _Step2LocationScreenState extends State<Step2LocationScreen> {
         // Parse address components from formatted address
         // Format: 日本、〒100-0001 東京都千代田区千代田
         final address = placeDetails.formattedAddress;
+        print('[PostalCode] Raw address: $address');
         final addressParts = _parseJapaneseAddress(address);
+        print('[PostalCode] Parsed parts: $addressParts');
+
+        // Update controllers outside setState first
+        if (addressParts['prefecture'] != null) {
+          _prefectureController.text = addressParts['prefecture']!;
+          print('[PostalCode] Set prefecture: ${addressParts['prefecture']}');
+        }
+        if (addressParts['city'] != null) {
+          _cityController.text = addressParts['city']!;
+          print('[PostalCode] Set city: ${addressParts['city']}');
+        }
+        if (addressParts['street'] != null) {
+          _streetController.text = addressParts['street']!;
+          print('[PostalCode] Set street: ${addressParts['street']}');
+        }
 
         setState(() {
-          if (addressParts['prefecture'] != null) {
-            _prefectureController.text = addressParts['prefecture']!;
-          }
-          if (addressParts['city'] != null) {
-            _cityController.text = addressParts['city']!;
-          }
-          if (addressParts['street'] != null) {
-            _streetController.text = addressParts['street']!;
-          }
-
           // Also set the selected location
           _selectedLocation = LocationData(
             name: addressParts['city'] ?? address,
@@ -331,10 +337,14 @@ class _Step2LocationScreenState extends State<Step2LocationScreen> {
 
   /// Parse Japanese address into components
   Map<String, String> _parseJapaneseAddress(String address) {
+    print('[PostalCode] Original address: $address');
+
     // Remove "日本、" prefix if exists
-    address = address.replaceAll('日本、', '').replaceAll('日本', '');
+    address = address.replaceAll('日本、', '').replaceAll('日本', '').trim();
     // Remove postal code (〒XXX-XXXX)
-    address = address.replaceAll(RegExp(r'〒\d{3}-?\d{4}\s*'), '');
+    address = address.replaceAll(RegExp(r'〒\d{3}-?\d{4}\s*'), '').trim();
+
+    print('[PostalCode] After cleanup: $address');
 
     final result = <String, String>{};
 
@@ -353,21 +363,24 @@ class _Step2LocationScreenState extends State<Step2LocationScreen> {
     for (final pref in prefectures) {
       if (address.contains(pref)) {
         result['prefecture'] = pref;
-        address = address.substring(address.indexOf(pref) + pref.length);
+        address = address.substring(address.indexOf(pref) + pref.length).trim();
+        print('[PostalCode] Found prefecture: $pref, remaining: $address');
         break;
       }
     }
 
-    // Extract city (市区町村)
-    final cityMatch = RegExp(r'([^都道府県]{1,10}?[市区町村])').firstMatch(address);
+    // Extract city (市区町村) - improved regex
+    final cityMatch = RegExp(r'([^\s]{1,15}?[市区町村])').firstMatch(address);
     if (cityMatch != null) {
       result['city'] = cityMatch.group(1)!;
-      address = address.substring(cityMatch.end);
+      address = address.substring(cityMatch.end).trim();
+      print('[PostalCode] Found city: ${result['city']}, remaining: $address');
     }
 
     // Remaining is street
     if (address.trim().isNotEmpty) {
       result['street'] = address.trim();
+      print('[PostalCode] Street: ${result['street']}');
     }
 
     return result;
