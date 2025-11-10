@@ -23,6 +23,10 @@ class LocationService {
   DateTime? _lastUpdateTime;
   bool _isOnline = true;
 
+  // Foreground auto-update (for debugging)
+  Timer? _foregroundTimer;
+  bool _isForegroundAutoUpdateEnabled = false;
+
   // Location update interval (in milliseconds)
   // TODO: 本番環境では10分 (10 * 60 * 1000) に戻す
   static const int _updateIntervalMs = 1 * 5 * 1000; // 1 minute for testing
@@ -32,6 +36,9 @@ class LocationService {
 
   /// Check if location tracking is currently active
   bool get isTracking => _isTracking;
+
+  /// Check if foreground auto-update is enabled
+  bool get isForegroundAutoUpdateEnabled => _isForegroundAutoUpdateEnabled;
 
   /// Check location permission status
   Future<LocationPermission> checkPermission() async {
@@ -360,8 +367,112 @@ class LocationService {
     return await Geolocator.openLocationSettings();
   }
 
+  /// Start foreground auto-update (for debugging)
+  /// This sends location updates every 5 seconds while the app is in foreground
+  Future<void> startForegroundAutoUpdate() async {
+    if (_isForegroundAutoUpdateEnabled) {
+      print('[LocationService] Foreground auto-update is already running');
+      return;
+    }
+
+    print('[LocationService] Starting foreground auto-update...');
+    _isForegroundAutoUpdateEnabled = true;
+
+    // Start timer to send location every 5 seconds
+    _foregroundTimer = Timer.periodic(
+      Duration(milliseconds: _updateIntervalMs),
+      (timer) async {
+        try {
+          print('[LocationService] [Timer] Fetching location...');
+          final position = await getCurrentLocation();
+
+          if (position != null) {
+            print('[LocationService] [Timer] Location fetched, sending to API...');
+            await _apiService.updateLocation(
+              latitude: position.latitude,
+              longitude: position.longitude,
+              accuracy: position.accuracy,
+            );
+            print('[LocationService] [Timer] ✓ Location sent successfully');
+          } else {
+            print('[LocationService] [Timer] ✗ Failed to get location');
+          }
+        } catch (e) {
+          print('[LocationService] [Timer] ✗ Error: $e');
+        }
+      },
+    );
+
+    print('[LocationService] Foreground auto-update started');
+  }
+
+  /// Stop foreground auto-update
+  void stopForegroundAutoUpdate() {
+    if (!_isForegroundAutoUpdateEnabled) {
+      print('[LocationService] Foreground auto-update is not running');
+      return;
+    }
+
+    print('[LocationService] Stopping foreground auto-update...');
+    _foregroundTimer?.cancel();
+    _foregroundTimer = null;
+    _isForegroundAutoUpdateEnabled = false;
+    print('[LocationService] Foreground auto-update stopped');
+  }
+
+  /// Send current location manually (for debugging)
+  Future<Map<String, dynamic>> sendCurrentLocationManually() async {
+    final timestamp = DateTime.now().toIso8601String();
+    print('[$timestamp] [LocationService] Manual location send requested...');
+
+    try {
+      // Get current location
+      print('[$timestamp] [LocationService] Fetching current location...');
+      final position = await getCurrentLocation();
+
+      if (position == null) {
+        throw Exception('Failed to get current location');
+      }
+
+      print('[$timestamp] [LocationService] Location fetched:');
+      print('  - Latitude: ${position.latitude}');
+      print('  - Longitude: ${position.longitude}');
+      print('  - Accuracy: ${position.accuracy}m');
+
+      // Send to API
+      print('[$timestamp] [LocationService] Sending to API...');
+      final response = await _apiService.updateLocation(
+        latitude: position.latitude,
+        longitude: position.longitude,
+        accuracy: position.accuracy,
+      );
+
+      print('[$timestamp] [LocationService] ✓ Manual send successful');
+      print('  - Response: $response');
+
+      return {
+        'success': true,
+        'position': {
+          'latitude': position.latitude,
+          'longitude': position.longitude,
+          'accuracy': position.accuracy,
+        },
+        'response': response,
+        'timestamp': timestamp,
+      };
+    } catch (e) {
+      print('[$timestamp] [LocationService] ✗ Manual send failed: $e');
+      return {
+        'success': false,
+        'error': e.toString(),
+        'timestamp': timestamp,
+      };
+    }
+  }
+
   /// Dispose resources
   Future<void> dispose() async {
+    stopForegroundAutoUpdate();
     await stopTracking();
   }
 }
