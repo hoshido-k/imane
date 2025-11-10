@@ -368,8 +368,7 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
                     ),
                   ),
                 ),
-              ),
-            );
+              );
           },
         ),
       );

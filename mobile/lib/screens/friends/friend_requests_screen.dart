@@ -361,8 +361,7 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
                     ),
                   ),
                 ),
-              ),
-            );
+              );
           },
         ),
       );
@@ -656,8 +655,7 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
                     ),
                   ),
                 ),
-              ),
-            );
+              );
           },
         ),
       );
