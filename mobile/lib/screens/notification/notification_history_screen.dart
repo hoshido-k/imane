@@ -355,15 +355,6 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        Text(
-                          '下に引っ張って更新',
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 11,
-                            fontWeight: FontWeight.w400,
-                            color: AppColors.textSecondary.withOpacity(0.6),
-                          ),
-                        ),
                       ],
                     ),
                   ),
