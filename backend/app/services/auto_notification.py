@@ -137,8 +137,16 @@ class AutoNotificationService:
             "auto_delete_at": auto_delete_at,
         }
 
+        logger.info(
+            f"[通知履歴] notification_historyコレクションに保存中: "
+            f"history_id={history_id}, type={notification_type}, "
+            f"from={from_user_id} -> to={to_user_id}"
+        )
+
         history_ref = self.db.collection(self.notification_history_collection).document(history_id)
         history_ref.set(history_dict)
+
+        logger.info(f"[通知履歴] 保存完了: history_id={history_id}")
 
         return NotificationHistoryInDB(**history_dict)
 
@@ -155,18 +163,33 @@ class AutoNotificationService:
         Returns:
             送信した通知のIDリスト
         """
+        logger.info(
+            f"[到着通知] スケジュール {schedule.id} の処理開始: "
+            f"通知先={len(schedule.notify_to_user_ids)}人, "
+            f"到着通知有効={schedule.notify_on_arrival}"
+        )
+
         # 到着通知が無効の場合はスキップ
         if not schedule.notify_on_arrival:
-            logger.info(f"スケジュール {schedule.id}: 到着通知は無効です")
+            logger.warning(f"[到着通知] スケジュール {schedule.id}: 到着通知は無効です")
+            return []
+
+        # 通知先が空の場合は警告
+        if not schedule.notify_to_user_ids:
+            logger.warning(
+                f"[到着通知] スケジュール {schedule.id}: "
+                f"通知先ユーザーIDが空です。通知先を設定してください。"
+            )
             return []
 
         # ユーザー情報を取得
         user = await self.user_service.get_user_by_uid(schedule.user_id)
         if not user:
-            logger.error(f"ユーザーが見つかりません: {schedule.user_id}")
+            logger.error(f"[到着通知] ユーザーが見つかりません: {schedule.user_id}")
             return []
 
         user_name = user.display_name or user.username
+        logger.info(f"[到着通知] 送信者: {user_name} ({schedule.user_id})")
 
         # メッセージと地図リンクを生成
         message = self._format_arrival_message(user_name, schedule.destination_name)
@@ -177,7 +200,9 @@ class AutoNotificationService:
         # 通知先ユーザーに送信
         for to_user_id in schedule.notify_to_user_ids:
             try:
-                # プッシュ通知を送信
+                logger.info(f"[到着通知] 通知送信中: {schedule.user_id} -> {to_user_id}")
+
+                # プッシュ通知を送信（save_to_db=Trueで明示的に指定）
                 await self.notification_service.send_push_notification(
                     user_id=to_user_id,
                     title=f"{user_name}さんが到着",
@@ -190,6 +215,7 @@ class AutoNotificationService:
                         "map_link": map_link,
                         "coords": {"lat": current_coords.lat, "lng": current_coords.lng},
                     },
+                    save_to_db=True,  # 明示的にDB保存を指定
                 )
 
                 # 通知履歴を保存（24時間TTL）
@@ -203,11 +229,19 @@ class AutoNotificationService:
                 )
                 notification_ids.append(history.id)
 
-                logger.info(f"到着通知を送信: {schedule.user_id} -> {to_user_id}")
+                logger.info(
+                    f"[到着通知] 送信成功: {schedule.user_id} -> {to_user_id}, "
+                    f"履歴ID: {history.id}"
+                )
 
             except Exception as e:
-                logger.error(f"到着通知の送信に失敗: {e}")
+                logger.error(
+                    f"[到着通知] 送信失敗: {schedule.user_id} -> {to_user_id}, "
+                    f"エラー: {type(e).__name__}: {str(e)}",
+                    exc_info=True,
+                )
 
+        logger.info(f"[到着通知] 完了: {len(notification_ids)}件の通知を送信しました")
         return notification_ids
 
     async def send_stay_notification(
@@ -305,18 +339,33 @@ class AutoNotificationService:
         Returns:
             送信した通知のIDリスト
         """
+        logger.info(
+            f"[退出通知] スケジュール {schedule.id} の処理開始: "
+            f"通知先={len(schedule.notify_to_user_ids)}人, "
+            f"退出通知有効={schedule.notify_on_departure}"
+        )
+
         # 退出通知が無効の場合はスキップ
         if not schedule.notify_on_departure:
-            logger.info(f"スケジュール {schedule.id}: 退出通知は無効です")
+            logger.warning(f"[退出通知] スケジュール {schedule.id}: 退出通知は無効です")
+            return []
+
+        # 通知先が空の場合は警告
+        if not schedule.notify_to_user_ids:
+            logger.warning(
+                f"[退出通知] スケジュール {schedule.id}: "
+                f"通知先ユーザーIDが空です。通知先を設定してください。"
+            )
             return []
 
         # ユーザー情報を取得
         user = await self.user_service.get_user_by_uid(schedule.user_id)
         if not user:
-            logger.error(f"ユーザーが見つかりません: {schedule.user_id}")
+            logger.error(f"[退出通知] ユーザーが見つかりません: {schedule.user_id}")
             return []
 
         user_name = user.display_name or user.username
+        logger.info(f"[退出通知] 送信者: {user_name} ({schedule.user_id})")
 
         # メッセージを生成（退出通知では現在地リンクは不要）
         message = self._format_departure_message(user_name, schedule.destination_name)
@@ -327,7 +376,9 @@ class AutoNotificationService:
         # 通知先ユーザーに送信
         for to_user_id in schedule.notify_to_user_ids:
             try:
-                # プッシュ通知を送信
+                logger.info(f"[退出通知] 通知送信中: {schedule.user_id} -> {to_user_id}")
+
+                # プッシュ通知を送信（save_to_db=Trueで明示的に指定）
                 await self.notification_service.send_push_notification(
                     user_id=to_user_id,
                     title=f"{user_name}さんが出発",
@@ -339,6 +390,7 @@ class AutoNotificationService:
                         "destination_name": schedule.destination_name,
                         "map_link": map_link,
                     },
+                    save_to_db=True,  # 明示的にDB保存を指定
                 )
 
                 # 通知履歴を保存（24時間TTL）
@@ -352,11 +404,19 @@ class AutoNotificationService:
                 )
                 notification_ids.append(history.id)
 
-                logger.info(f"退出通知を送信: {schedule.user_id} -> {to_user_id}")
+                logger.info(
+                    f"[退出通知] 送信成功: {schedule.user_id} -> {to_user_id}, "
+                    f"履歴ID: {history.id}"
+                )
 
             except Exception as e:
-                logger.error(f"退出通知の送信に失敗: {e}")
+                logger.error(
+                    f"[退出通知] 送信失敗: {schedule.user_id} -> {to_user_id}, "
+                    f"エラー: {type(e).__name__}: {str(e)}",
+                    exc_info=True,
+                )
 
+        logger.info(f"[退出通知] 完了: {len(notification_ids)}件の通知を送信しました")
         return notification_ids
 
     async def check_and_send_stay_notifications(self) -> int:

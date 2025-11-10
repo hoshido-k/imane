@@ -194,6 +194,12 @@ class GeofencingService:
 
         all_schedules = active_schedules + arrived_schedules
 
+        logger.info(
+            f"[ジオフェンス処理] ユーザー: {user_id}, "
+            f"対象スケジュール: {len(all_schedules)}件 "
+            f"(ACTIVE: {len(active_schedules)}, ARRIVED: {len(arrived_schedules)})"
+        )
+
         # 現在時刻を取得
         now = datetime.now(UTC)
 
@@ -202,9 +208,21 @@ class GeofencingService:
             # 時間枠はあくまで目安なので、時間外でも通知を送る
             # （start_time/end_timeのチェックは行わない）
 
+            logger.info(
+                f"[ジオフェンス判定] スケジュール: {schedule.id}, "
+                f"目的地: {schedule.destination_name}, "
+                f"ステータス: {schedule.status}, "
+                f"通知先: {len(schedule.notify_to_user_ids)}人"
+            )
+
             # 到着判定
             is_entry, distance = await self.check_geofence_entry(
                 schedule, current_coords, previous_coords
+            )
+
+            logger.info(
+                f"[到着判定] スケジュール: {schedule.id}, "
+                f"到着判定: {is_entry}, 距離: {distance:.1f}m"
             )
 
             if is_entry:
@@ -229,6 +247,11 @@ class GeofencingService:
                     schedule, current_coords, previous_coords
                 )
 
+                logger.info(
+                    f"[退出判定] スケジュール: {schedule.id}, "
+                    f"退出判定: {is_exit}, 距離: {distance:.1f}m"
+                )
+
                 if is_exit:
                     # 退出イベントを記録
                     event = GeofenceEvent(
@@ -245,6 +268,7 @@ class GeofencingService:
                     )
                     logger.info(f"スケジュール {schedule.id}: ステータスをCOMPLETEDに更新")
 
+        logger.info(f"[ジオフェンス処理完了] 検出イベント: {len(events)}件")
         return events
 
     async def get_nearby_schedules(

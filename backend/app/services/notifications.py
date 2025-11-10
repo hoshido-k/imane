@@ -58,24 +58,37 @@ class NotificationService:
         if data is None:
             data = {}
 
+        logger.info(
+            f"[通知送信] 送信先: {user_id}, タイプ: {notification_type.value}, "
+            f"タイトル: {title}, DB保存: {save_to_db}"
+        )
+
         # ユーザーを取得
         user = await self.user_service.get_user_by_uid(user_id)
         if not user:
+            logger.error(f"[通知送信] ユーザーが見つかりません: {user_id}")
             raise ValueError(f"ユーザーが見つかりません: {user_id}")
 
         # FCMトークンが登録されているか確認
         if not user.fcm_tokens or len(user.fcm_tokens) == 0:
-            logger.warning(f"ユーザー {user_id} にFCMトークンが登録されていません")
+            logger.warning(
+                f"[通知送信] ユーザー {user_id} にFCMトークンが登録されていません。"
+                f"FCM送信はスキップしますが、DB保存は実行します。"
+            )
             # トークンがなくてもDB保存は行う（後で通知一覧で確認できるように）
             if save_to_db:
-                return await self._save_notification_to_db(
+                result = await self._save_notification_to_db(
                     user_id=user_id,
                     title=title,
                     body=body,
                     notification_type=notification_type,
                     data=data,
                 )
+                logger.info(f"[通知送信] DB保存完了: notification_id={result.notification_id}")
+                return result
             return None
+
+        logger.info(f"[通知送信] FCMトークン数: {len(user.fcm_tokens)}")
 
         # FCMメッセージを構築
         # 複数のトークンに送信する場合はMulticastMessageを使用
@@ -120,7 +133,7 @@ class NotificationService:
         try:
             response = messaging.send_multicast(multicast_message)
             logger.info(
-                f"FCM送信完了: {response.success_count}/{len(tokens)} 成功, "
+                f"[通知送信] FCM送信完了: {response.success_count}/{len(tokens)} 成功, "
                 f"{response.failure_count} 失敗"
             )
 
@@ -130,24 +143,29 @@ class NotificationService:
                 for idx, result in enumerate(response.responses):
                     if not result.success:
                         failed_tokens.append(tokens[idx])
-                        logger.warning(f"FCM送信失敗: {tokens[idx]}, エラー: {result.exception}")
+                        logger.warning(
+                            f"[通知送信] FCM送信失敗: トークン={tokens[idx][:20]}..., "
+                            f"エラー: {result.exception}"
+                        )
 
                 # 無効なトークンを削除
                 await self._remove_invalid_fcm_tokens(user_id, failed_tokens)
 
         except Exception as e:
-            logger.error(f"FCM送信エラー: {e}")
+            logger.error(f"[通知送信] FCM送信エラー: {type(e).__name__}: {str(e)}", exc_info=True)
             # エラーが発生してもDB保存は続行
 
         # Firestoreに通知を保存
         if save_to_db:
-            return await self._save_notification_to_db(
+            result = await self._save_notification_to_db(
                 user_id=user_id,
                 title=title,
                 body=body,
                 notification_type=notification_type,
                 data=data,
             )
+            logger.info(f"[通知送信] DB保存完了: notification_id={result.notification_id}")
+            return result
 
         return None
 
@@ -185,7 +203,14 @@ class NotificationService:
             "read_at": None,
         }
 
+        logger.info(
+            f"[DB保存] notificationsコレクションに保存中: "
+            f"notification_id={notification_ref.id}, user_id={user_id}, type={notification_type.value}"
+        )
+
         notification_ref.set(notification_dict)
+
+        logger.info(f"[DB保存] 保存完了: notification_id={notification_ref.id}")
 
         return NotificationResponse(**notification_dict)
 
