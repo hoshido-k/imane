@@ -311,12 +311,12 @@ class _Step1DateTimeScreenState extends State<Step1DateTimeScreen> {
                     const SizedBox(height: 8),
                     _buildScrollablePicker(
                       itemCount: 24,
-                      selectedIndex: _selectedTime?.hour ?? 0,
+                      selectedIndex: _selectedTime?.hour ?? TimeOfDay.now().hour,
                       onChanged: (index) {
                         setState(() {
                           _selectedTime = TimeOfDay(
                             hour: index,
-                            minute: _selectedTime?.minute ?? 0,
+                            minute: _selectedTime?.minute ?? TimeOfDay.now().minute,
                           );
                           // Set default date if not set yet
                           if (_selectedDate == null) {
@@ -342,11 +342,11 @@ class _Step1DateTimeScreenState extends State<Step1DateTimeScreen> {
                     const SizedBox(height: 8),
                     _buildScrollablePicker(
                       itemCount: 60,
-                      selectedIndex: _selectedTime?.minute ?? 0,
+                      selectedIndex: _selectedTime?.minute ?? TimeOfDay.now().minute,
                       onChanged: (index) {
                         setState(() {
                           _selectedTime = TimeOfDay(
-                            hour: _selectedTime?.hour ?? 0,
+                            hour: _selectedTime?.hour ?? TimeOfDay.now().hour,
                             minute: index,
                           );
                           // Set default date if not set yet
@@ -380,20 +380,34 @@ class _Step1DateTimeScreenState extends State<Step1DateTimeScreen> {
     required int selectedIndex,
     required Function(int) onChanged,
   }) {
+    // Calculate initial scroll offset to show selected item in the center (3rd position)
+    // Item height is 44px, container shows 5 items (220px)
+    const double itemHeight = 44.0;
+    const double containerHeight = 220.0; // 44px × 5 items
+
+    // Position selected item in the center (3rd position)
+    // This means 2 items above the selected item
+    final double initialOffset = (selectedIndex * itemHeight - (2 * itemHeight)).clamp(0.0, (itemCount * itemHeight) - containerHeight);
+
+    final ScrollController scrollController = ScrollController(
+      initialScrollOffset: initialOffset,
+    );
+
     return Container(
-      height: 180,
+      height: containerHeight,
       decoration: BoxDecoration(
         border: Border.all(color: AppColors.inputBorder),
         borderRadius: BorderRadius.circular(8),
       ),
       child: ListView.builder(
+        controller: scrollController,
         itemCount: itemCount,
         itemBuilder: (context, index) {
           final isSelected = index == selectedIndex;
           return GestureDetector(
             onTap: () => onChanged(index),
             child: Container(
-              height: 44,
+              height: itemHeight,
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: isSelected ? AppColors.primary : Colors.transparent,
