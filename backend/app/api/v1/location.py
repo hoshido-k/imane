@@ -36,17 +36,38 @@ async def update_location(
     Returns:
         更新結果と通知・スケジュール更新の情報
     """
+    import logging
+
     from app.services.auto_notification import AutoNotificationService
     from app.services.geofencing import GeofencingService
+
+    logger = logging.getLogger(__name__)
+
+    logger.info(
+        f"[位置情報更新] ユーザー: {current_user.uid}, "
+        f"座標: ({location_data.coords.lat}, {location_data.coords.lng}), "
+        f"精度: {location_data.accuracy}m"
+    )
 
     # 位置情報を記録
     await location_service.record_location(current_user.uid, location_data)
 
-    # 前回の位置情報を取得
-    location_histories = await location_service.get_location_history(current_user.uid, limit=2)
+    # 前回の位置情報を取得（インデックスエラーが出る場合はスキップ）
     previous_coords = None
-    if len(location_histories) >= 2:
-        previous_coords = location_histories[1].coords
+    try:
+        location_histories = await location_service.get_location_history(current_user.uid, limit=2)
+        if len(location_histories) >= 2:
+            previous_coords = location_histories[1].coords
+            logger.info(
+                f"[位置情報更新] 前回の位置: ({previous_coords.lat}, {previous_coords.lng})"
+            )
+        else:
+            logger.info(f"[位置情報更新] 初回の位置情報記録（履歴件数: {len(location_histories)}）")
+    except Exception as e:
+        logger.warning(
+            f"[位置情報更新] 位置情報履歴の取得に失敗（インデックス未作成の可能性）: {e}. "
+            f"前回位置情報なしで処理を継続します"
+        )
 
     # ジオフェンスチェック
     geofencing_service = GeofencingService()
@@ -56,12 +77,24 @@ async def update_location(
         previous_coords=previous_coords,
     )
 
+    logger.info(
+        f"[位置情報更新] ジオフェンスイベント: {len(geofence_events)}件検出"
+    )
+
     # 自動通知の送信
     auto_notification_service = AutoNotificationService()
     triggered_notifications = []
     schedule_updates = []
 
     for event in geofence_events:
+        logger.info(
+            f"[ジオフェンスイベント] タイプ: {event.event_type}, "
+            f"スケジュール: {event.schedule.id}, "
+            f"目的地: {event.schedule.destination_name}, "
+            f"距離: {event.distance_to_destination:.1f}m, "
+            f"通知先: {len(event.schedule.notify_to_user_ids)}人"
+        )
+
         schedule_update = {
             "schedule_id": event.schedule.id,
             "destination_name": event.schedule.destination_name,
@@ -71,9 +104,11 @@ async def update_location(
 
         if event.event_type == "entry":
             # 到着通知を送信
+            logger.info(f"[到着通知] スケジュール {event.schedule.id} の到着通知を送信開始")
             notification_ids = await auto_notification_service.send_arrival_notification(
                 schedule=event.schedule, current_coords=location_data.coords
             )
+            logger.info(f"[到着通知] {len(notification_ids)}件の通知を送信しました")
             schedule_update["status"] = "arrived"
             schedule_update["notification_ids"] = notification_ids
             triggered_notifications.extend(
@@ -82,9 +117,11 @@ async def update_location(
 
         elif event.event_type == "exit":
             # 退出通知を送信
+            logger.info(f"[退出通知] スケジュール {event.schedule.id} の退出通知を送信開始")
             notification_ids = await auto_notification_service.send_departure_notification(
                 schedule=event.schedule, current_coords=location_data.coords
             )
+            logger.info(f"[退出通知] {len(notification_ids)}件の通知を送信しました")
             schedule_update["status"] = "completed"
             schedule_update["notification_ids"] = notification_ids
             triggered_notifications.extend(
@@ -94,6 +131,7 @@ async def update_location(
         schedule_updates.append(schedule_update)
 
     message = f"位置情報を記録しました。{len(geofence_events)}件のジオフェンスイベントを処理しました。"
+    logger.info(f"[位置情報更新完了] {message}")
 
     return LocationUpdateResponse(
         message=message,

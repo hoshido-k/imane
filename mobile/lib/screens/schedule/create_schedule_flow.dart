@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/schedule.dart' show LocationSchedule, LatLng;
 import '../../services/api_service.dart';
+import '../../services/location_service.dart';
 import 'steps/step1_datetime_screen.dart';
 import 'steps/step2_location_screen.dart';
 import 'steps/step3_recipients_screen.dart';
@@ -180,6 +181,37 @@ class _CreateScheduleFlowState extends State<CreateScheduleFlow> {
 
       print('[CreateSchedule] SUCCESS! Response: $response');
       print('[CreateSchedule] Response type: ${response.runtimeType}');
+
+      if (!mounted) return;
+
+      // Start location tracking after schedule creation
+      try {
+        final locationService = LocationService();
+        final hasPermission = await locationService.hasAlwaysPermission();
+
+        if (hasPermission) {
+          print('[CreateSchedule] Starting location tracking...');
+          final trackingStarted = await locationService.startTracking();
+          if (trackingStarted) {
+            print('[CreateSchedule] Location tracking started successfully');
+          } else {
+            print('[CreateSchedule] Failed to start location tracking');
+          }
+        } else {
+          print('[CreateSchedule] Location permission not granted - tracking not started');
+          // Show permission reminder
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('位置情報の「常に許可」を有効にすると、自動的に到着通知が送信されます'),
+              backgroundColor: Colors.orange,
+              duration: Duration(seconds: 4),
+            ),
+          );
+        }
+      } catch (e) {
+        print('[CreateSchedule] Error starting location tracking: $e');
+        // Continue even if tracking fails
+      }
 
       if (!mounted) return;
 

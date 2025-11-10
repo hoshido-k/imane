@@ -194,8 +194,10 @@ class ApiService {
     return await post(
       '/location/update',
       body: {
-        'latitude': latitude,
-        'longitude': longitude,
+        'coords': {
+          'lat': latitude,
+          'lng': longitude,
+        },
         if (accuracy != null) 'accuracy': accuracy,
       },
       requiresAuth: true,
