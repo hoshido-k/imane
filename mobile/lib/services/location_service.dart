@@ -23,8 +23,9 @@ class LocationService {
   DateTime? _lastUpdateTime;
   bool _isOnline = true;
 
-  // 10 minutes interval for location updates (in milliseconds)
-  static const int _updateIntervalMs = 10 * 60 * 1000;
+  // Location update interval (in milliseconds)
+  // TODO: 本番環境では10分 (10 * 60 * 1000) に戻す
+  static const int _updateIntervalMs = 1 * 5 * 1000; // 1 minute for testing
 
   // Minimum distance filter in meters
   static const double _distanceFilterMeters = 50.0;

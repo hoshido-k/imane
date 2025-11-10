@@ -52,16 +52,22 @@ async def update_location(
     # 位置情報を記録
     await location_service.record_location(current_user.uid, location_data)
 
-    # 前回の位置情報を取得
-    location_histories = await location_service.get_location_history(current_user.uid, limit=2)
+    # 前回の位置情報を取得（インデックスエラーが出る場合はスキップ）
     previous_coords = None
-    if len(location_histories) >= 2:
-        previous_coords = location_histories[1].coords
-        logger.info(
-            f"[位置情報更新] 前回の位置: ({previous_coords.lat}, {previous_coords.lng})"
+    try:
+        location_histories = await location_service.get_location_history(current_user.uid, limit=2)
+        if len(location_histories) >= 2:
+            previous_coords = location_histories[1].coords
+            logger.info(
+                f"[位置情報更新] 前回の位置: ({previous_coords.lat}, {previous_coords.lng})"
+            )
+        else:
+            logger.info(f"[位置情報更新] 初回の位置情報記録（履歴件数: {len(location_histories)}）")
+    except Exception as e:
+        logger.warning(
+            f"[位置情報更新] 位置情報履歴の取得に失敗（インデックス未作成の可能性）: {e}. "
+            f"前回位置情報なしで処理を継続します"
         )
-    else:
-        logger.info(f"[位置情報更新] 初回の位置情報記録（履歴件数: {len(location_histories)}）")
 
     # ジオフェンスチェック
     geofencing_service = GeofencingService()
