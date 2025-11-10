@@ -115,11 +115,20 @@ class LocationScheduleInDB(LocationScheduleBase):
     model_config = ConfigDict(from_attributes=True)
 
 
+class CreatorUser(BaseModel):
+    """作成者ユーザー情報"""
+
+    user_id: str = Field(..., description="ユーザID")
+    display_name: str = Field(..., description="表示名")
+    profile_image_url: Optional[str] = Field(None, description="プロフィール画像URL")
+
+
 class LocationScheduleResponse(BaseModel):
     """スケジュールのレスポンス"""
 
     id: str
     user_id: str
+    creator: Optional[CreatorUser] = Field(None, description="作成者情報")
     destination_name: str
     destination_address: str
     destination_coords: Coordinates

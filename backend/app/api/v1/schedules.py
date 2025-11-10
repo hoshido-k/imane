@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
 
 from app.api.dependencies import get_current_user
 from app.schemas.schedule import (
+    CreatorUser,
     LocationScheduleCreate,
     LocationScheduleListResponse,
     LocationScheduleResponse,
@@ -25,6 +26,7 @@ router = APIRouter()
 async def _enrich_schedule_with_user_info(
     schedule: LocationScheduleResponse,
     user_service: UserService,
+    include_creator: bool = False,
 ) -> LocationScheduleResponse:
     """
     スケジュールに通知先ユーザー情報を追加
@@ -32,6 +34,7 @@ async def _enrich_schedule_with_user_info(
     Args:
         schedule: スケジュールレスポンス
         user_service: ユーザーサービス
+        include_creator: 作成者情報も追加するか
 
     Returns:
         ユーザー情報を追加したスケジュールレスポンス
@@ -49,6 +52,17 @@ async def _enrich_schedule_with_user_info(
             )
 
     schedule.notify_to_users = notify_to_users
+
+    # 作成者情報も追加する場合
+    if include_creator:
+        creator = await user_service.get_user_by_uid(schedule.user_id)
+        if creator:
+            schedule.creator = CreatorUser(
+                user_id=creator.uid,
+                display_name=creator.display_name,
+                profile_image_url=creator.profile_image_url,
+            )
+
     return schedule
 
 
@@ -146,6 +160,44 @@ async def get_active_schedules(
     for s in schedules:
         schedule_response = LocationScheduleResponse(**s.model_dump())
         enriched_schedule = await _enrich_schedule_with_user_info(schedule_response, user_service)
+        schedule_responses.append(enriched_schedule)
+
+    return LocationScheduleListResponse(schedules=schedule_responses, total=len(schedule_responses))
+
+
+@router.get("/friend-schedules", response_model=LocationScheduleListResponse)
+async def get_friend_schedules(
+    status_filter: Optional[ScheduleStatus] = Query(
+        None, description="ステータスでフィルタリング"
+    ),
+    current_user: UserInDB = Depends(get_current_user),
+    schedule_service: ScheduleService = Depends(lambda: ScheduleService()),
+    user_service: UserService = Depends(lambda: UserService()),
+):
+    """
+    フレンドが作成したスケジュール一覧を取得
+
+    自分が通知先として指定されているフレンドのスケジュールの一覧を取得します。
+    オプションでステータスによるフィルタリングが可能です。
+
+    Args:
+        status_filter: ステータスフィルター（active/arrived/completed/expired）
+        current_user: 現在のユーザー
+        schedule_service: スケジュールサービス
+        user_service: ユーザーサービス
+
+    Returns:
+        フレンドのスケジュール一覧
+    """
+    schedules = await schedule_service.get_schedules_by_recipient(current_user.uid, status_filter)
+
+    # LocationScheduleInDB -> LocationScheduleResponse に変換し、ユーザー情報と作成者情報を追加
+    schedule_responses = []
+    for s in schedules:
+        schedule_response = LocationScheduleResponse(**s.model_dump())
+        enriched_schedule = await _enrich_schedule_with_user_info(
+            schedule_response, user_service, include_creator=True
+        )
         schedule_responses.append(enriched_schedule)
 
     return LocationScheduleListResponse(schedules=schedule_responses, total=len(schedule_responses))
