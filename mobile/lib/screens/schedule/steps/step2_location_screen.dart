@@ -136,8 +136,11 @@ class _Step2LocationScreenState extends State<Step2LocationScreen> {
       ),
     );
 
-    // Get place details (coordinates)
-    final placeDetails = await _placesService.getPlaceDetails(prediction.placeId);
+    // Get place details (coordinates) in Japanese
+    final placeDetails = await _placesService.getPlaceDetails(
+      prediction.placeId,
+      language: 'ja',
+    );
 
     if (!mounted) return;
     Navigator.pop(context); // Close loading dialog
@@ -230,6 +233,144 @@ class _Step2LocationScreenState extends State<Step2LocationScreen> {
     }
     // Proceed to next step with the selected location
     widget.onNext(_selectedLocation!);
+  }
+
+  /// Search address by postal code and auto-fill the form
+  Future<void> _searchByPostalCode() async {
+    final postalCode = _postalCodeController.text.trim();
+
+    if (postalCode.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('郵便番号を入力してください'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
+    // Validate postal code format (7 digits)
+    if (postalCode.length != 7 || !RegExp(r'^\d+$').hasMatch(postalCode)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('7桁の郵便番号を入力してください（ハイフンなし）'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
+    // Show loading dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+
+    try {
+      final placeDetails = await _placesService.searchByPostalCode(postalCode);
+
+      if (!mounted) return;
+      Navigator.pop(context); // Close loading dialog
+
+      if (placeDetails != null) {
+        // Parse address components from formatted address
+        // Format: 日本、〒100-0001 東京都千代田区千代田
+        final address = placeDetails.formattedAddress;
+        final addressParts = _parseJapaneseAddress(address);
+
+        setState(() {
+          if (addressParts['prefecture'] != null) {
+            _prefectureController.text = addressParts['prefecture']!;
+          }
+          if (addressParts['city'] != null) {
+            _cityController.text = addressParts['city']!;
+          }
+          if (addressParts['street'] != null) {
+            _streetController.text = addressParts['street']!;
+          }
+
+          // Also set the selected location
+          _selectedLocation = LocationData(
+            name: addressParts['city'] ?? address,
+            address: address,
+            latitude: placeDetails.latitude,
+            longitude: placeDetails.longitude,
+          );
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('住所を自動入力しました'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('郵便番号から住所が見つかりませんでした'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } catch (e) {
+      print('Error searching postal code: $e');
+      if (mounted) {
+        Navigator.pop(context); // Close loading dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('住所の検索に失敗しました'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Parse Japanese address into components
+  Map<String, String> _parseJapaneseAddress(String address) {
+    // Remove "日本、" prefix if exists
+    address = address.replaceAll('日本、', '').replaceAll('日本', '');
+    // Remove postal code (〒XXX-XXXX)
+    address = address.replaceAll(RegExp(r'〒\d{3}-?\d{4}\s*'), '');
+
+    final result = <String, String>{};
+
+    // List of Japanese prefectures
+    final prefectures = [
+      '北海道', '青森県', '岩手県', '宮城県', '秋田県', '山形県', '福島県',
+      '茨城県', '栃木県', '群馬県', '埼玉県', '千葉県', '東京都', '神奈川県',
+      '新潟県', '富山県', '石川県', '福井県', '山梨県', '長野県', '岐阜県',
+      '静岡県', '愛知県', '三重県', '滋賀県', '京都府', '大阪府', '兵庫県',
+      '奈良県', '和歌山県', '鳥取県', '島根県', '岡山県', '広島県', '山口県',
+      '徳島県', '香川県', '愛媛県', '高知県', '福岡県', '佐賀県', '長崎県',
+      '熊本県', '大分県', '宮崎県', '鹿児島県', '沖縄県'
+    ];
+
+    // Find prefecture
+    for (final pref in prefectures) {
+      if (address.contains(pref)) {
+        result['prefecture'] = pref;
+        address = address.substring(address.indexOf(pref) + pref.length);
+        break;
+      }
+    }
+
+    // Extract city (市区町村)
+    final cityMatch = RegExp(r'([^都道府県]{1,10}?[市区町村])').firstMatch(address);
+    if (cityMatch != null) {
+      result['city'] = cityMatch.group(1)!;
+      address = address.substring(cityMatch.end);
+    }
+
+    // Remaining is street
+    if (address.trim().isNotEmpty) {
+      result['street'] = address.trim();
+    }
+
+    return result;
   }
 
   @override
@@ -522,9 +663,7 @@ class _Step2LocationScreenState extends State<Step2LocationScreen> {
               keyboardType: TextInputType.number,
               suffixIcon: IconButton(
                 icon: Icon(Icons.search, color: AppColors.primary),
-                onPressed: () {
-                  // TODO: Search address by postal code
-                },
+                onPressed: _searchByPostalCode,
               ),
             ),
             const SizedBox(height: 4),

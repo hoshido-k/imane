@@ -84,20 +84,45 @@ class _CreateScheduleFlowState extends State<CreateScheduleFlow> {
     );
   }
 
-  void _navigateToStep4() {
-    // Get recipient names (TODO: fetch from API)
-    final recipientNames = _selectedRecipientIds!.map((id) {
-      // Mock data - replace with actual API call
-      final mockNames = {
-        '1': '田中 太郎',
-        '2': '佐藤 花子',
-        '3': '鈴木 次郎',
-        '4': '高橋 美咲',
-        '5': '渡辺 健太',
-        '6': '伊藤 あゆみ',
-      };
-      return mockNames[id] ?? 'Unknown';
-    }).toList();
+  Future<void> _navigateToStep4() async {
+    // Fetch friend names from API
+    List<String> recipientNames = [];
+    try {
+      final response = await _apiService.get('/friends');
+
+      List<dynamic> friendsJson;
+      if (response is Map && response['friends'] != null) {
+        friendsJson = response['friends'];
+      } else if (response is List) {
+        friendsJson = response;
+      } else {
+        friendsJson = [];
+      }
+
+      // Create a map of friend_id -> friend_display_name
+      final friendMap = <String, String>{};
+      for (final friendData in friendsJson) {
+        final friendId = friendData['friend_id'] as String?;
+        final friendName = friendData['friend_display_name'] as String? ??
+                          friendData['friend_email'] as String? ??
+                          'Unknown';
+        if (friendId != null) {
+          friendMap[friendId] = friendName;
+        }
+      }
+
+      // Map selected IDs to names
+      recipientNames = _selectedRecipientIds!.map((id) {
+        return friendMap[id] ?? 'Unknown';
+      }).toList();
+
+    } catch (e) {
+      print('[CreateSchedule] Error fetching friend names: $e');
+      // Fallback to Unknown if API fails
+      recipientNames = _selectedRecipientIds!.map((id) => 'Unknown').toList();
+    }
+
+    if (!mounted) return;
 
     Navigator.push(
       context,

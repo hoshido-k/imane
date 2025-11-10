@@ -177,6 +177,51 @@ class PlacesService {
     }
   }
 
+  /// Search address by postal code (郵便番号→住所)
+  /// Uses Geocoding API
+  ///
+  /// [postalCode] - Japanese postal code (e.g., "1000001")
+  /// [language] - Language code (default: 'ja' for Japanese)
+  Future<PlaceDetails?> searchByPostalCode(
+    String postalCode, {
+    String language = 'ja',
+  }) async {
+    try {
+      final url = Uri.parse(
+        '$_geocodingBaseUrl/geocode/json'
+        '?address=$postalCode,Japan'
+        '&language=$language'
+        '&key=$_apiKey',
+      );
+
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+
+        if (data['status'] == 'OK' && data['results'].isNotEmpty) {
+          final result = data['results'][0];
+          final location = result['geometry']['location'];
+
+          return PlaceDetails(
+            placeId: result['place_id'] as String,
+            name: result['formatted_address'] as String,
+            formattedAddress: result['formatted_address'] as String,
+            latitude: (location['lat'] as num).toDouble(),
+            longitude: (location['lng'] as num).toDouble(),
+          );
+        } else {
+          throw Exception('Geocoding API error: ${data['status']}');
+        }
+      } else {
+        throw Exception('HTTP error: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error searching by postal code: $e');
+      return null;
+    }
+  }
+
   /// Reverse geocode coordinates to get address (緯度経度→住所)
   /// Uses Geocoding API (legacy endpoint)
   ///

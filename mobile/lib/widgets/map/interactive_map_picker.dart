@@ -206,8 +206,11 @@ class _InteractiveMapPickerState extends State<InteractiveMapPicker> {
     // Unfocus keyboard
     FocusScope.of(context).unfocus();
 
-    // Get place details (coordinates)
-    final placeDetails = await _placesService.getPlaceDetails(prediction.placeId);
+    // Get place details (coordinates) in Japanese
+    final placeDetails = await _placesService.getPlaceDetails(
+      prediction.placeId,
+      language: 'ja',
+    );
 
     if (placeDetails != null && mounted) {
       final latLng = LatLng(placeDetails.latitude, placeDetails.longitude);
@@ -237,10 +240,11 @@ class _InteractiveMapPickerState extends State<InteractiveMapPicker> {
       _isLoadingLocation = true;
     });
 
-    // Get address from coordinates using reverse geocoding
+    // Get address from coordinates using reverse geocoding (in Japanese)
     final placeDetails = await _placesService.reverseGeocode(
       position.latitude,
       position.longitude,
+      language: 'ja',
     );
 
     if (mounted) {
@@ -278,10 +282,11 @@ class _InteractiveMapPickerState extends State<InteractiveMapPicker> {
       _isLoadingLocation = true;
     });
 
-    // Get address from coordinates using reverse geocoding
+    // Get address from coordinates using reverse geocoding (in Japanese)
     final placeDetails = await _placesService.reverseGeocode(
       position.latitude,
       position.longitude,
+      language: 'ja',
     );
 
     if (mounted) {
@@ -359,6 +364,7 @@ class _InteractiveMapPickerState extends State<InteractiveMapPicker> {
             myLocationEnabled: true,
             myLocationButtonEnabled: false,
             zoomControlsEnabled: false,
+            zoomGesturesEnabled: true, // Enable pinch-to-zoom with 2 fingers
             mapToolbarEnabled: false,
             buildingsEnabled: true,
             trafficEnabled: false,
