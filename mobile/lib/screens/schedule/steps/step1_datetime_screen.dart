@@ -380,14 +380,14 @@ class _Step1DateTimeScreenState extends State<Step1DateTimeScreen> {
     required int selectedIndex,
     required Function(int) onChanged,
   }) {
-    // Calculate initial scroll offset to show selected item near top
-    // Item height is 44px, we want to show the selected item in view
+    // Calculate initial scroll offset to show selected item in the center (3rd position)
+    // Item height is 44px, container shows 5 items (220px)
     const double itemHeight = 44.0;
-    const double containerHeight = 180.0;
+    const double containerHeight = 220.0; // 44px × 5 items
 
-    // Position selected item so it's visible, ideally near the top of the viewport
-    // Subtract one item height to show it clearly
-    final double initialOffset = (selectedIndex * itemHeight - itemHeight).clamp(0.0, (itemCount * itemHeight) - containerHeight);
+    // Position selected item in the center (3rd position)
+    // This means 2 items above the selected item
+    final double initialOffset = (selectedIndex * itemHeight - (2 * itemHeight)).clamp(0.0, (itemCount * itemHeight) - containerHeight);
 
     final ScrollController scrollController = ScrollController(
       initialScrollOffset: initialOffset,
