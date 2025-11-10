@@ -27,10 +27,40 @@ class NotifyToUser {
   }
 }
 
+/// Creator user info (same as NotifyToUser but for clarity)
+class CreatorUser {
+  final String userId;
+  final String displayName;
+  final String? profileImageUrl;
+
+  CreatorUser({
+    required this.userId,
+    required this.displayName,
+    this.profileImageUrl,
+  });
+
+  factory CreatorUser.fromJson(Map<String, dynamic> json) {
+    return CreatorUser(
+      userId: json['user_id'],
+      displayName: json['display_name'],
+      profileImageUrl: json['profile_image_url'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'user_id': userId,
+      'display_name': displayName,
+      if (profileImageUrl != null) 'profile_image_url': profileImageUrl,
+    };
+  }
+}
+
 /// Location Schedule model for imane
 class LocationSchedule {
   final String? id;
   final String userId;
+  final CreatorUser? creator; // Creator information for friend schedules
   final String destinationName;
   final String destinationAddress;
   final LatLng destinationCoords;
@@ -53,6 +83,7 @@ class LocationSchedule {
   LocationSchedule({
     this.id,
     required this.userId,
+    this.creator,
     required this.destinationName,
     required this.destinationAddress,
     required this.destinationCoords,
@@ -78,6 +109,9 @@ class LocationSchedule {
     return LocationSchedule(
       id: json['id'],
       userId: json['user_id'],
+      creator: json['creator'] != null
+          ? CreatorUser.fromJson(json['creator'])
+          : null,
       destinationName: json['destination_name'],
       destinationAddress: json['destination_address'],
       destinationCoords: LatLng(

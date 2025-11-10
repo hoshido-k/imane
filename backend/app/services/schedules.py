@@ -143,6 +143,43 @@ class ScheduleService:
         """
         return await self.get_schedules_by_user(user_id, ScheduleStatus.ACTIVE)
 
+    async def get_schedules_by_recipient(
+        self, recipient_user_id: str, status: Optional[ScheduleStatus] = None
+    ) -> List[LocationScheduleInDB]:
+        """
+        通知先として指定されているスケジュール一覧を取得
+
+        フレンドが作成し、自分が通知先として指定されているスケジュールを取得します。
+
+        Args:
+            recipient_user_id: 通知先ユーザID
+            status: フィルタリングするステータス（Noneの場合は全て取得）
+
+        Returns:
+            スケジュール一覧
+        """
+        query = self.db.collection(self.collection_name).where(
+            "notify_to_user_ids", "array_contains", recipient_user_id
+        )
+
+        # ステータスでフィルタリング
+        if status:
+            query = query.where("status", "==", status.value)
+
+        schedules_docs = query.stream()
+
+        schedules = []
+        for doc in schedules_docs:
+            schedule_data = doc.to_dict()
+            # 自分が作成したスケジュールは除外（フレンドが作成したもののみ）
+            if schedule_data.get("user_id") != recipient_user_id:
+                schedules.append(LocationScheduleInDB(**schedule_data))
+
+        # Pythonで開始時刻で降順にソート
+        schedules.sort(key=lambda x: x.start_time, reverse=True)
+
+        return schedules
+
     async def update_schedule(
         self, schedule_id: str, user_id: str, update_data: LocationScheduleUpdate
     ) -> LocationScheduleInDB:

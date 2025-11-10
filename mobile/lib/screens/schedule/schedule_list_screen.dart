@@ -16,9 +16,11 @@ class ScheduleListScreen extends StatefulWidget {
 
 class _ScheduleListScreenState extends State<ScheduleListScreen> with WidgetsBindingObserver {
   final ApiService _apiService = ApiService();
-  List<LocationSchedule> _schedules = [];
+  List<LocationSchedule> _mySchedules = [];
+  List<LocationSchedule> _friendSchedules = [];
   bool _isLoading = false;
   String? _errorMessage;
+  int _currentTabIndex = 0; // 0: My Schedules, 1: Friend Schedules
 
   @override
   void initState() {
@@ -51,50 +53,60 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> with WidgetsBin
     });
 
     try {
+      // Load my schedules
       print('[ScheduleList] Making GET request to /schedules...');
-      final response = await _apiService.get('/schedules');
-      print('[ScheduleList] Raw response: $response');
-      print('[ScheduleList] Response type: ${response.runtimeType}');
+      final myResponse = await _apiService.get('/schedules');
+      print('[ScheduleList] My schedules response: $myResponse');
 
-      // Handle different response formats
-      List<dynamic> schedulesJson;
-      if (response is List) {
-        print('[ScheduleList] Response is a List');
-        schedulesJson = response;
-      } else if (response is Map && response['schedules'] != null) {
-        print('[ScheduleList] Response is a Map with schedules key');
-        schedulesJson = response['schedules'];
-        print('[ScheduleList] Total count from API: ${response['total']}');
-      } else {
-        print('[ScheduleList] Response format not recognized, using empty list');
-        schedulesJson = [];
+      List<dynamic> mySchedulesJson = [];
+      if (myResponse is List) {
+        mySchedulesJson = myResponse;
+      } else if (myResponse is Map && myResponse['schedules'] != null) {
+        mySchedulesJson = myResponse['schedules'];
       }
 
-      print('[ScheduleList] Found ${schedulesJson.length} schedules in response');
+      // Load friend schedules
+      print('[ScheduleList] Making GET request to /schedules/friend-schedules...');
+      final friendResponse = await _apiService.get('/schedules/friend-schedules');
+      print('[ScheduleList] Friend schedules response: $friendResponse');
 
-      if (schedulesJson.isNotEmpty) {
-        print('[ScheduleList] First schedule data: ${schedulesJson[0]}');
+      List<dynamic> friendSchedulesJson = [];
+      if (friendResponse is List) {
+        friendSchedulesJson = friendResponse;
+      } else if (friendResponse is Map && friendResponse['schedules'] != null) {
+        friendSchedulesJson = friendResponse['schedules'];
       }
 
       setState(() {
-        _schedules = schedulesJson
+        _mySchedules = mySchedulesJson
             .map((json) {
               try {
                 return LocationSchedule.fromJson(json);
               } catch (e) {
-                print('[ScheduleList] Error parsing schedule: $e');
+                print('[ScheduleList] Error parsing my schedule: $e');
                 print('[ScheduleList] Problem schedule data: $json');
                 rethrow;
               }
             })
             .toList();
+
+        _friendSchedules = friendSchedulesJson
+            .map((json) {
+              try {
+                return LocationSchedule.fromJson(json);
+              } catch (e) {
+                print('[ScheduleList] Error parsing friend schedule: $e');
+                print('[ScheduleList] Problem schedule data: $json');
+                rethrow;
+              }
+            })
+            .toList();
+
         _isLoading = false;
       });
 
-      print('[ScheduleList] Successfully loaded ${_schedules.length} schedules');
-      if (_schedules.isNotEmpty) {
-        print('[ScheduleList] First schedule: ${_schedules[0].destinationName}');
-      }
+      print('[ScheduleList] Successfully loaded ${_mySchedules.length} my schedules');
+      print('[ScheduleList] Successfully loaded ${_friendSchedules.length} friend schedules');
       print('[ScheduleList] ========================================');
     } catch (e, stackTrace) {
       print('[ScheduleList] ========================================');
@@ -104,26 +116,11 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> with WidgetsBin
       print('[ScheduleList] ========================================');
 
       // Handle specific error types - show empty state for most errors
-      // since backend might not be fully set up yet
-      if (e is NotFoundException ||
-          e is SocketException ||
-          e is UnauthorizedException ||
-          e is ServerException ||
-          e is ApiException) {
-        // Show empty state for API/network errors
-        setState(() {
-          _schedules = [];
-          _isLoading = false;
-        });
-
-        // Network errors are handled silently - show empty state
-      } else {
-        // Show empty state for unexpected errors too
-        setState(() {
-          _schedules = [];
-          _isLoading = false;
-        });
-      }
+      setState(() {
+        _mySchedules = [];
+        _friendSchedules = [];
+        _isLoading = false;
+      });
     }
   }
 
@@ -329,6 +326,92 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> with WidgetsBin
   }
 
   Widget _buildBody() {
+    return Column(
+      children: [
+        // Tab bar
+        _buildTabBar(),
+        const SizedBox(height: 16),
+        // Content
+        Expanded(child: _buildTabContent()),
+      ],
+    );
+  }
+
+  Widget _buildTabBar() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(28),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _currentTabIndex = 0;
+                  });
+                },
+                child: Container(
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: _currentTabIndex == 0
+                        ? AppColors.primary
+                        : Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    '自分が作成',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
+                      color: _currentTabIndex == 0
+                          ? Colors.white
+                          : AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _currentTabIndex = 1;
+                  });
+                },
+                child: Container(
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: _currentTabIndex == 1
+                        ? AppColors.primary
+                        : Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    'フレンドが作成',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
+                      color: _currentTabIndex == 1
+                          ? Colors.white
+                          : AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTabContent() {
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -355,7 +438,9 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> with WidgetsBin
       );
     }
 
-    if (_schedules.isEmpty) {
+    final schedules = _currentTabIndex == 0 ? _mySchedules : _friendSchedules;
+
+    if (schedules.isEmpty) {
       return Align(
         alignment: Alignment.topCenter,
         child: SingleChildScrollView(
@@ -368,13 +453,14 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> with WidgetsBin
       onRefresh: _loadSchedules,
       child: ListView.builder(
         padding: const EdgeInsets.symmetric(horizontal: 24),
-        itemCount: _schedules.length,
+        itemCount: schedules.length,
         itemBuilder: (context, index) {
-          final schedule = _schedules[index];
+          final schedule = schedules[index];
           return _ScheduleCard(
             schedule: schedule,
-            onTap: () => _navigateToEditSchedule(schedule),
-            onDelete: () => _deleteSchedule(schedule),
+            onTap: _currentTabIndex == 0 ? () => _navigateToEditSchedule(schedule) : null,
+            onDelete: _currentTabIndex == 0 ? () => _deleteSchedule(schedule) : null,
+            showCreator: _currentTabIndex == 1,
           );
         },
       ),
@@ -435,13 +521,15 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> with WidgetsBin
 /// Schedule card widget matching Figma design
 class _ScheduleCard extends StatelessWidget {
   final LocationSchedule schedule;
-  final VoidCallback onTap;
-  final VoidCallback onDelete;
+  final VoidCallback? onTap;
+  final VoidCallback? onDelete;
+  final bool showCreator;
 
   const _ScheduleCard({
     required this.schedule,
-    required this.onTap,
-    required this.onDelete,
+    this.onTap,
+    this.onDelete,
+    this.showCreator = false,
   });
 
   @override
@@ -470,12 +558,22 @@ class _ScheduleCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Show creator if this is a friend's schedule
+          if (showCreator && schedule.creator != null) ...[
+            _buildInfoRow(
+              label: '作成者',
+              text: schedule.creator!.displayName,
+              icon: Icons.person,
+              isPrimary: true,
+            ),
+            const SizedBox(height: 12),
+          ],
           // Date and time with primary background icon
           _buildInfoRow(
             label: '日時',
             text: _formatDateTime(schedule.startTime),
             icon: Icons.access_time,
-            isPrimary: true,
+            isPrimary: !showCreator,
           ),
           const SizedBox(height: 12),
           // Location with gray background icon
@@ -493,29 +591,31 @@ class _ScheduleCard extends StatelessWidget {
             icon: Icons.people,
             isPrimary: false,
           ),
-          const SizedBox(height: 8),
-          // Action buttons
-          Row(
-            children: [
-              Expanded(
-                child: _buildActionButton(
-                  icon: Icons.edit,
-                  label: '編集',
-                  color: const Color(0xFF5A4A40),
-                  onPressed: onTap,
+          // Action buttons (only for my schedules)
+          if (onTap != null && onDelete != null) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildActionButton(
+                    icon: Icons.edit,
+                    label: '編集',
+                    color: const Color(0xFF5A4A40),
+                    onPressed: onTap!,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _buildActionButton(
-                  icon: Icons.delete,
-                  label: '削除',
-                  color: AppColors.primary,
-                  onPressed: onDelete,
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _buildActionButton(
+                    icon: Icons.delete,
+                    label: '削除',
+                    color: AppColors.primary,
+                    onPressed: onDelete!,
+                  ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
+          ],
         ],
       ),
     );
