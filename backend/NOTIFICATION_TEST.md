@@ -303,7 +303,9 @@ Firebase Console > Cloud Messaging で送信状況を確認できます。
 3. ✅ スケジュールの通知設定が有効（`notify_on_arrival`など）
 4. ✅ 位置情報が正しく送信されている
 5. ✅ ジオフェンス内（目的地から50m以内）に位置している
-6. ✅ スケジュールの時間枠内（`start_time`と`end_time`の間）
-7. ✅ Firestoreのインデックスが作成されている
+6. ✅ Firestoreのインデックスが作成されている
+
+**注意**: `start_time`と`end_time`はフレンドへの目安として共有されるだけで、
+時間外でも通知は正常に送信されます（実際に到着した時刻に通知が送られます）。
 
 テストスクリプト（`test_notification_delivery.py`）を使うと、これらの条件を自動的にチェックできます。
