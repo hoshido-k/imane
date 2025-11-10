@@ -273,8 +273,8 @@ When working on new features or fixes:
   "destination_coords": {"lat": float, "lng": float},
   "geofence_radius": int (default: 50),
   "notify_to_user_ids": List[str],
-  "start_time": datetime,
-  "end_time": datetime,
+  "start_time": datetime,  # 予定開始時刻（目安）※時間外でも通知は送られる
+  "end_time": datetime,    # 予定終了時刻（目安）※時間外でも通知は送られる
   "recurrence": Optional[str],  # "daily", "weekdays", "weekends"
   "notify_on_arrival": bool,
   "notify_after_minutes": int (default: 60),
@@ -285,6 +285,9 @@ When working on new features or fixes:
   "favorite": bool
 }
 ```
+
+**重要**: `start_time`と`end_time`はフレンドへの「目安」として共有されるだけで、
+実際の通知は**実際に到着した時刻**に送られます。時間枠外でも通知は正常に送信されます。
 
 ### FavoriteLocation
 ```python

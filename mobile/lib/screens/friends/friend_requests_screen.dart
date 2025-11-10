@@ -312,52 +312,57 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
     }
 
     if (_receivedRequests.isEmpty) {
-      return Align(
-        alignment: Alignment.topCenter,
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 32),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.person_add_disabled,
-                    size: 48,
-                    color: AppColors.textSecondary.withOpacity(0.3),
+      return RefreshIndicator(
+        onRefresh: _loadData,
+        color: AppColors.primary,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 32),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    '受信したフレンド申請はありません',
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 16,
-                      fontWeight: FontWeight.w400,
-                      color: AppColors.textSecondary,
-                      letterSpacing: -0.3125,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.person_add_disabled,
+                        size: 48,
+                        color: AppColors.textSecondary.withOpacity(0.3),
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        '受信したフレンド申請はありません',
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 16,
+                            fontWeight: FontWeight.w400,
+                            color: AppColors.textSecondary,
+                            letterSpacing: -0.3125,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'フレンド申請が届くと表示されます',
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'フレンド申請が届くと表示されます',
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w400,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+                ),
+              );
+          },
         ),
       );
     }
@@ -601,52 +606,57 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
     }
 
     if (_sentRequests.isEmpty) {
-      return Align(
-        alignment: Alignment.topCenter,
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 32),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.send_outlined,
-                    size: 48,
-                    color: AppColors.textSecondary.withOpacity(0.3),
+      return RefreshIndicator(
+        onRefresh: _loadData,
+        color: AppColors.primary,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 32),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    '送信したフレンド申請はありません',
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 16,
-                      fontWeight: FontWeight.w400,
-                      color: AppColors.textSecondary,
-                      letterSpacing: -0.3125,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.send_outlined,
+                        size: 48,
+                        color: AppColors.textSecondary.withOpacity(0.3),
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        '送信したフレンド申請はありません',
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 16,
+                            fontWeight: FontWeight.w400,
+                            color: AppColors.textSecondary,
+                            letterSpacing: -0.3125,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          '新しいフレンドを検索して申請しましょう',
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    '新しいフレンドを検索して申請しましょう',
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w400,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+                ),
+              );
+          },
         ),
       );
     }

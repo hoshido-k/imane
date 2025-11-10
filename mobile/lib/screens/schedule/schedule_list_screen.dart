@@ -441,16 +441,23 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> with WidgetsBin
     final schedules = _currentTabIndex == 0 ? _mySchedules : _friendSchedules;
 
     if (schedules.isEmpty) {
-      return Align(
-        alignment: Alignment.topCenter,
-        child: SingleChildScrollView(
-          child: _buildEmptyState(),
+      return RefreshIndicator(
+        onRefresh: _loadSchedules,
+        color: AppColors.primary,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: _buildEmptyState(),
+            );
+          },
         ),
       );
     }
 
     return RefreshIndicator(
       onRefresh: _loadSchedules,
+      color: AppColors.primary,
       child: ListView.builder(
         padding: const EdgeInsets.symmetric(horizontal: 24),
         itemCount: schedules.length,
@@ -480,7 +487,6 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> with WidgetsBin
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // Bell icon
             Icon(

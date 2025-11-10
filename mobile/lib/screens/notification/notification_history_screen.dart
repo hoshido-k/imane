@@ -308,52 +308,59 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
     }
 
     if (_notifications.isEmpty) {
-      return Align(
-        alignment: Alignment.topCenter,
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 32),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.notifications_none,
-                    size: 48,
-                    color: AppColors.textSecondary.withOpacity(0.3),
+      return RefreshIndicator(
+        onRefresh: _loadNotifications,
+        color: AppColors.primary,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 32),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    '通知履歴がありません',
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 16,
-                      fontWeight: FontWeight.w400,
-                      color: AppColors.textSecondary,
-                      letterSpacing: -0.3125,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                        Icon(
+                          Icons.notifications_none,
+                          size: 48,
+                          color: AppColors.textSecondary.withOpacity(0.3),
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          '通知履歴がありません',
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 16,
+                            fontWeight: FontWeight.w400,
+                            color: AppColors.textSecondary,
+                            letterSpacing: -0.3125,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'スケジュールを作成すると\n通知が表示されます',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'スケジュールを作成すると\n通知が表示されます',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w400,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+                ),
+              );
+          },
         ),
       );
     }
@@ -433,7 +440,7 @@ class _NotificationCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      notification.type.displayName,
+                      notification.title,
                       style: const TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 14,
@@ -444,7 +451,7 @@ class _NotificationCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      _formatDateTime(notification.sentAt),
+                      _formatDateTime(notification.createdAt),
                       style: const TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 11,
@@ -455,53 +462,9 @@ class _NotificationCard extends StatelessWidget {
                   ],
                 ),
               ),
-              if (notification.autoDeleteAt != null)
-                _buildTimeRemaining(notification.autoDeleteAt!),
             ],
           ),
           const SizedBox(height: 12),
-
-          // From user
-          if (notification.fromUserName != null) ...[
-            Row(
-              children: [
-                Container(
-                  width: 24,
-                  height: 24,
-                  decoration: BoxDecoration(
-                    color: AppColors.inputBackground,
-                    borderRadius: BorderRadius.circular(100),
-                  ),
-                  alignment: Alignment.center,
-                  child: notification.fromUserAvatar != null
-                      ? ClipRRect(
-                          borderRadius: BorderRadius.circular(100),
-                          child: Image.network(
-                            notification.fromUserAvatar!,
-                            width: 24,
-                            height: 24,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return const Icon(Icons.person, size: 14);
-                            },
-                          ),
-                        )
-                      : const Icon(Icons.person, size: 14, color: AppColors.textSecondary),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  notification.fromUserName!,
-                  style: const TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-          ],
 
           // Message
           Container(
@@ -512,7 +475,7 @@ class _NotificationCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
-              notification.message,
+              notification.body,
               style: const TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 14,
@@ -560,56 +523,6 @@ class _NotificationCard extends StatelessWidget {
       default:
         return AppColors.primary;
     }
-  }
-
-  Widget _buildTimeRemaining(DateTime autoDeleteAt) {
-    final now = DateTime.now();
-    final remaining = autoDeleteAt.difference(now);
-
-    if (remaining.isNegative) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: Colors.red.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(100),
-        ),
-        child: const Text(
-          '期限切れ',
-          style: TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 10,
-            fontWeight: FontWeight.w600,
-            color: Colors.red,
-          ),
-        ),
-      );
-    }
-
-    String timeText;
-    if (remaining.inHours > 0) {
-      timeText = '${remaining.inHours}時間';
-    } else if (remaining.inMinutes > 0) {
-      timeText = '${remaining.inMinutes}分';
-    } else {
-      timeText = '${remaining.inSeconds}秒';
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.orange.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(100),
-      ),
-      child: Text(
-        '残り$timeText',
-        style: const TextStyle(
-          fontFamily: 'Inter',
-          fontSize: 10,
-          fontWeight: FontWeight.w600,
-          color: Colors.orange,
-        ),
-      ),
-    );
   }
 
   String _formatDateTime(DateTime dateTime) {

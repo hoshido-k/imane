@@ -5,13 +5,13 @@ import 'package:http/http.dart' as http;
 /// TODO: 本番環境では環境変数から取得
 class ApiConfig {
   // ローカル開発用（iOSシミュレーター）
-  static const String baseUrl = 'http://localhost:8000/api/v1';
+  // static const String baseUrl = 'http://localhost:8000/api/v1';
 
   // Android エミュレーター用の場合は以下を使用
   // static const String baseUrl = 'http://10.0.2.2:8000/api/v1';
 
-  // 実機の場合はPCのIPアドレスを使用
-  // static const String baseUrl = 'http://192.168.x.x:8000/api/v1';
+  // 実機の場合はPCのIPアドレスを使用（あなたのMacのIPアドレスに置き換えてください）
+  static const String baseUrl = 'http://192.168.0.41:8000/api/v1';
 }
 
 /// API通信の基盤サービス

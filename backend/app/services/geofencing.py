@@ -199,10 +199,8 @@ class GeofencingService:
 
         # 各スケジュールに対してジオフェンス判定
         for schedule in all_schedules:
-            # スケジュールの時間枠内かチェック
-            if schedule.start_time > now or schedule.end_time < now:
-                # 時間枠外の場合はスキップ
-                continue
+            # 時間枠はあくまで目安なので、時間外でも通知を送る
+            # （start_time/end_timeのチェックは行わない）
 
             # 到着判定
             is_entry, distance = await self.check_geofence_entry(

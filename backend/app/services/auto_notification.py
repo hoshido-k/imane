@@ -397,9 +397,8 @@ class AutoNotificationService:
                 if stay_minutes < schedule.notify_after_minutes:
                     continue
 
-                # スケジュールの時間枠内かチェック
-                if schedule.end_time < now:
-                    continue
+                # 時間枠はあくまで目安なので、end_timeを過ぎていても通知を送る
+                # （end_timeのチェックは行わない）
 
                 # 既に滞在通知を送信済みかチェック（通知履歴を確認）
                 notification_history_query = (

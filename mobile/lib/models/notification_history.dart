@@ -1,95 +1,87 @@
 /// Notification History model for imane
 class NotificationHistory {
-  final String? id;
-  final String fromUserId;
-  final String toUserId;
-  final String scheduleId;
+  final String notificationId;
+  final String userId;
   final NotificationType type;
-  final String message;
-  final String? mapLink;
-  final DateTime sentAt;
-  final DateTime? autoDeleteAt;
+  final String title;
+  final String body;
+  final Map<String, dynamic> data;
+  final bool isRead;
+  final DateTime createdAt;
+  final DateTime? readAt;
 
-  // Optional user info for display
-  final String? fromUserName;
-  final String? fromUserAvatar;
+  // Computed properties from data
+  String? get mapLink => data['map_link'] as String?;
+  String? get fromUserId => data['from_user_id'] as String?;
+  String? get scheduleId => data['schedule_id'] as String?;
+  String? get destinationName => data['destination_name'] as String?;
 
   NotificationHistory({
-    this.id,
-    required this.fromUserId,
-    required this.toUserId,
-    required this.scheduleId,
+    required this.notificationId,
+    required this.userId,
     required this.type,
-    required this.message,
-    this.mapLink,
-    required this.sentAt,
-    this.autoDeleteAt,
-    this.fromUserName,
-    this.fromUserAvatar,
+    required this.title,
+    required this.body,
+    required this.data,
+    required this.isRead,
+    required this.createdAt,
+    this.readAt,
   });
 
   /// Create from JSON
   factory NotificationHistory.fromJson(Map<String, dynamic> json) {
     return NotificationHistory(
-      id: json['id'],
-      fromUserId: json['from_user_id'],
-      toUserId: json['to_user_id'],
-      scheduleId: json['schedule_id'],
-      type: NotificationType.fromString(json['type']),
-      message: json['message'],
-      mapLink: json['map_link'],
-      sentAt: DateTime.parse(json['sent_at']),
-      autoDeleteAt: json['auto_delete_at'] != null
-          ? DateTime.parse(json['auto_delete_at'])
+      notificationId: json['notification_id'] as String,
+      userId: json['user_id'] as String,
+      type: NotificationType.fromString(json['type'] as String),
+      title: json['title'] as String,
+      body: json['body'] as String,
+      data: json['data'] as Map<String, dynamic>? ?? {},
+      isRead: json['is_read'] as bool? ?? false,
+      createdAt: DateTime.parse(json['created_at'] as String),
+      readAt: json['read_at'] != null
+          ? DateTime.parse(json['read_at'] as String)
           : null,
-      fromUserName: json['from_user_name'],
-      fromUserAvatar: json['from_user_avatar'],
     );
   }
 
   /// Convert to JSON
   Map<String, dynamic> toJson() {
     return {
-      if (id != null) 'id': id,
-      'from_user_id': fromUserId,
-      'to_user_id': toUserId,
-      'schedule_id': scheduleId,
+      'notification_id': notificationId,
+      'user_id': userId,
       'type': type.value,
-      'message': message,
-      if (mapLink != null) 'map_link': mapLink,
-      'sent_at': sentAt.toIso8601String(),
-      if (autoDeleteAt != null) 'auto_delete_at': autoDeleteAt!.toIso8601String(),
-      if (fromUserName != null) 'from_user_name': fromUserName,
-      if (fromUserAvatar != null) 'from_user_avatar': fromUserAvatar,
+      'title': title,
+      'body': body,
+      'data': data,
+      'is_read': isRead,
+      'created_at': createdAt.toIso8601String(),
+      if (readAt != null) 'read_at': readAt!.toIso8601String(),
     };
   }
 
   /// Copy with
   NotificationHistory copyWith({
-    String? id,
-    String? fromUserId,
-    String? toUserId,
-    String? scheduleId,
+    String? notificationId,
+    String? userId,
     NotificationType? type,
-    String? message,
-    String? mapLink,
-    DateTime? sentAt,
-    DateTime? autoDeleteAt,
-    String? fromUserName,
-    String? fromUserAvatar,
+    String? title,
+    String? body,
+    Map<String, dynamic>? data,
+    bool? isRead,
+    DateTime? createdAt,
+    DateTime? readAt,
   }) {
     return NotificationHistory(
-      id: id ?? this.id,
-      fromUserId: fromUserId ?? this.fromUserId,
-      toUserId: toUserId ?? this.toUserId,
-      scheduleId: scheduleId ?? this.scheduleId,
+      notificationId: notificationId ?? this.notificationId,
+      userId: userId ?? this.userId,
       type: type ?? this.type,
-      message: message ?? this.message,
-      mapLink: mapLink ?? this.mapLink,
-      sentAt: sentAt ?? this.sentAt,
-      autoDeleteAt: autoDeleteAt ?? this.autoDeleteAt,
-      fromUserName: fromUserName ?? this.fromUserName,
-      fromUserAvatar: fromUserAvatar ?? this.fromUserAvatar,
+      title: title ?? this.title,
+      body: body ?? this.body,
+      data: data ?? this.data,
+      isRead: isRead ?? this.isRead,
+      createdAt: createdAt ?? this.createdAt,
+      readAt: readAt ?? this.readAt,
     );
   }
 }
