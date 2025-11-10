@@ -130,6 +130,42 @@ async def update_location(
 
         schedule_updates.append(schedule_update)
 
+    # 到着済みスケジュールの滞在通知をチェック
+    from app.schemas.schedule import ScheduleStatus
+    from app.services.schedules import ScheduleService
+
+    schedule_service = ScheduleService()
+    arrived_schedules = await schedule_service.get_schedules_by_user(
+        current_user.uid, ScheduleStatus.ARRIVED
+    )
+
+    logger.info(f"[滞在通知チェック] 到着済みスケジュール: {len(arrived_schedules)}件")
+
+    for schedule in arrived_schedules:
+        try:
+            # 滞在通知を送信（条件を満たす場合のみ送信される）
+            notification_ids = await auto_notification_service.send_stay_notification(
+                schedule=schedule, current_coords=location_data.coords
+            )
+
+            if notification_ids:
+                logger.info(
+                    f"[滞在通知] スケジュール {schedule.id}: {len(notification_ids)}件の通知を送信しました"
+                )
+                schedule_updates.append(
+                    {
+                        "schedule_id": schedule.id,
+                        "destination_name": schedule.destination_name,
+                        "event_type": "stay",
+                        "notification_ids": notification_ids,
+                    }
+                )
+                triggered_notifications.extend(
+                    [{"type": "stay", "schedule_id": schedule.id}] * len(notification_ids)
+                )
+        except Exception as e:
+            logger.error(f"[滞在通知エラー] スケジュール {schedule.id}: {e}", exc_info=True)
+
     message = f"位置情報を記録しました。{len(geofence_events)}件のジオフェンスイベントを処理しました。"
     logger.info(f"[位置情報更新完了] {message}")
 

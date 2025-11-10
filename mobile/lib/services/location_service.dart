@@ -68,19 +68,28 @@ class LocationService {
   /// Start background location tracking
   /// Sends location updates every 10 minutes to the backend API
   Future<bool> startTracking() async {
+    final timestamp = DateTime.now().toIso8601String();
+    print('[$timestamp] [LocationService] === Starting location tracking ===');
+
     if (_isTracking) {
-      print('Location tracking is already active');
+      print('[$timestamp] [LocationService] Already tracking - skipping');
       return true;
     }
 
     // Check permission first
+    print('[$timestamp] [LocationService] Checking location permission...');
     final hasPermission = await requestPermission();
     if (!hasPermission) {
-      print('Location permission not granted');
+      print('[$timestamp] [LocationService] ✗ Permission denied');
       return false;
     }
+    print('[$timestamp] [LocationService] ✓ Permission granted');
 
     try {
+      print('[$timestamp] [LocationService] Configuring background location...');
+      print('  - Update interval: ${_updateIntervalMs}ms (${_updateIntervalMs / 1000}s)');
+      print('  - Distance filter: ${_distanceFilterMeters}m');
+
       // Configure background location settings
       await BackgroundLocation.setAndroidNotification(
         title: 'imane',
@@ -96,6 +105,7 @@ class LocationService {
         distanceFilter: _distanceFilterMeters,
       );
 
+      print('[$timestamp] [LocationService] Registering location update listener...');
       // Listen to location updates
       BackgroundLocation.getLocationUpdates((location) {
         _handleLocationUpdate(location);
@@ -107,10 +117,10 @@ class LocationService {
       // Start connectivity monitoring
       _startConnectivityMonitoring();
 
-      print('Location tracking started successfully');
+      print('[$timestamp] [LocationService] ✓ Location tracking started successfully');
       return true;
     } catch (e) {
-      print('Error starting location tracking: $e');
+      print('[$timestamp] [LocationService] ✗ Error starting location tracking: $e');
       return false;
     }
   }
@@ -138,19 +148,33 @@ class LocationService {
 
   /// Handle location update from background service
   Future<void> _handleLocationUpdate(Location location) async {
-    print('Location update received: ${location.latitude}, ${location.longitude}');
-
-    // Check if enough time has passed since last update (10 minutes)
     final now = DateTime.now();
+    final timestamp = now.toIso8601String();
+
+    print('[$timestamp] [LocationService] Location update received:');
+    print('  - Latitude: ${location.latitude}');
+    print('  - Longitude: ${location.longitude}');
+    print('  - Accuracy: ${location.accuracy}m');
+    print('  - Tracking active: $_isTracking');
+
+    // Check if enough time has passed since last update
     if (_lastUpdateTime != null) {
       final timeDiff = now.difference(_lastUpdateTime!).inMilliseconds;
+      final timeDiffSeconds = (timeDiff / 1000).toStringAsFixed(1);
+      final requiredSeconds = (_updateIntervalMs / 1000).toStringAsFixed(1);
+
+      print('  - Time since last update: ${timeDiffSeconds}s (required: ${requiredSeconds}s)');
+
       if (timeDiff < _updateIntervalMs) {
-        print('Skipping update - not enough time passed since last update');
+        print('  - Result: SKIPPED (interval not met)');
         return;
       }
+    } else {
+      print('  - First location update in this session');
     }
 
     _lastUpdateTime = now;
+    print('  - Result: PROCESSING - sending to backend API');
 
     // Send location to backend API
     await _sendLocationWithRetry(location);
@@ -177,18 +201,21 @@ class LocationService {
 
   /// Send location with retry logic
   Future<void> _sendLocationWithRetry(Location location) async {
+    final timestamp = DateTime.now().toIso8601String();
+    print('[$timestamp] [LocationService] Attempting to send location to API...');
+
     try {
       await _sendLocationToApi(location);
-      print('Location sent successfully');
+      print('[$timestamp] [LocationService] ✓ Location sent successfully to backend');
     } catch (e) {
-      print('Failed to send location: $e');
+      print('[$timestamp] [LocationService] ✗ Failed to send location: $e');
       // Cache the location for later retry
       await _cacheService.cacheLocation(
         latitude: location.latitude!,
         longitude: location.longitude!,
         accuracy: location.accuracy,
       );
-      print('Location cached for later retry');
+      print('[$timestamp] [LocationService] Location cached for later retry');
     }
   }
 
@@ -232,15 +259,25 @@ class LocationService {
 
   /// Send location data to backend API
   Future<void> _sendLocationToApi(Location location) async {
+    final timestamp = DateTime.now().toIso8601String();
+
     try {
-      await _apiService.updateLocation(
+      print('[$timestamp] [LocationService] Calling API updateLocation...');
+      print('  - Endpoint: /location/update');
+      print('  - Coords: (${location.latitude}, ${location.longitude})');
+      print('  - Accuracy: ${location.accuracy ?? 0.0}m');
+
+      final response = await _apiService.updateLocation(
         latitude: location.latitude!,
         longitude: location.longitude!,
         accuracy: location.accuracy ?? 0.0,
       );
-      print('Location sent to API successfully');
+
+      print('[$timestamp] [LocationService] API response received:');
+      print('  - Response: $response');
+      print('[$timestamp] [LocationService] ✓ Location sent to API successfully');
     } catch (e) {
-      print('Failed to send location to API: $e');
+      print('[$timestamp] [LocationService] ✗ Failed to send location to API: $e');
       rethrow;
     }
   }
