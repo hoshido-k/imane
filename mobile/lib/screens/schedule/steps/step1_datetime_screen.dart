@@ -311,12 +311,12 @@ class _Step1DateTimeScreenState extends State<Step1DateTimeScreen> {
                     const SizedBox(height: 8),
                     _buildScrollablePicker(
                       itemCount: 24,
-                      selectedIndex: _selectedTime?.hour ?? 0,
+                      selectedIndex: _selectedTime?.hour ?? TimeOfDay.now().hour,
                       onChanged: (index) {
                         setState(() {
                           _selectedTime = TimeOfDay(
                             hour: index,
-                            minute: _selectedTime?.minute ?? 0,
+                            minute: _selectedTime?.minute ?? TimeOfDay.now().minute,
                           );
                           // Set default date if not set yet
                           if (_selectedDate == null) {
@@ -342,11 +342,11 @@ class _Step1DateTimeScreenState extends State<Step1DateTimeScreen> {
                     const SizedBox(height: 8),
                     _buildScrollablePicker(
                       itemCount: 60,
-                      selectedIndex: _selectedTime?.minute ?? 0,
+                      selectedIndex: _selectedTime?.minute ?? TimeOfDay.now().minute,
                       onChanged: (index) {
                         setState(() {
                           _selectedTime = TimeOfDay(
-                            hour: _selectedTime?.hour ?? 0,
+                            hour: _selectedTime?.hour ?? TimeOfDay.now().hour,
                             minute: index,
                           );
                           // Set default date if not set yet
