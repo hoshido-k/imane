@@ -246,9 +246,50 @@ class PlacesService {
           // Get the most detailed result (usually results[0])
           final result = data['results'][0];
           final location = result['geometry']['location'];
-          final formattedAddress = result['formatted_address'] as String;
 
-          print('[PostalCode API] Formatted address: $formattedAddress');
+          // Build formatted address from address_components
+          String formattedAddress = '';
+          String? postalCode;
+          String? prefecture;
+          String? city;
+          String? ward;
+          String? sublocality;
+
+          if (result['address_components'] != null) {
+            for (var component in result['address_components']) {
+              final types = component['types'] as List;
+              final longName = component['long_name'] as String;
+
+              if (types.contains('postal_code')) {
+                postalCode = longName;
+              } else if (types.contains('administrative_area_level_1')) {
+                prefecture = longName;
+              } else if (types.contains('locality')) {
+                city = longName;
+              } else if (types.contains('sublocality_level_1')) {
+                ward = longName;
+              } else if (types.contains('sublocality_level_2')) {
+                sublocality = longName;
+              }
+            }
+
+            // Build Japanese address format: 〒XXX-XXXX 都道府県市区町村
+            final parts = <String>[];
+            if (postalCode != null) parts.add('〒$postalCode');
+            if (prefecture != null) parts.add(prefecture);
+            if (city != null) parts.add(city);
+            if (ward != null) parts.add(ward);
+            if (sublocality != null) parts.add(sublocality);
+
+            formattedAddress = parts.join(' ');
+          }
+
+          // Fallback to API's formatted_address if components not available
+          if (formattedAddress.isEmpty) {
+            formattedAddress = result['formatted_address'] as String;
+          }
+
+          print('[PostalCode API] Built formatted address: $formattedAddress');
           print('[PostalCode API] Address components: ${result['address_components']}');
 
           return PlaceDetails(

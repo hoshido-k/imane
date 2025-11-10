@@ -297,8 +297,7 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> with WidgetsBin
               child: ElevatedButton(
                 onPressed: _navigateToCreateSchedule,
                 style: ElevatedButton.styleFrom(
-                  // Lighter color between primary and background
-                  backgroundColor: const Color(0xFFD0A196), // Midpoint between #B85D4D and #E8E4DF
+                  backgroundColor: AppColors.primary, // Primary color
                   foregroundColor: Colors.white,
                   elevation: 0,
                   shadowColor: Colors.black.withOpacity(0.1),
@@ -306,9 +305,9 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> with WidgetsBin
                     borderRadius: BorderRadius.circular(28),
                   ),
                 ).copyWith(
-                  elevation: MaterialStateProperty.all(3),
+                  elevation: MaterialStateProperty.all(4),
                   shadowColor: MaterialStateProperty.all(
-                    Colors.black.withOpacity(0.08),
+                    Colors.black.withOpacity(0.1),
                   ),
                 ),
                 child: Row(
@@ -358,8 +357,8 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> with WidgetsBin
                   height: 48,
                   decoration: BoxDecoration(
                     color: _currentTabIndex == 0
-                        ? AppColors.primary
-                        : Colors.white,
+                        ? const Color(0xFFB0B0B0) // Selected: Gray
+                        : Colors.white, // Unselected: White
                     borderRadius: BorderRadius.circular(24),
                   ),
                   alignment: Alignment.center,
@@ -388,8 +387,8 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> with WidgetsBin
                   height: 48,
                   decoration: BoxDecoration(
                     color: _currentTabIndex == 1
-                        ? AppColors.primary
-                        : Colors.white,
+                        ? const Color(0xFFB0B0B0) // Selected: Gray
+                        : Colors.white, // Unselected: White
                     borderRadius: BorderRadius.circular(24),
                   ),
                   alignment: Alignment.center,
