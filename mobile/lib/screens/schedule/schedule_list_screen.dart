@@ -357,8 +357,8 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> with WidgetsBin
                   height: 48,
                   decoration: BoxDecoration(
                     color: _currentTabIndex == 0
-                        ? const Color(0xFFB0B0B0) // Selected: Gray
-                        : Colors.white, // Unselected: White
+                        ? Colors.white // Selected: White
+                        : const Color(0xFFB0B0B0), // Unselected: Gray
                     borderRadius: BorderRadius.circular(24),
                   ),
                   alignment: Alignment.center,
@@ -368,8 +368,8 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> with WidgetsBin
                       fontSize: 16,
                       fontWeight: FontWeight.w400,
                       color: _currentTabIndex == 0
-                          ? Colors.white
-                          : AppColors.textPrimary,
+                          ? AppColors.textPrimary
+                          : Colors.white,
                     ),
                   ),
                 ),
@@ -387,8 +387,8 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> with WidgetsBin
                   height: 48,
                   decoration: BoxDecoration(
                     color: _currentTabIndex == 1
-                        ? const Color(0xFFB0B0B0) // Selected: Gray
-                        : Colors.white, // Unselected: White
+                        ? Colors.white // Selected: White
+                        : const Color(0xFFB0B0B0), // Unselected: Gray
                     borderRadius: BorderRadius.circular(24),
                   ),
                   alignment: Alignment.center,
@@ -398,8 +398,8 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> with WidgetsBin
                       fontSize: 16,
                       fontWeight: FontWeight.w400,
                       color: _currentTabIndex == 1
-                          ? Colors.white
-                          : AppColors.textPrimary,
+                          ? AppColors.textPrimary
+                          : Colors.white,
                     ),
                   ),
                 ),
