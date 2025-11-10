@@ -380,20 +380,34 @@ class _Step1DateTimeScreenState extends State<Step1DateTimeScreen> {
     required int selectedIndex,
     required Function(int) onChanged,
   }) {
+    // Calculate initial scroll offset to show selected item near top
+    // Item height is 44px, we want to show the selected item in view
+    const double itemHeight = 44.0;
+    const double containerHeight = 180.0;
+
+    // Position selected item so it's visible, ideally near the top of the viewport
+    // Subtract one item height to show it clearly
+    final double initialOffset = (selectedIndex * itemHeight - itemHeight).clamp(0.0, (itemCount * itemHeight) - containerHeight);
+
+    final ScrollController scrollController = ScrollController(
+      initialScrollOffset: initialOffset,
+    );
+
     return Container(
-      height: 180,
+      height: containerHeight,
       decoration: BoxDecoration(
         border: Border.all(color: AppColors.inputBorder),
         borderRadius: BorderRadius.circular(8),
       ),
       child: ListView.builder(
+        controller: scrollController,
         itemCount: itemCount,
         itemBuilder: (context, index) {
           final isSelected = index == selectedIndex;
           return GestureDetector(
             onTap: () => onChanged(index),
             child: Container(
-              height: 44,
+              height: itemHeight,
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: isSelected ? AppColors.primary : Colors.transparent,
