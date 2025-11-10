@@ -319,28 +319,26 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
           builder: (context, constraints) {
             return SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 32),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.person_add_disabled,
-                          size: 48,
-                          color: AppColors.textSecondary.withOpacity(0.3),
-                        ),
-                        const SizedBox(height: 16),
-                        const Text(
-                          '受信したフレンド申請はありません',
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 32),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.person_add_disabled,
+                        size: 48,
+                        color: AppColors.textSecondary.withOpacity(0.3),
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        '受信したフレンド申請はありません',
                           style: TextStyle(
                             fontFamily: 'Inter',
                             fontSize: 16,
@@ -616,28 +614,26 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
           builder: (context, constraints) {
             return SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 32),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.send_outlined,
-                          size: 48,
-                          color: AppColors.textSecondary.withOpacity(0.3),
-                        ),
-                        const SizedBox(height: 16),
-                        const Text(
-                          '送信したフレンド申請はありません',
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 32),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.send_outlined,
+                        size: 48,
+                        color: AppColors.textSecondary.withOpacity(0.3),
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        '送信したフレンド申請はありません',
                           style: TextStyle(
                             fontFamily: 'Inter',
                             fontSize: 16,
