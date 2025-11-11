@@ -164,8 +164,8 @@ class _CreateScheduleFlowState extends State<CreateScheduleFlow> {
           'lng': _selectedLocation!.longitude ?? 139.7671,
         },
         'notify_to_user_ids': _selectedRecipientIds!,
-        'start_time': _selectedDateTime!.toIso8601String(),
-        'end_time': _selectedDateTime!.add(const Duration(hours: 2)).toIso8601String(),
+        'start_time': _toJstIso8601String(_selectedDateTime!),
+        'end_time': _toJstIso8601String(_selectedDateTime!.add(const Duration(hours: 2))),
         'notify_on_arrival': true,
         'notify_after_minutes': 1,  // テスト用に1分に設定
         'notify_on_departure': true,
@@ -231,6 +231,17 @@ class _CreateScheduleFlowState extends State<CreateScheduleFlow> {
         });
       }
     }
+  }
+
+  /// ユーザーが選択した時刻をJST（UTC+9）のISO 8601形式に変換
+  /// 例: 2025-11-11 16:24 → 2025-11-11T16:24:00+09:00
+  String _toJstIso8601String(DateTime dt) {
+    return '${dt.year.toString().padLeft(4, '0')}-'
+        '${dt.month.toString().padLeft(2, '0')}-'
+        '${dt.day.toString().padLeft(2, '0')}T'
+        '${dt.hour.toString().padLeft(2, '0')}:'
+        '${dt.minute.toString().padLeft(2, '0')}:'
+        '00+09:00';
   }
 
   @override
