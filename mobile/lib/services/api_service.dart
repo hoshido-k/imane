@@ -162,16 +162,21 @@ class ApiService {
   /// DELETEリクエスト
   Future<dynamic> delete(
     String endpoint, {
+    Map<String, dynamic>? body,
     bool requiresAuth = true,
   }) async {
     try {
       print('[ApiService] DELETE $baseUrl$endpoint');
       print('[ApiService] Auth required: $requiresAuth');
       print('[ApiService] Has token: ${_accessToken != null}');
+      if (body != null) {
+        print('[ApiService] Request body: ${jsonEncode(body)}');
+      }
 
       final response = await _client.delete(
         Uri.parse('$baseUrl$endpoint'),
         headers: _getHeaders(includeAuth: requiresAuth),
+        body: body != null ? jsonEncode(body) : null,
       );
 
       print('[ApiService] Response status: ${response.statusCode}');

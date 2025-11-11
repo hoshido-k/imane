@@ -84,10 +84,9 @@ class FCMService {
   Future<void> _registerToken(String token) async {
     try {
       await _apiService.post(
-        '/notifications/register',
+        '/api/v1/notifications/fcm-token',
         body: {
           'fcm_token': token,
-          'device_type': 'ios', // iOS for MVP
         },
         requiresAuth: true,
       );
@@ -195,7 +194,10 @@ class FCMService {
     try {
       // Backend API call to remove token
       await _apiService.delete(
-        '/notifications/unregister',
+        '/api/v1/notifications/fcm-token',
+        body: {
+          'fcm_token': _fcmToken!,
+        },
         requiresAuth: true,
       );
       print('[FCMService] Token unregistered from backend');
