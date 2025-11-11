@@ -12,9 +12,12 @@ import 'screens/friends/friends_screen.dart';
 import 'screens/friends/add_friend_screen.dart';
 import 'screens/friends/friend_requests_screen.dart';
 import 'screens/profile/profile_screen.dart';
+import 'screens/debug/location_test_screen.dart';
 import 'services/auth_service.dart';
 import 'services/fcm_service.dart';
 import 'services/location_service.dart';
+import 'services/app_lifecycle_observer.dart';
+import 'services/schedule_monitor_service.dart';
 
 /// Background message handler (must be top-level function)
 @pragma('vm:entry-point')
@@ -59,8 +62,31 @@ void main() async {
   runApp(const ImaneApp());
 }
 
-class ImaneApp extends StatelessWidget {
+class ImaneApp extends StatefulWidget {
   const ImaneApp({super.key});
+
+  @override
+  State<ImaneApp> createState() => _ImaneAppState();
+}
+
+class _ImaneAppState extends State<ImaneApp> {
+  final AppLifecycleObserver _lifecycleObserver = AppLifecycleObserver();
+
+  @override
+  void initState() {
+    super.initState();
+    // Register lifecycle observer
+    WidgetsBinding.instance.addObserver(_lifecycleObserver);
+    print('[ImaneApp] AppLifecycleObserver registered');
+  }
+
+  @override
+  void dispose() {
+    // Unregister lifecycle observer
+    WidgetsBinding.instance.removeObserver(_lifecycleObserver);
+    print('[ImaneApp] AppLifecycleObserver unregistered');
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -78,6 +104,7 @@ class ImaneApp extends StatelessWidget {
         '/friends/add': (context) => const AddFriendScreen(),
         '/friends/requests': (context) => const FriendRequestsScreen(),
         '/profile': (context) => const ProfileScreen(),
+        '/debug/location': (context) => const LocationTestScreen(),
       },
     );
   }
@@ -130,24 +157,29 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
 
   /// Initialize FCM and Location services after login
   Future<void> _initializeServices() async {
-    try {
-      print('[AuthCheck] Initializing services...');
+    print('[AuthCheck] Initializing services...');
 
-      // Initialize FCM service
+    // Initialize FCM service (non-blocking)
+    try {
       final fcmService = FCMService();
       await fcmService.initialize();
       print('[AuthCheck] FCM service initialized');
-
-      // Initialize Location service (resume tracking if needed)
-      final locationService = LocationService();
-      await locationService.resumeTrackingIfNeeded();
-      print('[AuthCheck] Location service initialized');
-
-      print('[AuthCheck] All services initialized successfully');
     } catch (e) {
-      print('[AuthCheck] Error initializing services: $e');
-      // Don't block login if services fail to initialize
+      print('[AuthCheck] FCM service initialization failed (non-critical): $e');
+      // FCM failure should not block other services
     }
+
+    // Start schedule monitoring (critical for location tracking)
+    try {
+      // 位置情報追跡はstart_timeから自動的に開始されます
+      final scheduleMonitor = ScheduleMonitorService();
+      scheduleMonitor.startMonitoring();
+      print('[AuthCheck] Schedule monitoring started');
+    } catch (e) {
+      print('[AuthCheck] Schedule monitoring initialization failed: $e');
+    }
+
+    print('[AuthCheck] All services initialization completed');
   }
 
   @override

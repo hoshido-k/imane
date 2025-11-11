@@ -48,6 +48,8 @@ from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.utils.timezone import now_jst
+
 
 class FriendRequestStatus(str, Enum):
     """フレンドリクエストのステータス"""
@@ -134,8 +136,8 @@ class FriendshipInDB(FriendshipBase):
 
     friendship_id: str
     status: FriendshipStatus = FriendshipStatus.ACTIVE
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=now_jst)
+    updated_at: datetime = Field(default_factory=now_jst)
 
     model_config = ConfigDict(from_attributes=True)
 

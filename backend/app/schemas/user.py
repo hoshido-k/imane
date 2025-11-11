@@ -39,6 +39,8 @@ from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from typing import Optional, List
 from datetime import datetime
 
+from app.utils.timezone import now_jst
+
 
 class AddressBase(BaseModel):
     """住所の基本情報"""
@@ -48,8 +50,8 @@ class AddressBase(BaseModel):
 
 class Address(AddressBase):
     """登録済み住所（自宅・職場）"""
-    registered_at: datetime = Field(default_factory=datetime.utcnow)
-    last_changed_at: datetime = Field(default_factory=datetime.utcnow)
+    registered_at: datetime = Field(default_factory=now_jst)
+    last_changed_at: datetime = Field(default_factory=now_jst)
 
 
 class CustomLocation(AddressBase):
@@ -87,8 +89,8 @@ class UserInDB(UserBase):
     work_address: Optional[Address] = None
     custom_locations: List[CustomLocation] = Field(default_factory=list)
     fcm_tokens: List[str] = Field(default_factory=list)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=now_jst)
+    updated_at: datetime = Field(default_factory=now_jst)
 
     model_config = ConfigDict(from_attributes=True)
 

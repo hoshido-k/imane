@@ -5,11 +5,12 @@
 """
 
 import logging
-from datetime import UTC, datetime
+from datetime import datetime
 from typing import List, Optional, Tuple
 
 from app.config import settings
 from app.core.firebase import get_firestore_client
+from app.utils.timezone import now_jst
 from app.schemas.common import Coordinates
 from app.schemas.schedule import LocationScheduleInDB, ScheduleStatus
 from app.services.schedules import ScheduleService
@@ -100,6 +101,14 @@ class GeofencingService:
         # ジオフェンス内にいる場合は侵入と判定
         # （前回の座標がない場合や、前回がジオフェンス外だった場合も含む）
         if is_inside:
+            # スケジュールがまだ到着していない（arrived_at is None）場合、
+            # ジオフェンス内にいれば初回到着として扱う
+            if schedule.arrived_at is None:
+                logger.info(
+                    f"スケジュール {schedule.id}: 初回ジオフェンス内を検出 (距離: {distance:.1f}m)"
+                )
+                return True, distance
+
             if previous_coords is None:
                 # 前回の位置情報がない場合（初回記録）
                 logger.info(
@@ -201,7 +210,7 @@ class GeofencingService:
         )
 
         # 現在時刻を取得
-        now = datetime.now(UTC)
+        now = now_jst()
 
         # 各スケジュールに対してジオフェンス判定
         for schedule in all_schedules:

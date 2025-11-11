@@ -18,6 +18,8 @@ from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.utils.timezone import now_jst
+
 
 class ReactionStatus(str, Enum):
     """リアクションのステータス"""
@@ -47,7 +49,7 @@ class ReactionInDB(ReactionBase):
     from_user_id: str = Field(..., description="送信者のUID")
     to_user_id: str = Field(..., description="受信者のUID（ポップの投稿者）")
     message: Optional[str] = Field(None, description="添付メッセージ")
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=now_jst)
     status: ReactionStatus = Field(default=ReactionStatus.PENDING)
 
     model_config = ConfigDict(from_attributes=True)

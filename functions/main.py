@@ -5,11 +5,14 @@ Cloud Functions for Firebase - ポップ自動削除機能
 """
 
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import firebase_admin
 from firebase_admin import credentials, firestore
 from firebase_functions import scheduler_fn
+
+# 日本標準時（JST = UTC+9）
+JST = timezone(timedelta(hours=9), "JST")
 
 # Firebase初期化
 if not firebase_admin._apps:
@@ -32,7 +35,7 @@ def delete_expired_pops(event: scheduler_fn.ScheduledEvent) -> None:
     """
     try:
         db = firestore.client()
-        now = datetime.now(timezone.utc)
+        now = datetime.now(JST)
 
         logger.info(f"Starting expired pops deletion at {now.isoformat()}")
 
@@ -93,11 +96,9 @@ def cleanup_old_deleted_pops(event: scheduler_fn.ScheduledEvent) -> None:
     """
     try:
         db = firestore.client()
-        now = datetime.now(timezone.utc)
+        now = datetime.now(JST)
 
         # 24時間前の時刻を計算
-        from datetime import timedelta
-
         cutoff_time = now - timedelta(hours=24)
 
         logger.info(

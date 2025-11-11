@@ -3,12 +3,13 @@
 """
 
 import uuid
-from datetime import UTC, datetime
+from datetime import datetime
 from typing import List, Optional
 
 from google.cloud.firestore_v1 import FieldFilter
 
 from app.core.firebase import get_firestore_client, get_storage_bucket
+from app.utils.timezone import now_jst
 from app.schemas.user import UserInDB, UserUpdate
 
 
@@ -200,7 +201,7 @@ class UserService:
 
         # 更新データの準備（Noneでない値のみ）
         update_dict = update_data.model_dump(exclude_unset=True, exclude_none=True)
-        update_dict["updated_at"] = datetime.now(UTC)
+        update_dict["updated_at"] = now_jst()
 
         # Firestoreを更新
         user_ref.update(update_dict)
@@ -251,7 +252,7 @@ class UserService:
             # メタデータを設定
             blob.metadata = {
                 "user_id": uid,
-                "uploaded_at": datetime.now(UTC).isoformat(),
+                "uploaded_at": now_jst().isoformat(),
             }
 
             # アップロード
@@ -267,7 +268,7 @@ class UserService:
             user_ref = self.db.collection("users").document(uid)
             user_ref.update({
                 "profile_image_url": public_url,
-                "updated_at": datetime.now(UTC)
+                "updated_at": now_jst()
             })
 
             return public_url

@@ -3,10 +3,11 @@
 """
 
 import pytest
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from app.schemas.common import Coordinates
+from app.utils.timezone import now_jst
 from app.schemas.schedule import LocationScheduleInDB, ScheduleStatus
 from app.services.geofencing import GeofencingService
 
@@ -20,7 +21,7 @@ def geofencing_service():
 @pytest.fixture
 def sample_schedule():
     """サンプルスケジュール"""
-    now = datetime.now(UTC)
+    now = now_jst()
     return LocationScheduleInDB(
         id="schedule_123",
         user_id="user_123",

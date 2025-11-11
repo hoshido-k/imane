@@ -3,10 +3,11 @@
 """
 
 import uuid
-from datetime import UTC, datetime
+from datetime import datetime
 from typing import List, Optional
 
 from app.core.firebase import get_firestore_client
+from app.utils.timezone import now_jst
 from app.schemas.favorite import (
     FavoriteLocationCreate,
     FavoriteLocationInDB,
@@ -35,7 +36,7 @@ class FavoriteService:
         """
         # 新しいお気に入りIDを生成
         favorite_id = str(uuid.uuid4())
-        now = datetime.now(UTC)
+        now = now_jst()
 
         # お気に入りデータを作成
         favorite_dict = favorite_data.model_dump()

@@ -91,9 +91,17 @@ async def create_schedule(
         HTTPException: バリデーションエラー
     """
     try:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"[DEBUG API] クライアントから受信した start_time: {schedule_data.start_time}")
+
         schedule = await schedule_service.create_schedule(current_user.uid, schedule_data)
         schedule_response = LocationScheduleResponse(**schedule.model_dump())
-        return await _enrich_schedule_with_user_info(schedule_response, user_service)
+
+        logger.info(f"[DEBUG API] レスポンス前の start_time: {schedule_response.start_time}")
+        result = await _enrich_schedule_with_user_info(schedule_response, user_service)
+        logger.info(f"[DEBUG API] レスポンス直前の start_time: {result.start_time}")
+        return result
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 

@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -12,6 +14,15 @@ from app.api.v1 import (
     users,
 )
 from app.core.firebase import initialize_firebase
+
+# ロギング設定
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(levelname)s:     %(name)s - %(message)s",
+)
+
+# アプリケーションロガーを取得
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="imane API",
@@ -29,7 +40,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-initialize_firebase()
+@app.on_event("startup")
+async def startup_event():
+    """アプリケーション起動時の処理"""
+    logger.info("=" * 50)
+    logger.info("imane API サーバー起動中...")
+    logger.info("=" * 50)
+    initialize_firebase()
+    logger.info("Firebase初期化完了")
+    logger.info("=" * 50)
 
 # ルーター登録
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["認証"])

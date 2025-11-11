@@ -33,7 +33,9 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_serializer
+
+from app.utils.timezone import now_jst, to_jst
 
 
 class NotificationType(str, Enum):
@@ -61,7 +63,7 @@ class NotificationInDB(BaseModel):
     body: str = Field(..., max_length=500, description="通知本文")
     data: dict[str, Any] = Field(default_factory=dict, description="追加データ")
     is_read: bool = Field(default=False, description="既読フラグ")
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=now_jst)
     read_at: Optional[datetime] = Field(None, description="既読日時")
 
     model_config = ConfigDict(from_attributes=True)
@@ -81,6 +83,14 @@ class NotificationResponse(BaseModel):
     read_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+    @field_serializer('created_at', 'read_at')
+    def serialize_datetime(self, dt: Optional[datetime], _info) -> Optional[str]:
+        """datetimeをJSTタイムゾーン付きのISO 8601形式でシリアライズ"""
+        if dt is None:
+            return None
+        jst_dt = to_jst(dt)
+        return jst_dt.isoformat()
 
 
 class NotificationListResponse(BaseModel):
@@ -128,7 +138,7 @@ class NotificationHistoryInDB(BaseModel):
     type: str = Field(..., description="通知タイプ (arrival/stay/departure)")
     message: str = Field(..., description="通知メッセージ")
     map_link: str = Field(..., description="地図リンク")
-    sent_at: datetime = Field(default_factory=datetime.utcnow, description="送信日時")
+    sent_at: datetime = Field(default_factory=now_jst, description="送信日時")
     auto_delete_at: datetime = Field(..., description="自動削除日時（24時間後）")
 
     model_config = ConfigDict(from_attributes=True)

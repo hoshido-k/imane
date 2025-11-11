@@ -2,13 +2,14 @@
 認証サービス - Firebase Authentication + Firestore連携
 """
 
-from datetime import UTC, datetime
+from datetime import datetime
 from typing import Optional
 
 from firebase_admin import auth, firestore
 from firebase_admin.exceptions import FirebaseError
 
 from app.core.firebase import get_auth_client, get_firestore_client
+from app.utils.timezone import now_jst
 from app.schemas.auth import SignupRequest, TokenResponse
 from app.schemas.user import UserInDB
 from app.utils.jwt import create_access_token, get_token_expire_time
@@ -58,8 +59,8 @@ class AuthService:
                 username=request.username,
                 email=request.email,
                 display_name=request.display_name,
-                created_at=datetime.now(UTC),
-                updated_at=datetime.now(UTC)
+                created_at=now_jst(),
+                updated_at=now_jst()
             )
 
             user_ref = self.db.collection('users').document(user_record.uid)

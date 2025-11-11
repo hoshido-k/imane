@@ -3,10 +3,11 @@
 """
 
 import pytest
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from app.schemas.common import Coordinates
+from app.utils.timezone import now_jst
 from app.schemas.schedule import LocationScheduleInDB, ScheduleStatus
 from app.services.auto_notification import AutoNotificationService
 
@@ -20,7 +21,7 @@ def auto_notification_service():
 @pytest.fixture
 def sample_schedule():
     """サンプルスケジュール"""
-    now = datetime.now(UTC)
+    now = now_jst()
     return LocationScheduleInDB(
         id="schedule_123",
         user_id="user_123",
@@ -55,8 +56,8 @@ def sample_user():
         username="testuser",
         display_name="テストユーザー",
         fcm_tokens=["fcm_token_123"],
-        created_at=datetime.now(UTC),
-        updated_at=datetime.now(UTC),
+        created_at=now_jst(),
+        updated_at=now_jst(),
     )
 
 
@@ -220,7 +221,7 @@ async def test_send_departure_notification_disabled(
 async def test_send_stay_notification(auto_notification_service, sample_schedule, sample_user):
     """滞在通知送信のテスト"""
     # 到着から60分経過した状態を設定
-    sample_schedule.arrived_at = datetime.now(UTC) - timedelta(minutes=60)
+    sample_schedule.arrived_at = now_jst() - timedelta(minutes=60)
     current_coords = Coordinates(lat=35.6580, lng=139.7016)
 
     with patch.object(
@@ -256,7 +257,7 @@ async def test_send_stay_notification_insufficient_duration(
 ):
     """滞在時間が不足している場合のテスト"""
     # 到着から30分しか経過していない
-    sample_schedule.arrived_at = datetime.now(UTC) - timedelta(minutes=30)
+    sample_schedule.arrived_at = now_jst() - timedelta(minutes=30)
     current_coords = Coordinates(lat=35.6580, lng=139.7016)
 
     with patch.object(

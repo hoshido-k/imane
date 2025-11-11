@@ -18,9 +18,10 @@ Firestoreのlocation_history コレクション構造:
 from datetime import datetime, timedelta
 from typing import List, Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_serializer
 
 from app.schemas.common import Coordinates
+from app.utils.timezone import now_jst, jst_now_plus, to_jst
 
 
 class LocationUpdateRequest(BaseModel):
@@ -39,9 +40,9 @@ class LocationHistoryInDB(BaseModel):
     schedule_id: Optional[str] = Field(None, description="関連するスケジュールID")
     coords: Coordinates = Field(..., description="座標")
     accuracy: Optional[float] = Field(None, description="位置情報の精度（メートル）")
-    recorded_at: datetime = Field(default_factory=datetime.utcnow)
+    recorded_at: datetime = Field(default_factory=now_jst)
     auto_delete_at: datetime = Field(
-        default_factory=lambda: datetime.utcnow() + timedelta(hours=24),
+        default_factory=lambda: jst_now_plus(hours=24),
         description="自動削除日時（24時間後）",
     )
 
@@ -61,6 +62,14 @@ class LocationHistoryResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+    @field_serializer('recorded_at', 'auto_delete_at')
+    def serialize_datetime(self, dt: Optional[datetime], _info) -> Optional[str]:
+        """datetimeをJSTタイムゾーン付きのISO 8601形式でシリアライズ"""
+        if dt is None:
+            return None
+        jst_dt = to_jst(dt)
+        return jst_dt.isoformat()
+
 
 class ScheduleStatusInfo(BaseModel):
     """スケジュールのステータス情報"""
@@ -73,6 +82,14 @@ class ScheduleStatusInfo(BaseModel):
     arrived_at: Optional[datetime] = Field(None, description="到着日時")
     departed_at: Optional[datetime] = Field(None, description="退出日時")
 
+    @field_serializer('arrived_at', 'departed_at')
+    def serialize_datetime(self, dt: Optional[datetime], _info) -> Optional[str]:
+        """datetimeをJSTタイムゾーン付きのISO 8601形式でシリアライズ"""
+        if dt is None:
+            return None
+        jst_dt = to_jst(dt)
+        return jst_dt.isoformat()
+
 
 class LocationStatusResponse(BaseModel):
     """位置情報ステータスのレスポンス"""
@@ -82,6 +99,14 @@ class LocationStatusResponse(BaseModel):
     active_schedules: List[ScheduleStatusInfo] = Field(
         default_factory=list, description="アクティブなスケジュール一覧"
     )
+
+    @field_serializer('last_updated')
+    def serialize_datetime(self, dt: Optional[datetime], _info) -> Optional[str]:
+        """datetimeをJSTタイムゾーン付きのISO 8601形式でシリアライズ"""
+        if dt is None:
+            return None
+        jst_dt = to_jst(dt)
+        return jst_dt.isoformat()
 
 
 class LocationUpdateResponse(BaseModel):

@@ -7,9 +7,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from datetime import UTC, datetime
+from datetime import datetime
 
 from app.core.firebase import get_firestore_client, initialize_firebase
+from app.utils.timezone import now_jst
 
 
 def check_schedules():
@@ -31,7 +32,7 @@ def check_schedules():
 
     print(f"\n見つかったスケジュール数: {len(schedules)}\n")
 
-    now = datetime.now(UTC)
+    now = now_jst()
 
     for schedule_doc in schedules:
         schedule_data = schedule_doc.to_dict()

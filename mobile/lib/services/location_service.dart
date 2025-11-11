@@ -23,15 +23,22 @@ class LocationService {
   DateTime? _lastUpdateTime;
   bool _isOnline = true;
 
+  // Foreground auto-update (for debugging)
+  Timer? _foregroundTimer;
+  bool _isForegroundAutoUpdateEnabled = false;
+
   // Location update interval (in milliseconds)
   // TODO: 本番環境では10分 (10 * 60 * 1000) に戻す
-  static const int _updateIntervalMs = 1 * 5 * 1000; // 1 minute for testing
+  static const int _updateIntervalMs = 1 * 60 * 1000; // 1 minute (60 seconds) for testing
 
   // Minimum distance filter in meters
   static const double _distanceFilterMeters = 50.0;
 
   /// Check if location tracking is currently active
   bool get isTracking => _isTracking;
+
+  /// Check if foreground auto-update is enabled
+  bool get isForegroundAutoUpdateEnabled => _isForegroundAutoUpdateEnabled;
 
   /// Check location permission status
   Future<LocationPermission> checkPermission() async {
@@ -68,19 +75,28 @@ class LocationService {
   /// Start background location tracking
   /// Sends location updates every 10 minutes to the backend API
   Future<bool> startTracking() async {
+    final timestamp = DateTime.now().toIso8601String();
+    print('[$timestamp] [LocationService] === Starting location tracking ===');
+
     if (_isTracking) {
-      print('Location tracking is already active');
+      print('[$timestamp] [LocationService] Already tracking - skipping');
       return true;
     }
 
     // Check permission first
+    print('[$timestamp] [LocationService] Checking location permission...');
     final hasPermission = await requestPermission();
     if (!hasPermission) {
-      print('Location permission not granted');
+      print('[$timestamp] [LocationService] ✗ Permission denied');
       return false;
     }
+    print('[$timestamp] [LocationService] ✓ Permission granted');
 
     try {
+      print('[$timestamp] [LocationService] Configuring background location...');
+      print('  - Update interval: ${_updateIntervalMs}ms (${_updateIntervalMs / 1000}s)');
+      print('  - Distance filter: ${_distanceFilterMeters}m');
+
       // Configure background location settings
       await BackgroundLocation.setAndroidNotification(
         title: 'imane',
@@ -96,6 +112,7 @@ class LocationService {
         distanceFilter: _distanceFilterMeters,
       );
 
+      print('[$timestamp] [LocationService] Registering location update listener...');
       // Listen to location updates
       BackgroundLocation.getLocationUpdates((location) {
         _handleLocationUpdate(location);
@@ -107,10 +124,10 @@ class LocationService {
       // Start connectivity monitoring
       _startConnectivityMonitoring();
 
-      print('Location tracking started successfully');
+      print('[$timestamp] [LocationService] ✓ Location tracking started successfully');
       return true;
     } catch (e) {
-      print('Error starting location tracking: $e');
+      print('[$timestamp] [LocationService] ✗ Error starting location tracking: $e');
       return false;
     }
   }
@@ -138,19 +155,33 @@ class LocationService {
 
   /// Handle location update from background service
   Future<void> _handleLocationUpdate(Location location) async {
-    print('Location update received: ${location.latitude}, ${location.longitude}');
-
-    // Check if enough time has passed since last update (10 minutes)
     final now = DateTime.now();
+    final timestamp = now.toIso8601String();
+
+    print('[$timestamp] [LocationService] Location update received:');
+    print('  - Latitude: ${location.latitude}');
+    print('  - Longitude: ${location.longitude}');
+    print('  - Accuracy: ${location.accuracy}m');
+    print('  - Tracking active: $_isTracking');
+
+    // Check if enough time has passed since last update
     if (_lastUpdateTime != null) {
       final timeDiff = now.difference(_lastUpdateTime!).inMilliseconds;
+      final timeDiffSeconds = (timeDiff / 1000).toStringAsFixed(1);
+      final requiredSeconds = (_updateIntervalMs / 1000).toStringAsFixed(1);
+
+      print('  - Time since last update: ${timeDiffSeconds}s (required: ${requiredSeconds}s)');
+
       if (timeDiff < _updateIntervalMs) {
-        print('Skipping update - not enough time passed since last update');
+        print('  - Result: SKIPPED (interval not met)');
         return;
       }
+    } else {
+      print('  - First location update in this session');
     }
 
     _lastUpdateTime = now;
+    print('  - Result: PROCESSING - sending to backend API');
 
     // Send location to backend API
     await _sendLocationWithRetry(location);
@@ -177,18 +208,21 @@ class LocationService {
 
   /// Send location with retry logic
   Future<void> _sendLocationWithRetry(Location location) async {
+    final timestamp = DateTime.now().toIso8601String();
+    print('[$timestamp] [LocationService] Attempting to send location to API...');
+
     try {
       await _sendLocationToApi(location);
-      print('Location sent successfully');
+      print('[$timestamp] [LocationService] ✓ Location sent successfully to backend');
     } catch (e) {
-      print('Failed to send location: $e');
+      print('[$timestamp] [LocationService] ✗ Failed to send location: $e');
       // Cache the location for later retry
       await _cacheService.cacheLocation(
         latitude: location.latitude!,
         longitude: location.longitude!,
         accuracy: location.accuracy,
       );
-      print('Location cached for later retry');
+      print('[$timestamp] [LocationService] Location cached for later retry');
     }
   }
 
@@ -232,15 +266,25 @@ class LocationService {
 
   /// Send location data to backend API
   Future<void> _sendLocationToApi(Location location) async {
+    final timestamp = DateTime.now().toIso8601String();
+
     try {
-      await _apiService.updateLocation(
+      print('[$timestamp] [LocationService] Calling API updateLocation...');
+      print('  - Endpoint: /location/update');
+      print('  - Coords: (${location.latitude}, ${location.longitude})');
+      print('  - Accuracy: ${location.accuracy ?? 0.0}m');
+
+      final response = await _apiService.updateLocation(
         latitude: location.latitude!,
         longitude: location.longitude!,
         accuracy: location.accuracy ?? 0.0,
       );
-      print('Location sent to API successfully');
+
+      print('[$timestamp] [LocationService] API response received:');
+      print('  - Response: $response');
+      print('[$timestamp] [LocationService] ✓ Location sent to API successfully');
     } catch (e) {
-      print('Failed to send location to API: $e');
+      print('[$timestamp] [LocationService] ✗ Failed to send location to API: $e');
       rethrow;
     }
   }
@@ -323,8 +367,140 @@ class LocationService {
     return await Geolocator.openLocationSettings();
   }
 
+  /// Start foreground auto-update (for debugging)
+  /// This sends location updates every 5 seconds while the app is in foreground
+  Future<void> startForegroundAutoUpdate() async {
+    final timestamp = DateTime.now().toIso8601String();
+
+    if (_isForegroundAutoUpdateEnabled) {
+      print('[$timestamp] [LocationService] Foreground auto-update is already running');
+      return;
+    }
+
+    print('[$timestamp] [LocationService] === Starting foreground auto-update ===');
+    print('[$timestamp] [LocationService] Update interval: ${_updateIntervalMs}ms (${_updateIntervalMs / 1000}s)');
+    _isForegroundAutoUpdateEnabled = true;
+
+    // Send location immediately on start
+    try {
+      print('[$timestamp] [LocationService] Sending initial location...');
+      final position = await getCurrentLocation();
+
+      if (position != null) {
+        print('[$timestamp] [LocationService] Initial location fetched, sending to API...');
+        await _apiService.updateLocation(
+          latitude: position.latitude,
+          longitude: position.longitude,
+          accuracy: position.accuracy,
+        );
+        print('[$timestamp] [LocationService] ✓ Initial location sent successfully');
+      } else {
+        print('[$timestamp] [LocationService] ✗ Failed to get initial location');
+      }
+    } catch (e) {
+      print('[$timestamp] [LocationService] ✗ Initial location error: $e');
+    }
+
+    // Start timer to send location every 5 seconds
+    _foregroundTimer = Timer.periodic(
+      Duration(milliseconds: _updateIntervalMs),
+      (timer) async {
+        final timerTimestamp = DateTime.now().toIso8601String();
+        try {
+          print('[$timerTimestamp] [LocationService] [Timer] Fetching location...');
+          final position = await getCurrentLocation();
+
+          if (position != null) {
+            print('[$timerTimestamp] [LocationService] [Timer] Location fetched, sending to API...');
+            await _apiService.updateLocation(
+              latitude: position.latitude,
+              longitude: position.longitude,
+              accuracy: position.accuracy,
+            );
+            print('[$timerTimestamp] [LocationService] [Timer] ✓ Location sent successfully');
+          } else {
+            print('[$timerTimestamp] [LocationService] [Timer] ✗ Failed to get location');
+          }
+        } catch (e) {
+          print('[$timerTimestamp] [LocationService] [Timer] ✗ Error: $e');
+        }
+      },
+    );
+
+    print('[$timestamp] [LocationService] ✓ Foreground auto-update started successfully');
+  }
+
+  /// Stop foreground auto-update
+  void stopForegroundAutoUpdate() {
+    final timestamp = DateTime.now().toIso8601String();
+
+    if (!_isForegroundAutoUpdateEnabled) {
+      print('[$timestamp] [LocationService] Foreground auto-update is not running');
+      return;
+    }
+
+    print('[$timestamp] [LocationService] ⚠️ === Stopping foreground auto-update ===');
+    print('[$timestamp] [LocationService] Called from:');
+    print(StackTrace.current);
+    _foregroundTimer?.cancel();
+    _foregroundTimer = null;
+    _isForegroundAutoUpdateEnabled = false;
+    print('[$timestamp] [LocationService] ✓ Foreground auto-update stopped');
+  }
+
+  /// Send current location manually (for debugging)
+  Future<Map<String, dynamic>> sendCurrentLocationManually() async {
+    final timestamp = DateTime.now().toIso8601String();
+    print('[$timestamp] [LocationService] Manual location send requested...');
+
+    try {
+      // Get current location
+      print('[$timestamp] [LocationService] Fetching current location...');
+      final position = await getCurrentLocation();
+
+      if (position == null) {
+        throw Exception('Failed to get current location');
+      }
+
+      print('[$timestamp] [LocationService] Location fetched:');
+      print('  - Latitude: ${position.latitude}');
+      print('  - Longitude: ${position.longitude}');
+      print('  - Accuracy: ${position.accuracy}m');
+
+      // Send to API
+      print('[$timestamp] [LocationService] Sending to API...');
+      final response = await _apiService.updateLocation(
+        latitude: position.latitude,
+        longitude: position.longitude,
+        accuracy: position.accuracy,
+      );
+
+      print('[$timestamp] [LocationService] ✓ Manual send successful');
+      print('  - Response: $response');
+
+      return {
+        'success': true,
+        'position': {
+          'latitude': position.latitude,
+          'longitude': position.longitude,
+          'accuracy': position.accuracy,
+        },
+        'response': response,
+        'timestamp': timestamp,
+      };
+    } catch (e) {
+      print('[$timestamp] [LocationService] ✗ Manual send failed: $e');
+      return {
+        'success': false,
+        'error': e.toString(),
+        'timestamp': timestamp,
+      };
+    }
+  }
+
   /// Dispose resources
   Future<void> dispose() async {
+    stopForegroundAutoUpdate();
     await stopTracking();
   }
 }

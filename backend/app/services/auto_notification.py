@@ -7,7 +7,7 @@
 
 import logging
 import uuid
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta
 from typing import List
 
 from app.config import settings
@@ -17,6 +17,7 @@ from app.schemas.notification import NotificationHistoryInDB, NotificationType
 from app.schemas.schedule import LocationScheduleInDB
 from app.services.notifications import NotificationService
 from app.services.users import UserService
+from app.utils.timezone import now_jst, JST, jst_now_plus
 
 logger = logging.getLogger(__name__)
 
@@ -53,8 +54,9 @@ class AutoNotificationService:
         Returns:
             フォーマットされたメッセージ
         """
-        now = datetime.now(UTC)
-        time_str = now.strftime("%H:%M")
+        # 日本時間（JST）で現在時刻を取得
+        now_jst = datetime.now(JST)
+        time_str = now_jst.strftime("%H:%M")
         return f"今ね、{user_name}さんが{destination_name}へ到着したよ\n到着時刻: {time_str}"
 
     def _format_stay_message(
@@ -94,8 +96,9 @@ class AutoNotificationService:
         Returns:
             フォーマットされたメッセージ
         """
-        now = datetime.now(UTC)
-        time_str = now.strftime("%H:%M")
+        # 日本時間（JST）で現在時刻を取得
+        now_jst = datetime.now(JST)
+        time_str = now_jst.strftime("%H:%M")
         return f"今ね、{user_name}さんが{destination_name}から出発したよ\n出発時刻: {time_str}"
 
     async def _save_notification_history(
@@ -122,7 +125,7 @@ class AutoNotificationService:
             保存された通知履歴
         """
         history_id = str(uuid.uuid4())
-        now = datetime.now(UTC)
+        now = now_jst()
         auto_delete_at = now + timedelta(hours=settings.DATA_RETENTION_HOURS)
 
         history_dict = {
@@ -257,31 +260,59 @@ class AutoNotificationService:
         Returns:
             送信した通知のIDリスト
         """
+        logger.info(
+            f"[滞在通知チェック] スケジュール {schedule.id}: "
+            f"到着時刻={schedule.arrived_at}, 通知閾値={schedule.notify_after_minutes}分"
+        )
+
         # 到着していない場合はスキップ
         if not schedule.arrived_at:
-            logger.warning(f"スケジュール {schedule.id}: 到着時刻が記録されていません")
+            logger.warning(f"[滞在通知] スケジュール {schedule.id}: 到着時刻が記録されていません")
             return []
 
         # 滞在時間を計算
-        now = datetime.now(UTC)
+        now = now_jst()
         stay_duration = now - schedule.arrived_at
         stay_minutes = int(stay_duration.total_seconds() / 60)
+
+        logger.info(
+            f"[滞在通知] スケジュール {schedule.id}: 滞在時間={stay_minutes}分"
+        )
 
         # 指定された滞在時間に達していない場合はスキップ
         if stay_minutes < schedule.notify_after_minutes:
             logger.info(
-                f"スケジュール {schedule.id}: 滞在時間が不足 "
+                f"[滞在通知] スケジュール {schedule.id}: 滞在時間が不足 "
                 f"({stay_minutes}分 < {schedule.notify_after_minutes}分)"
             )
             return []
 
+        # 既に滞在通知を送信済みかチェック（重複送信防止）
+        logger.info(f"[滞在通知] スケジュール {schedule.id}: 既存通知をチェック中...")
+        notification_history_query = (
+            self.db.collection(self.notification_history_collection)
+            .where("schedule_id", "==", schedule.id)
+            .where("type", "==", "stay")
+        )
+        existing_notifications = list(notification_history_query.stream())
+
+        if existing_notifications:
+            logger.info(
+                f"[滞在通知] スケジュール {schedule.id}: "
+                f"既に滞在通知が送信済みです（{len(existing_notifications)}件）。スキップします。"
+            )
+            return []
+
+        logger.info(f"[滞在通知] スケジュール {schedule.id}: 滞在通知を送信します")
+
         # ユーザー情報を取得
         user = await self.user_service.get_user_by_uid(schedule.user_id)
         if not user:
-            logger.error(f"ユーザーが見つかりません: {schedule.user_id}")
+            logger.error(f"[滞在通知] ユーザーが見つかりません: {schedule.user_id}")
             return []
 
         user_name = user.display_name or user.username
+        logger.info(f"[滞在通知] 送信者: {user_name} ({schedule.user_id})")
 
         # メッセージと地図リンクを生成
         message = self._format_stay_message(user_name, schedule.destination_name, stay_minutes)
@@ -292,7 +323,9 @@ class AutoNotificationService:
         # 通知先ユーザーに送信
         for to_user_id in schedule.notify_to_user_ids:
             try:
-                # プッシュ通知を送信
+                logger.info(f"[滞在通知] 通知送信中: {schedule.user_id} -> {to_user_id}")
+
+                # プッシュ通知を送信（save_to_db=Trueで明示的に指定）
                 await self.notification_service.send_push_notification(
                     user_id=to_user_id,
                     title=f"{user_name}さんが滞在中",
@@ -306,6 +339,7 @@ class AutoNotificationService:
                         "coords": {"lat": current_coords.lat, "lng": current_coords.lng},
                         "stay_duration_minutes": stay_minutes,
                     },
+                    save_to_db=True,  # 明示的にDB保存を指定
                 )
 
                 # 通知履歴を保存（24時間TTL）
@@ -319,11 +353,19 @@ class AutoNotificationService:
                 )
                 notification_ids.append(history.id)
 
-                logger.info(f"滞在通知を送信: {schedule.user_id} -> {to_user_id}")
+                logger.info(
+                    f"[滞在通知] 送信成功: {schedule.user_id} -> {to_user_id}, "
+                    f"履歴ID: {history.id}"
+                )
 
             except Exception as e:
-                logger.error(f"滞在通知の送信に失敗: {e}")
+                logger.error(
+                    f"[滞在通知] 送信失敗: {schedule.user_id} -> {to_user_id}, "
+                    f"エラー: {type(e).__name__}: {str(e)}",
+                    exc_info=True,
+                )
 
+        logger.info(f"[滞在通知] 完了: {len(notification_ids)}件の通知を送信しました")
         return notification_ids
 
     async def send_departure_notification(
@@ -440,7 +482,7 @@ class AutoNotificationService:
             schedule_data = doc.to_dict()
             arrived_schedules.append(LocationScheduleInDB(**schedule_data))
 
-        now = datetime.now(UTC)
+        now = now_jst()
         total_sent = 0
 
         for schedule in arrived_schedules:
@@ -507,7 +549,7 @@ class AutoNotificationService:
         Returns:
             削除した件数
         """
-        now = datetime.now(UTC)
+        now = now_jst()
 
         query = self.db.collection(self.notification_history_collection).where(
             "auto_delete_at", "<=", now

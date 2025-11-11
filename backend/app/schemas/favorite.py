@@ -20,6 +20,8 @@ from typing import List
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.utils.timezone import now_jst
+
 
 class Coordinates(BaseModel):
     """座標情報"""
@@ -47,7 +49,7 @@ class FavoriteLocationInDB(FavoriteLocationBase):
 
     id: str = Field(..., description="お気に入りID")
     user_id: str = Field(..., description="ユーザID")
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=now_jst)
 
     model_config = ConfigDict(from_attributes=True)
 

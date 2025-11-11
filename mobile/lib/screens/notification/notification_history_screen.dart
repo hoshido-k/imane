@@ -526,9 +526,12 @@ class _NotificationCard extends StatelessWidget {
   }
 
   String _formatDateTime(DateTime dateTime) {
+    // UTC時刻をローカル時刻（日本時間）に変換
+    final localDateTime = dateTime.toLocal();
+
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final date = DateTime(dateTime.year, dateTime.month, dateTime.day);
+    final date = DateTime(localDateTime.year, localDateTime.month, localDateTime.day);
 
     String dateStr;
     if (date == today) {
@@ -536,9 +539,9 @@ class _NotificationCard extends StatelessWidget {
     } else if (date == today.subtract(const Duration(days: 1))) {
       dateStr = '昨日';
     } else {
-      dateStr = '${dateTime.month}/${dateTime.day}';
+      dateStr = '${localDateTime.month}/${localDateTime.day}';
     }
 
-    return '$dateStr ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+    return '$dateStr ${localDateTime.hour.toString().padLeft(2, '0')}:${localDateTime.minute.toString().padLeft(2, '0')}';
   }
 }
