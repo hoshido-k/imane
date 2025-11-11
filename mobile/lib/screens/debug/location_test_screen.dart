@@ -30,10 +30,9 @@ class _LocationTestScreenState extends State<LocationTestScreen> {
 
   @override
   void dispose() {
-    // Stop auto-update when leaving screen
-    if (_isAutoUpdateEnabled) {
-      _locationService.stopForegroundAutoUpdate();
-    }
+    // デバッグ画面を閉じても位置情報取得は継続
+    // （予定が有効な間は取得し続ける必要があるため）
+    // 位置情報取得は予定削除時に自動的に停止されます
     super.dispose();
   }
 
