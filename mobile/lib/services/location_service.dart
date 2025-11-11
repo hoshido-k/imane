@@ -6,6 +6,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'api_service.dart';
 import 'location_cache_service.dart';
+import 'popup_notification_service.dart';
+import '../models/notification_history.dart';
 
 /// Location tracking service for imane
 /// Handles background location tracking and sends updates to the backend API
@@ -28,7 +30,8 @@ class LocationService {
   static const int _updateIntervalMs = 1 * 60 * 1000; // 1 minute (60 seconds) for testing
 
   // Minimum distance filter in meters
-  static const double _distanceFilterMeters = 50.0;
+  // TODO: 本番環境では50.0mに戻す
+  static const double _distanceFilterMeters = 5.0; // 5m for testing (was 50.0)
 
   /// Check if location tracking is currently active
   bool get isTracking => _isTracking;
@@ -78,12 +81,25 @@ class LocationService {
 
     // Check permission first
     print('[$timestamp] [LocationService] Checking location permission...');
+
+    // Check current permission status
+    final currentPermission = await Geolocator.checkPermission();
+    print('[$timestamp] [LocationService] Current permission: $currentPermission');
+
     final hasPermission = await requestPermission();
     if (!hasPermission) {
       print('[$timestamp] [LocationService] ✗ Permission denied');
+      print('[$timestamp] [LocationService] ⚠️ Please go to: Settings → Privacy → Location Services → imane → Select "Always"');
       return false;
     }
-    print('[$timestamp] [LocationService] ✓ Permission granted');
+
+    final finalPermission = await Geolocator.checkPermission();
+    print('[$timestamp] [LocationService] ✓ Permission granted: $finalPermission');
+
+    if (finalPermission != LocationPermission.always) {
+      print('[$timestamp] [LocationService] ⚠️ Warning: Permission is not "Always". Background tracking may not work properly.');
+      print('[$timestamp] [LocationService] ⚠️ Current: $finalPermission, Required: LocationPermission.always');
+    }
 
     try {
       print('[$timestamp] [LocationService] Configuring background location...');
@@ -106,8 +122,10 @@ class LocationService {
       );
 
       print('[$timestamp] [LocationService] Registering location update listener...');
+
       // Listen to location updates
       BackgroundLocation.getLocationUpdates((location) {
+        print('[$timestamp] [LocationService] 🔔 Location callback triggered!');
         _handleLocationUpdate(location);
       });
 
@@ -118,6 +136,8 @@ class LocationService {
       _startConnectivityMonitoring();
 
       print('[$timestamp] [LocationService] ✓ Location tracking started successfully');
+      print('[$timestamp] [LocationService] ⚠️ Distance filter: ${_distanceFilterMeters}m - Move at least this distance to trigger updates');
+      print('[$timestamp] [LocationService] ⚠️ Update interval: ${_updateIntervalMs / 1000}s - Wait at least this long between updates');
       return true;
     } catch (e) {
       print('[$timestamp] [LocationService] ✗ Error starting location tracking: $e');
@@ -276,9 +296,84 @@ class LocationService {
       print('[$timestamp] [LocationService] API response received:');
       print('  - Response: $response');
       print('[$timestamp] [LocationService] ✓ Location sent to API successfully');
+
+      // Handle triggered notifications from backend
+      _handleTriggeredNotifications(response, location);
     } catch (e) {
       print('[$timestamp] [LocationService] ✗ Failed to send location to API: $e');
       rethrow;
+    }
+  }
+
+  /// Handle notifications triggered by backend
+  void _handleTriggeredNotifications(Map<String, dynamic> response, Location location) {
+    try {
+      final triggeredNotifications = response['triggered_notifications'] as List?;
+      final scheduleUpdates = response['schedule_updates'] as List?;
+
+      if (triggeredNotifications == null || triggeredNotifications.isEmpty) {
+        return;
+      }
+
+      print('[LocationService] Processing ${triggeredNotifications.length} triggered notifications');
+
+      // Get popup service
+      final popupService = PopupNotificationService();
+
+      // Process each notification
+      for (final notification in triggeredNotifications) {
+        final type = notification['type'] as String?;
+        final scheduleId = notification['schedule_id'] as String?;
+
+        if (type == null || scheduleId == null) continue;
+
+        // Find corresponding schedule update for details
+        final scheduleUpdate = scheduleUpdates?.firstWhere(
+          (update) => update['schedule_id'] == scheduleId,
+          orElse: () => null,
+        );
+
+        final destinationName = scheduleUpdate?['destination_name'] as String? ?? '目的地';
+        final distance = scheduleUpdate?['distance'] as double?;
+
+        // Create notification title and body based on type
+        final notificationType = NotificationType.fromString(type);
+        final String title;
+        String body; // Non-final to allow modification
+        final String? mapLink;
+
+        switch (notificationType) {
+          case NotificationType.arrival:
+            title = '到着通知';
+            body = '今ね、$destinationNameへ到着したよ';
+            if (distance != null) {
+              body += '\n距離: ${distance.toStringAsFixed(0)}m';
+            }
+            mapLink = 'https://www.google.com/maps?q=${location.latitude},${location.longitude}';
+            break;
+          case NotificationType.stay:
+            title = '滞在通知';
+            body = '今ね、$destinationNameに滞在しているよ';
+            mapLink = 'https://www.google.com/maps?q=${location.latitude},${location.longitude}';
+            break;
+          case NotificationType.departure:
+            title = '出発通知';
+            body = '今ね、${destinationName}から出発したよ';
+            mapLink = null;
+            break;
+        }
+
+        // Show popup notification
+        print('[LocationService] Showing popup: $title - $body');
+        popupService.show(
+          title: title,
+          body: body,
+          type: notificationType,
+          mapLink: mapLink,
+        );
+      }
+    } catch (e) {
+      print('[LocationService] Error handling triggered notifications: $e');
     }
   }
 

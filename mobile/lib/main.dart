@@ -17,6 +17,8 @@ import 'services/fcm_service.dart';
 import 'services/location_service.dart';
 import 'services/app_lifecycle_observer.dart';
 import 'services/schedule_monitor_service.dart';
+import 'services/popup_notification_service.dart';
+import 'services/local_notification_service.dart';
 
 /// Background message handler (must be top-level function)
 @pragma('vm:entry-point')
@@ -61,6 +63,9 @@ void main() async {
   runApp(const ImaneApp());
 }
 
+/// Global navigator key for accessing context from anywhere
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 class ImaneApp extends StatefulWidget {
   const ImaneApp({super.key});
 
@@ -90,6 +95,7 @@ class _ImaneAppState extends State<ImaneApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: 'imane',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
@@ -156,6 +162,15 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
   /// Initialize FCM and Location services after login
   Future<void> _initializeServices() async {
     print('[AuthCheck] Initializing services...');
+
+    // Initialize local notification service (for system banners)
+    try {
+      final localNotificationService = LocalNotificationService();
+      await localNotificationService.initialize();
+      print('[AuthCheck] Local notification service initialized');
+    } catch (e) {
+      print('[AuthCheck] Local notification service initialization failed: $e');
+    }
 
     // Initialize FCM service (non-blocking)
     try {

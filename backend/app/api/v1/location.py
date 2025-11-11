@@ -131,15 +131,42 @@ async def update_location(
         schedule_updates.append(schedule_update)
 
     # 到着済みスケジュールの滞在通知をチェック
+    # 自分が作成したスケジュール + 通知先に自分が含まれているスケジュール
     from app.schemas.schedule import ScheduleStatus
     from app.services.schedules import ScheduleService
 
     schedule_service = ScheduleService()
-    arrived_schedules = await schedule_service.get_schedules_by_user(
+
+    # 1. 自分が作成した到着済みスケジュール
+    my_arrived_schedules = await schedule_service.get_schedules_by_user(
         current_user.uid, ScheduleStatus.ARRIVED
     )
 
-    logger.info(f"[滞在通知チェック] 到着済みスケジュール: {len(arrived_schedules)}件")
+    # 2. フレンドが作成し、自分が通知先になっている到着済みスケジュール
+    # (すべての到着済みスケジュールから、notify_to_user_idsに自分が含まれるものを検索)
+    all_arrived_schedules = []
+    try:
+        db = schedule_service.db
+        schedules_collection = db.collection("location_schedules")
+        arrived_query = schedules_collection.where("status", "==", "arrived")
+
+        for doc in arrived_query.stream():
+            schedule_data = doc.to_dict()
+            # 通知先に自分が含まれているかチェック
+            if current_user.uid in schedule_data.get("notify_to_user_ids", []):
+                from app.schemas.schedule import LocationScheduleInDB
+                schedule = LocationScheduleInDB(**schedule_data, id=doc.id)
+                all_arrived_schedules.append(schedule)
+    except Exception as e:
+        logger.warning(f"[滞在通知チェック] フレンドスケジュールの取得失敗: {e}")
+
+    # 自分のスケジュールとフレンドのスケジュールをマージ（重複排除）
+    arrived_schedules = list({s.id: s for s in (my_arrived_schedules + all_arrived_schedules)}.values())
+
+    logger.info(
+        f"[滞在通知チェック] 到着済みスケジュール: {len(arrived_schedules)}件 "
+        f"(自分: {len(my_arrived_schedules)}件, フレンド: {len(all_arrived_schedules)}件)"
+    )
 
     for schedule in arrived_schedules:
         try:

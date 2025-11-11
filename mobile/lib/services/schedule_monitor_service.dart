@@ -128,6 +128,21 @@ class ScheduleMonitorService {
           await _startTracking();
         } else {
           print('[$timestamp] [ScheduleMonitor] ℹ️ 既に追跡中');
+          // LocationServiceの実際の状態を確認
+          final actuallyTracking = _locationService.isTracking;
+          print('[$timestamp] [ScheduleMonitor] LocationService.isTracking = $actuallyTracking');
+
+          if (!actuallyTracking) {
+            print('[$timestamp] [ScheduleMonitor] ⚠️ 状態不整合検出！ScheduleMonitorは追跡中だがLocationServiceは停止中');
+            print('[$timestamp] [ScheduleMonitor] 🔄 追跡を再開します');
+            _isTracking = false; // 状態をリセット
+            await _startTracking(); // 再開
+          } else {
+            // 追跡中でもbackground_locationのコールバックが呼ばれない場合があるため
+            // 定期的に現在地を取得して送信（シミュレーター対応）
+            print('[$timestamp] [ScheduleMonitor] 📍 定期的な位置情報更新を実行');
+            await _manualLocationUpdate();
+          }
         }
       } else if (!hasActiveOrArrived) {
         if (_isTracking) {
@@ -155,19 +170,76 @@ class ScheduleMonitorService {
 
       // バックグラウンド追跡を開始（権限がある場合）
       final hasPermission = await _locationService.hasAlwaysPermission();
-      if (hasPermission) {
-        final trackingStarted = await _locationService.startTracking();
-        if (trackingStarted) {
-          print('[$timestamp] [ScheduleMonitor] ✓ バックグラウンド追跡開始');
-        }
-      } else {
-        print('[$timestamp] [ScheduleMonitor] バックグラウンド権限なし');
+      print('[$timestamp] [ScheduleMonitor] Always権限チェック: $hasPermission');
+
+      if (!hasPermission) {
+        print('[$timestamp] [ScheduleMonitor] ❌ バックグラウンド権限なし');
+        print('[$timestamp] [ScheduleMonitor] ⚠️ 設定 → プライバシー → 位置情報サービス → imane → "常に"を選択してください');
+        // 権限がない場合は _isTracking を true にしない
+        return;
       }
 
-      _isTracking = true;
+      print('[$timestamp] [ScheduleMonitor] 📍 LocationService.startTracking() を呼び出します...');
+      final trackingStarted = await _locationService.startTracking();
+      print('[$timestamp] [ScheduleMonitor] 📍 startTracking() の結果: $trackingStarted');
+
+      if (trackingStarted) {
+        print('[$timestamp] [ScheduleMonitor] ✓ バックグラウンド追跡開始成功');
+        _isTracking = true;
+      } else {
+        print('[$timestamp] [ScheduleMonitor] ❌ バックグラウンド追跡開始失敗');
+        _isTracking = false;
+      }
     } catch (e) {
       final timestamp = DateTime.now().toIso8601String();
-      print('[$timestamp] [ScheduleMonitor] 追跡開始エラー: $e');
+      print('[$timestamp] [ScheduleMonitor] ❌ 追跡開始エラー: $e');
+      _isTracking = false;
+    }
+  }
+
+  /// 手動で位置情報を更新（シミュレーター用）
+  Future<void> _manualLocationUpdate() async {
+    try {
+      final timestamp = DateTime.now().toIso8601String();
+      print('[$timestamp] [ScheduleMonitor] 現在地を手動取得中...');
+
+      final position = await _locationService.getCurrentLocation();
+
+      if (position == null) {
+        print('[$timestamp] [ScheduleMonitor] 現在地の取得失敗');
+        return;
+      }
+
+      print('[$timestamp] [ScheduleMonitor] 現在地取得成功:');
+      print('  - Latitude: ${position.latitude}');
+      print('  - Longitude: ${position.longitude}');
+      print('  - Accuracy: ${position.accuracy}m');
+
+      // バックエンドに送信
+      final apiService = ApiService();
+      final response = await apiService.post(
+        '/location/update',
+        body: {
+          'coords': {
+            'lat': position.latitude,
+            'lng': position.longitude,
+          },
+          'accuracy': position.accuracy,
+        },
+        requiresAuth: true,
+      );
+
+      print('[$timestamp] [ScheduleMonitor] 位置情報送信完了');
+      print('  - Response: $response');
+
+      // 通知がトリガーされたかチェック
+      final triggeredNotifications = response['triggered_notifications'] as List?;
+      if (triggeredNotifications != null && triggeredNotifications.isNotEmpty) {
+        print('[$timestamp] [ScheduleMonitor] ✅ ${triggeredNotifications.length}件の通知がトリガーされました');
+      }
+    } catch (e) {
+      final timestamp = DateTime.now().toIso8601String();
+      print('[$timestamp] [ScheduleMonitor] 手動位置更新エラー: $e');
     }
   }
 
