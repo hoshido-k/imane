@@ -8,6 +8,7 @@ import 'api_service.dart';
 import 'location_cache_service.dart';
 import 'popup_notification_service.dart';
 import '../models/notification_history.dart';
+import '../core/config/location_config.dart';
 
 /// Location tracking service for imane
 /// Handles background location tracking and sends updates to the backend API
@@ -24,14 +25,6 @@ class LocationService {
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
   DateTime? _lastUpdateTime;
   bool _isOnline = true;
-
-  // Location update interval (in milliseconds)
-  // TODO: 本番環境では10分 (10 * 60 * 1000) に戻す
-  static const int _updateIntervalMs = 1 * 60 * 1000; // 1 minute (60 seconds) for testing
-
-  // Minimum distance filter in meters
-  // TODO: 本番環境では50.0mに戻す
-  static const double _distanceFilterMeters = 5.0; // 5m for testing (was 50.0)
 
   /// Check if location tracking is currently active
   bool get isTracking => _isTracking;
@@ -103,8 +96,8 @@ class LocationService {
 
     try {
       print('[$timestamp] [LocationService] Configuring background location...');
-      print('  - Update interval: ${_updateIntervalMs}ms (${_updateIntervalMs / 1000}s)');
-      print('  - Distance filter: ${_distanceFilterMeters}m');
+      print('  - Update interval: ${LocationConfig.locationUpdateIntervalMs}ms (${LocationConfig.locationUpdateIntervalMs / 1000}s)');
+      print('  - Distance filter: ${LocationConfig.distanceFilterMeters}m');
 
       // Configure background location settings
       await BackgroundLocation.setAndroidNotification(
@@ -114,11 +107,11 @@ class LocationService {
       );
 
       // Set Android configuration
-      await BackgroundLocation.setAndroidConfiguration(_updateIntervalMs);
+      await BackgroundLocation.setAndroidConfiguration(LocationConfig.locationUpdateIntervalMs);
 
       // Start location service
       await BackgroundLocation.startLocationService(
-        distanceFilter: _distanceFilterMeters,
+        distanceFilter: LocationConfig.distanceFilterMeters,
       );
 
       print('[$timestamp] [LocationService] Registering location update listener...');
@@ -136,8 +129,8 @@ class LocationService {
       _startConnectivityMonitoring();
 
       print('[$timestamp] [LocationService] ✓ Location tracking started successfully');
-      print('[$timestamp] [LocationService] ⚠️ Distance filter: ${_distanceFilterMeters}m - Move at least this distance to trigger updates');
-      print('[$timestamp] [LocationService] ⚠️ Update interval: ${_updateIntervalMs / 1000}s - Wait at least this long between updates');
+      print('[$timestamp] [LocationService] ⚠️ Distance filter: ${LocationConfig.distanceFilterMeters}m - Move at least this distance to trigger updates');
+      print('[$timestamp] [LocationService] ⚠️ Update interval: ${LocationConfig.locationUpdateIntervalMs / 1000}s - Wait at least this long between updates');
       return true;
     } catch (e) {
       print('[$timestamp] [LocationService] ✗ Error starting location tracking: $e');
@@ -181,11 +174,11 @@ class LocationService {
     if (_lastUpdateTime != null) {
       final timeDiff = now.difference(_lastUpdateTime!).inMilliseconds;
       final timeDiffSeconds = (timeDiff / 1000).toStringAsFixed(1);
-      final requiredSeconds = (_updateIntervalMs / 1000).toStringAsFixed(1);
+      final requiredSeconds = (LocationConfig.locationUpdateIntervalMs / 1000).toStringAsFixed(1);
 
       print('  - Time since last update: ${timeDiffSeconds}s (required: ${requiredSeconds}s)');
 
-      if (timeDiff < _updateIntervalMs) {
+      if (timeDiff < LocationConfig.locationUpdateIntervalMs) {
         print('  - Result: SKIPPED (interval not met)');
         return;
       }
