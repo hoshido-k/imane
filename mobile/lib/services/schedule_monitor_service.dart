@@ -76,10 +76,9 @@ class ScheduleMonitorService {
         return;
       }
 
-      // 内部的にはUTC時刻で比較（タイムゾーンの問題を回避）
-      final nowUtc = DateTime.now().toUtc();
-      final nowJst = nowUtc.add(const Duration(hours: 9)); // UTC+9 = JST
-      print('[$timestamp] [ScheduleMonitor] 現在時刻 (JST): $nowJst');
+      // 現在時刻（JST）
+      final now = DateTime.now();
+      print('[$timestamp] [ScheduleMonitor] 現在時刻 (JST): $now');
 
       bool hasActiveOrArrived = false;
       bool shouldStartTracking = false;
@@ -87,25 +86,48 @@ class ScheduleMonitorService {
       for (var schedule in schedules) {
         final status = schedule['status'] as String;
         final startTimeStr = schedule['start_time'] as String;
-        final startTimeUtc = DateTime.parse(startTimeStr); // UTCのまま（比較用）
-        final startTimeJst = startTimeUtc.add(const Duration(hours: 9)); // UTC+9 = JST
+
+        // TODO: JST時刻計算の問題
+        // 現在の実装では、APIレスポンスがUTC(Z)で返ってきた場合、
+        // toLocal()を使用してローカル時刻（デバイスのタイムゾーン）に変換している。
+        // しかし、これはデバイスのタイムゾーン設定に依存するため、
+        // デバイスがJST以外のタイムゾーンに設定されている場合、正しく動作しない。
+        //
+        // 【問題】
+        // - バックエンドがUTC(Z)で時刻を返している（本来はJST+09:00で返すべき）
+        // - Flutter側でtoLocal()を使うと、デバイスのタイムゾーンに依存してしまう
+        // - start_timeとnowの比較で9時間のズレが発生している
+        //
+        // 【修正方針】
+        // 1. バックエンドのfield_serializerを修正し、+09:00付きで返すようにする
+        // 2. Flutter側でも明示的にJSTとして扱う（timezone パッケージの使用を検討）
+        //
+        // APIレスポンスの時刻をJSTとして解釈
+        // APIが+09:00付きで返してくれば正しく解釈される
+        // Zで返してきても、それをJSTとして扱う（システム全体がJST統一のため）
+        DateTime startTime = DateTime.parse(startTimeStr);
+        if (startTime.isUtc) {
+          // UTCマーカー(Z)がついている場合は、ローカル時刻（JST）に変換
+          startTime = startTime.toLocal();
+        }
 
         print('[$timestamp] [ScheduleMonitor] --- スケジュール ---');
         print('  ID: ${schedule['id']}');
         print('  status: $status');
-        print('  start_time (JST): $startTimeJst');
+        print('  start_time: $startTime');
+        print('  start_time (raw): $startTimeStr');
 
         // ACTIVEまたはARRIVEDのスケジュールがあるかチェック
         if (status == 'active' || status == 'arrived') {
           hasActiveOrArrived = true;
           print('  → ACTIVE/ARRIVED状態を検出');
 
-          // start_timeが到達しているかチェック（UTC同士で比較）
-          if (nowUtc.isAfter(startTimeUtc) || nowUtc.isAtSameMomentAs(startTimeUtc)) {
+          // start_timeが到達しているかチェック
+          if (now.isAfter(startTime) || now.isAtSameMomentAs(startTime)) {
             shouldStartTracking = true;
             print('  → ✅ start_time到達！追跡開始が必要');
           } else {
-            final remainingMinutes = startTimeUtc.difference(nowUtc).inMinutes;
+            final remainingMinutes = startTime.difference(now).inMinutes;
             print('  → ⏰ start_timeまで残り${remainingMinutes}分');
           }
         } else {
