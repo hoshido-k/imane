@@ -164,6 +164,28 @@ class AuthService {
     }
   }
 
+  /// アカウント削除
+  Future<void> deleteAccount() async {
+    try {
+      // バックエンドAPIでユーザーデータを削除
+      await _apiService.delete('/users/me');
+
+      // Firebase Authからユーザーを削除
+      final user = _firebaseAuth.currentUser;
+      if (user != null) {
+        await user.delete();
+      }
+
+      // トークンをクリア
+      await _clearToken();
+
+      // APIServiceのトークンをクリア
+      _apiService.clearAccessToken();
+    } catch (e) {
+      throw Exception('アカウント削除に失敗しました: $e');
+    }
+  }
+
   /// パスワードリセットメールを送信
   Future<AuthResult> sendPasswordResetEmail({
     required String email,

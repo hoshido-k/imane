@@ -83,10 +83,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             title: '通知設定',
             subtitle: '通知の受信設定',
             onTap: () {
-              // TODO: Navigate to notification settings
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('通知設定は準備中です')),
-              );
+              Navigator.of(context).pushNamed('/settings/notifications');
             },
           ),
           const SizedBox(height: 16),
@@ -95,10 +92,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             title: '位置情報',
             subtitle: '位置情報の利用設定',
             onTap: () {
-              // TODO: Navigate to location settings
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('位置情報設定は準備中です')),
-              );
+              Navigator.of(context).pushNamed('/settings/location');
             },
           ),
           const SizedBox(height: 16),
@@ -107,10 +101,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             title: 'プライバシー',
             subtitle: 'データの保存と削除',
             onTap: () {
-              // TODO: Navigate to privacy settings
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('プライバシー設定は準備中です')),
-              );
+              Navigator.of(context).pushNamed('/settings/privacy');
             },
           ),
           const SizedBox(height: 32),
