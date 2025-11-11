@@ -93,15 +93,6 @@ class _ImaneAppState extends State<ImaneApp> {
 
   @override
   Widget build(BuildContext context) {
-    // Initialize popup notification service with navigator context
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final context = navigatorKey.currentContext;
-      if (context != null) {
-        PopupNotificationService().initialize(context);
-        print('[ImaneApp] PopupNotificationService initialized');
-      }
-    });
-
     return MaterialApp(
       navigatorKey: navigatorKey,
       title: 'imane',

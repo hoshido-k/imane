@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/notification_history.dart';
 import '../widgets/popup_notification.dart';
+import '../main.dart'; // Import navigatorKey
 
 /// Service for showing popup notifications globally using overlay
 class PopupNotificationService {
@@ -10,13 +11,6 @@ class PopupNotificationService {
   PopupNotificationService._internal();
 
   OverlayEntry? _currentOverlay;
-  BuildContext? _context;
-
-  /// Initialize the service with app context
-  void initialize(BuildContext context) {
-    _context = context;
-    print('[PopupNotificationService] Initialized');
-  }
 
   /// Show a popup notification
   void show({
@@ -29,8 +23,10 @@ class PopupNotificationService {
     // Dismiss any existing popup
     dismiss();
 
-    if (_context == null || !(_context!.mounted)) {
-      print('[PopupNotificationService] Context not available');
+    // Get current context from navigator key
+    final context = navigatorKey.currentContext;
+    if (context == null || !context.mounted) {
+      print('[PopupNotificationService] Context not available or not mounted');
       return;
     }
 
@@ -52,8 +48,9 @@ class PopupNotificationService {
       ),
     );
 
-    // Insert overlay
-    Overlay.of(_context!).insert(_currentOverlay!);
+    // Insert overlay using the navigator key's overlay
+    final overlay = Overlay.of(context);
+    overlay.insert(_currentOverlay!);
   }
 
   /// Dismiss current popup
