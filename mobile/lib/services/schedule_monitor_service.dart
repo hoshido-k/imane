@@ -76,9 +76,10 @@ class ScheduleMonitorService {
         return;
       }
 
-      // UTC時刻で比較（タイムゾーンの問題を回避）
+      // 内部的にはUTC時刻で比較（タイムゾーンの問題を回避）
       final nowUtc = DateTime.now().toUtc();
-      print('[$timestamp] [ScheduleMonitor] 現在時刻 (UTC): $nowUtc');
+      final nowJst = nowUtc.toLocal(); // 表示用JST
+      print('[$timestamp] [ScheduleMonitor] 現在時刻 (JST): $nowJst');
 
       bool hasActiveOrArrived = false;
       bool shouldStartTracking = false;
@@ -86,14 +87,13 @@ class ScheduleMonitorService {
       for (var schedule in schedules) {
         final status = schedule['status'] as String;
         final startTimeStr = schedule['start_time'] as String;
-        final startTimeUtc = DateTime.parse(startTimeStr); // UTCのまま
-        final startTimeLocal = startTimeUtc.toLocal(); // ローカル時刻（表示用）
+        final startTimeUtc = DateTime.parse(startTimeStr); // UTCのまま（比較用）
+        final startTimeJst = startTimeUtc.toLocal(); // JST表示用
 
         print('[$timestamp] [ScheduleMonitor] --- スケジュール ---');
         print('  ID: ${schedule['id']}');
         print('  status: $status');
-        print('  start_time (UTC): $startTimeUtc');
-        print('  start_time (JST表示): $startTimeLocal');
+        print('  start_time (JST): $startTimeJst');
 
         // ACTIVEまたはARRIVEDのスケジュールがあるかチェック
         if (status == 'active' || status == 'arrived') {
