@@ -125,25 +125,25 @@ class LocationSchedule {
               .map((user) => NotifyToUser.fromJson(user))
               .toList()
           : [],
-      startTime: DateTime.parse(json['start_time']),
-      endTime: DateTime.parse(json['end_time']),
+      startTime: DateTime.parse(json['start_time']).toLocal(),
+      endTime: DateTime.parse(json['end_time']).toLocal(),
       recurrence: json['recurrence'],
       notifyOnArrival: json['notify_on_arrival'] ?? true,
       notifyAfterMinutes: json['notify_after_minutes'] ?? 60,
       notifyOnDeparture: json['notify_on_departure'] ?? true,
       status: ScheduleStatus.fromString(json['status']),
       arrivedAt: json['arrived_at'] != null
-          ? DateTime.parse(json['arrived_at'])
+          ? DateTime.parse(json['arrived_at']).toLocal()
           : null,
       departedAt: json['departed_at'] != null
-          ? DateTime.parse(json['departed_at'])
+          ? DateTime.parse(json['departed_at']).toLocal()
           : null,
       favorite: json['favorite'] ?? false,
       createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'])
+          ? DateTime.parse(json['created_at']).toLocal()
           : null,
       updatedAt: json['updated_at'] != null
-          ? DateTime.parse(json['updated_at'])
+          ? DateTime.parse(json['updated_at']).toLocal()
           : null,
     );
   }
