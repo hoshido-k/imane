@@ -184,39 +184,8 @@ class _CreateScheduleFlowState extends State<CreateScheduleFlow> {
 
       if (!mounted) return;
 
-      // Start location tracking after schedule creation
-      try {
-        final locationService = LocationService();
-
-        print('[CreateSchedule] Starting foreground auto-update...');
-        await locationService.startForegroundAutoUpdate();
-        print('[CreateSchedule] ✓ Foreground auto-update started (will run while app is open)');
-
-        final hasPermission = await locationService.hasAlwaysPermission();
-
-        if (hasPermission) {
-          print('[CreateSchedule] Starting background location tracking...');
-          final trackingStarted = await locationService.startTracking();
-          if (trackingStarted) {
-            print('[CreateSchedule] ✓ Background location tracking started');
-          } else {
-            print('[CreateSchedule] ✗ Failed to start background location tracking');
-          }
-        } else {
-          print('[CreateSchedule] Location permission not granted - background tracking not started');
-          // Show permission reminder
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('位置情報の「常に許可」を有効にすると、バックグラウンドでも通知が送信されます'),
-              backgroundColor: Colors.orange,
-              duration: Duration(seconds: 4),
-            ),
-          );
-        }
-      } catch (e) {
-        print('[CreateSchedule] Error starting location tracking: $e');
-        // Continue even if tracking fails
-      }
+      // 位置情報追跡はstart_timeから自動的に開始されます
+      print('[CreateSchedule] 位置情報追跡は予定開始時刻から自動的に開始されます');
 
       if (!mounted) return;
 

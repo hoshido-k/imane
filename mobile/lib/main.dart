@@ -17,6 +17,7 @@ import 'services/auth_service.dart';
 import 'services/fcm_service.dart';
 import 'services/location_service.dart';
 import 'services/app_lifecycle_observer.dart';
+import 'services/schedule_monitor_service.dart';
 
 /// Background message handler (must be top-level function)
 @pragma('vm:entry-point')
@@ -164,8 +165,11 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
       await fcmService.initialize();
       print('[AuthCheck] FCM service initialized');
 
-      // Note: Location tracking will be started when user creates a schedule
-      // (see create_schedule_flow.dart)
+      // Start schedule monitoring
+      // 位置情報追跡はstart_timeから自動的に開始されます
+      final scheduleMonitor = ScheduleMonitorService();
+      scheduleMonitor.startMonitoring();
+      print('[AuthCheck] Schedule monitoring started');
 
       print('[AuthCheck] All services initialized successfully');
     } catch (e) {

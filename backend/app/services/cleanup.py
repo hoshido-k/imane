@@ -144,23 +144,30 @@ class CleanupService:
 
     async def update_expired_schedules_status(self) -> int:
         """
-        終了時刻を過ぎたスケジュールのステータスをEXPIREDに更新
+        終了時刻 + 24時間を過ぎたスケジュールのステータスをEXPIREDに更新
+
+        退出通知が送信されないまま24時間経過したスケジュールを無効化します。
 
         Returns:
             更新した件数
         """
+        from datetime import timedelta
+
         now = datetime.now(UTC)
 
-        # 終了時刻が現在時刻より前で、statusがactiveまたはarrivedのスケジュールを取得
+        # end_time + 24時間前の時刻を計算
+        cutoff_time = now - timedelta(hours=24)
+
+        # 終了時刻がcutoff_timeより前で、statusがactiveまたはarrivedのスケジュールを取得
         query_active = (
             self.db.collection("schedules")
-            .where("end_time", "<", now)
+            .where("end_time", "<", cutoff_time)
             .where("status", "==", "active")
         )
 
         query_arrived = (
             self.db.collection("schedules")
-            .where("end_time", "<", now)
+            .where("end_time", "<", cutoff_time)
             .where("status", "==", "arrived")
         )
 
@@ -168,18 +175,28 @@ class CleanupService:
 
         # activeスケジュールを更新
         for doc in query_active.stream():
+            schedule_data = doc.to_dict()
+            end_time = schedule_data.get("end_time")
             doc.reference.update({"status": "expired", "updated_at": now})
             updated_count += 1
-            logger.info(f"スケジュールステータスをEXPIREDに更新: {doc.id}")
+            logger.info(
+                f"[期限切れ] スケジュールステータスをEXPIREDに更新: {doc.id} "
+                f"(end_time: {end_time}, 24時間経過)"
+            )
 
         # arrivedスケジュールを更新
         for doc in query_arrived.stream():
+            schedule_data = doc.to_dict()
+            end_time = schedule_data.get("end_time")
             doc.reference.update({"status": "expired", "updated_at": now})
             updated_count += 1
-            logger.info(f"スケジュールステータスをEXPIREDに更新: {doc.id}")
+            logger.info(
+                f"[期限切れ] スケジュールステータスをEXPIREDに更新: {doc.id} "
+                f"(end_time: {end_time}, 24時間経過、退出通知未送信)"
+            )
 
         if updated_count > 0:
-            logger.info(f"期限切れスケジュールのステータス更新完了: {updated_count}件")
+            logger.info(f"[期限切れ] スケジュールのステータス更新完了: {updated_count}件")
 
         return updated_count
 
