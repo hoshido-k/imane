@@ -1,6 +1,7 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'api_service.dart';
 import 'popup_notification_service.dart';
+import 'local_notification_service.dart';
 import '../models/notification_history.dart';
 
 /// FCM (Firebase Cloud Messaging) service for imane
@@ -141,7 +142,11 @@ class FCMService {
   void _handleMessage(RemoteMessage message) {
     print('[FCMService] Handling foreground message: ${message.messageId}');
 
-    // Show popup notification for foreground messages
+    // 1. Show system notification banner (iOS/Android)
+    final localNotificationService = LocalNotificationService();
+    localNotificationService.showNotificationFromFCM(message);
+
+    // 2. Show in-app popup notification
     final popupService = PopupNotificationService();
 
     // Extract notification data
