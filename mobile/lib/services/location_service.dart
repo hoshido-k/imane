@@ -321,7 +321,7 @@ class LocationService {
         // Create notification title and body based on type
         final notificationType = NotificationType.fromString(type);
         final String title;
-        final String body;
+        String body; // Non-final to allow modification
         final String? mapLink;
 
         switch (notificationType) {
