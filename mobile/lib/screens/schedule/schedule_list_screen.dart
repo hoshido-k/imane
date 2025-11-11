@@ -452,7 +452,10 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> with WidgetsBin
                 constraints: BoxConstraints(
                   minHeight: constraints.maxHeight,
                 ),
-                child: _buildEmptyState(),
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: _buildEmptyState(),
+                ),
               ),
             );
           },
