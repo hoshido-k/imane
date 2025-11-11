@@ -1,5 +1,7 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'api_service.dart';
+import 'popup_notification_service.dart';
+import '../models/notification_history.dart';
 
 /// FCM (Firebase Cloud Messaging) service for imane
 /// Handles push notification registration and receiving
@@ -137,9 +139,30 @@ class FCMService {
 
   /// Handle incoming message (foreground)
   void _handleMessage(RemoteMessage message) {
-    // TODO: Show local notification or update UI
-    // For now, just log the message
     print('[FCMService] Handling foreground message: ${message.messageId}');
+
+    // Show popup notification for foreground messages
+    final popupService = PopupNotificationService();
+
+    // Extract notification data
+    final data = message.data;
+    final notification = message.notification;
+
+    // Prepare data for popup
+    final Map<String, dynamic> popupData = {
+      'title': notification?.title ?? data['title'] ?? '通知',
+      'body': notification?.body ?? data['body'] ?? '',
+      'type': data['type'] ?? 'arrival',
+      'map_link': data['map_link'],
+      ...data,
+    };
+
+    // Show popup
+    popupService.showFromFCM(popupData, onTap: () {
+      print('[FCMService] Popup notification tapped');
+      // Handle tap action (e.g., navigate to notification history screen)
+      _handleNotificationTap(message);
+    });
   }
 
   /// Handle notification tap

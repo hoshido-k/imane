@@ -17,6 +17,7 @@ import 'services/fcm_service.dart';
 import 'services/location_service.dart';
 import 'services/app_lifecycle_observer.dart';
 import 'services/schedule_monitor_service.dart';
+import 'services/popup_notification_service.dart';
 
 /// Background message handler (must be top-level function)
 @pragma('vm:entry-point')
@@ -61,6 +62,9 @@ void main() async {
   runApp(const ImaneApp());
 }
 
+/// Global navigator key for accessing context from anywhere
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 class ImaneApp extends StatefulWidget {
   const ImaneApp({super.key});
 
@@ -89,7 +93,17 @@ class _ImaneAppState extends State<ImaneApp> {
 
   @override
   Widget build(BuildContext context) {
+    // Initialize popup notification service with navigator context
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final context = navigatorKey.currentContext;
+      if (context != null) {
+        PopupNotificationService().initialize(context);
+        print('[ImaneApp] PopupNotificationService initialized');
+      }
+    });
+
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: 'imane',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
