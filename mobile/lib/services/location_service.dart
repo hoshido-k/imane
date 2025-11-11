@@ -30,7 +30,8 @@ class LocationService {
   static const int _updateIntervalMs = 1 * 60 * 1000; // 1 minute (60 seconds) for testing
 
   // Minimum distance filter in meters
-  static const double _distanceFilterMeters = 50.0;
+  // TODO: 本番環境では50.0mに戻す
+  static const double _distanceFilterMeters = 5.0; // 5m for testing (was 50.0)
 
   /// Check if location tracking is currently active
   bool get isTracking => _isTracking;
@@ -80,12 +81,25 @@ class LocationService {
 
     // Check permission first
     print('[$timestamp] [LocationService] Checking location permission...');
+
+    // Check current permission status
+    final currentPermission = await Geolocator.checkPermission();
+    print('[$timestamp] [LocationService] Current permission: $currentPermission');
+
     final hasPermission = await requestPermission();
     if (!hasPermission) {
       print('[$timestamp] [LocationService] ✗ Permission denied');
+      print('[$timestamp] [LocationService] ⚠️ Please go to: Settings → Privacy → Location Services → imane → Select "Always"');
       return false;
     }
-    print('[$timestamp] [LocationService] ✓ Permission granted');
+
+    final finalPermission = await Geolocator.checkPermission();
+    print('[$timestamp] [LocationService] ✓ Permission granted: $finalPermission');
+
+    if (finalPermission != LocationPermission.always) {
+      print('[$timestamp] [LocationService] ⚠️ Warning: Permission is not "Always". Background tracking may not work properly.');
+      print('[$timestamp] [LocationService] ⚠️ Current: $finalPermission, Required: LocationPermission.always');
+    }
 
     try {
       print('[$timestamp] [LocationService] Configuring background location...');
@@ -108,8 +122,10 @@ class LocationService {
       );
 
       print('[$timestamp] [LocationService] Registering location update listener...');
+
       // Listen to location updates
       BackgroundLocation.getLocationUpdates((location) {
+        print('[$timestamp] [LocationService] 🔔 Location callback triggered!');
         _handleLocationUpdate(location);
       });
 
@@ -120,6 +136,8 @@ class LocationService {
       _startConnectivityMonitoring();
 
       print('[$timestamp] [LocationService] ✓ Location tracking started successfully');
+      print('[$timestamp] [LocationService] ⚠️ Distance filter: ${_distanceFilterMeters}m - Move at least this distance to trigger updates');
+      print('[$timestamp] [LocationService] ⚠️ Update interval: ${_updateIntervalMs / 1000}s - Wait at least this long between updates');
       return true;
     } catch (e) {
       print('[$timestamp] [LocationService] ✗ Error starting location tracking: $e');
