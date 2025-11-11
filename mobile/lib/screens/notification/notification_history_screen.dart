@@ -315,47 +315,55 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
           builder: (context, constraints) {
             return SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 32),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                        Icon(
-                          Icons.notifications_none,
-                          size: 48,
-                          color: AppColors.textSecondary.withOpacity(0.3),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight,
+                ),
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 32),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                            Icon(
+                              Icons.notifications_none,
+                              size: 48,
+                              color: AppColors.textSecondary.withOpacity(0.3),
+                            ),
+                            const SizedBox(height: 16),
+                            const Text(
+                              '通知履歴がありません',
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 16,
+                                fontWeight: FontWeight.w400,
+                                color: AppColors.textSecondary,
+                                letterSpacing: -0.3125,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'スケジュールを作成すると\n通知が表示されます',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 12,
+                                fontWeight: FontWeight.w400,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                          ],
                         ),
-                        const SizedBox(height: 16),
-                        const Text(
-                          '通知履歴がありません',
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 16,
-                            fontWeight: FontWeight.w400,
-                            color: AppColors.textSecondary,
-                            letterSpacing: -0.3125,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'スケジュールを作成すると\n通知が表示されます',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 12,
-                            fontWeight: FontWeight.w400,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                      ],
+                      ),
                     ),
                   ),
                 ),

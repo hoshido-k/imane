@@ -465,6 +465,25 @@ class _Step3RecipientsScreenState extends State<Step3RecipientsScreen> {
   Widget _buildFriendItem(Friend friend) {
     final isSelected = _selectedFriendIds.contains(friend.id);
 
+    // Build avatar widget
+    Widget avatar;
+    if (friend.avatar != null && friend.avatar!.isNotEmpty) {
+      avatar = ClipRRect(
+        borderRadius: BorderRadius.circular(100),
+        child: Image.network(
+          friend.avatar!,
+          width: 40,
+          height: 40,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return _buildDefaultAvatar(friend.name, 40);
+          },
+        ),
+      );
+    } else {
+      avatar = _buildDefaultAvatar(friend.name, 40);
+    }
+
     return GestureDetector(
       onTap: () => _toggleFriend(friend.id),
       child: Container(
@@ -481,24 +500,7 @@ class _Step3RecipientsScreenState extends State<Step3RecipientsScreen> {
         child: Row(
           children: [
             // Avatar
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.2),
-                shape: BoxShape.circle,
-              ),
-              child: Center(
-                child: Text(
-                  friend.name.substring(0, 1),
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ),
-            ),
+            avatar,
             const SizedBox(width: 12),
             // Name
             Expanded(
@@ -521,6 +523,32 @@ class _Step3RecipientsScreenState extends State<Step3RecipientsScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  /// Build default avatar with initial
+  Widget _buildDefaultAvatar(String displayName, double size) {
+    String initial = '?';
+    if (displayName.isNotEmpty) {
+      initial = displayName[0].toUpperCase();
+    }
+
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: AppColors.primary.withOpacity(0.2),
+        shape: BoxShape.circle,
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        initial,
+        style: TextStyle(
+          fontSize: size * 0.45,
+          fontWeight: FontWeight.w600,
+          color: AppColors.primary,
         ),
       ),
     );
