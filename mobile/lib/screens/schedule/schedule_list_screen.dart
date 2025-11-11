@@ -448,7 +448,12 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> with WidgetsBin
           builder: (context, constraints) {
             return SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
-              child: _buildEmptyState(),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight,
+                ),
+                child: _buildEmptyState(),
+              ),
             );
           },
         ),
@@ -488,9 +493,9 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> with WidgetsBin
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Bell icon
+            // Schedule icon
             Icon(
-              Icons.notifications_outlined,
+              Icons.event_outlined,
               size: 48,
               color: AppColors.textSecondary.withOpacity(0.3),
             ),
