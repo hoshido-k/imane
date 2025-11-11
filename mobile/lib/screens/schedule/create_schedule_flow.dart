@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../models/schedule.dart' show LocationSchedule, LatLng;
 import '../../services/api_service.dart';
 import '../../services/location_service.dart';
+import '../../core/config/location_config.dart';
 import 'steps/step1_datetime_screen.dart';
 import 'steps/step2_location_screen.dart';
 import 'steps/step3_recipients_screen.dart';
@@ -167,7 +168,7 @@ class _CreateScheduleFlowState extends State<CreateScheduleFlow> {
         'start_time': _toJstIso8601String(_selectedDateTime!),
         'end_time': _toJstIso8601String(_selectedDateTime!.add(const Duration(hours: 2))),
         'notify_on_arrival': true,
-        'notify_after_minutes': 1,  // テスト用に1分に設定
+        'notify_after_minutes': LocationConfig.defaultStayDurationMinutes,
         'notify_on_departure': true,
         'favorite': false,
       };

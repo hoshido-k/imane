@@ -21,7 +21,7 @@ class Settings(BaseSettings):
 
     # 位置情報設定
     GEOFENCE_RADIUS_METERS: int = 50
-    LOCATION_UPDATE_INTERVAL_MINUTES: int = 10
+    LOCATION_UPDATE_INTERVAL_MINUTES: int = 5
     DATA_RETENTION_HOURS: int = 24
 
     # 通知設定

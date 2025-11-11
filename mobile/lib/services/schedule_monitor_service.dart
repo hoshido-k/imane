@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:mobile/services/api_service.dart';
 import 'package:mobile/services/location_service.dart';
+import '../core/config/location_config.dart';
 
 /// スケジュール監視サービス
 ///
@@ -17,7 +18,7 @@ class ScheduleMonitorService {
   Timer? _monitorTimer;
   bool _isTracking = false;
 
-  /// 監視を開始（1分ごとにチェック）
+  /// 監視を開始（設定された間隔でチェック）
   void startMonitoring() {
     final timestamp = DateTime.now().toIso8601String();
     print('[$timestamp] [ScheduleMonitor] ========================================');
@@ -34,14 +35,17 @@ class ScheduleMonitorService {
     print('[$timestamp] [ScheduleMonitor] 初回チェックを実行');
     _checkSchedules();
 
-    // 1分ごとにチェック
-    _monitorTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
-      final t = DateTime.now().toIso8601String();
-      print('[$t] [ScheduleMonitor] ⏰ タイマー実行（1分経過）');
-      _checkSchedules();
-    });
+    // 設定された間隔でチェック
+    _monitorTimer = Timer.periodic(
+      Duration(minutes: LocationConfig.scheduleMonitorIntervalMinutes),
+      (timer) {
+        final t = DateTime.now().toIso8601String();
+        print('[$t] [ScheduleMonitor] ⏰ タイマー実行（${LocationConfig.scheduleMonitorIntervalMinutes}分経過）');
+        _checkSchedules();
+      },
+    );
 
-    print('[$timestamp] [ScheduleMonitor] タイマー設定完了（1分間隔）');
+    print('[$timestamp] [ScheduleMonitor] タイマー設定完了（${LocationConfig.scheduleMonitorIntervalMinutes}分間隔）');
   }
 
   /// 監視を停止
