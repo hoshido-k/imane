@@ -16,7 +16,6 @@ class AppLifecycleObserver extends WidgetsBindingObserver {
       case AppLifecycleState.resumed:
         print('[$timestamp] [AppLifecycle] ⬆️ App RESUMED (foreground)');
         print('[$timestamp] [AppLifecycle] Location tracking status:');
-        print('  - Foreground auto-update: ${_locationService.isForegroundAutoUpdateEnabled}');
         print('  - Background tracking: ${_locationService.isTracking}');
 
         // フォアグラウンド復帰時にスケジュールをチェック
@@ -31,7 +30,6 @@ class AppLifecycleObserver extends WidgetsBindingObserver {
       case AppLifecycleState.paused:
         print('[$timestamp] [AppLifecycle] ⬇️ App PAUSED (background)');
         print('[$timestamp] [AppLifecycle] Location tracking status:');
-        print('  - Foreground auto-update: ${_locationService.isForegroundAutoUpdateEnabled}');
         print('  - Background tracking: ${_locationService.isTracking}');
         break;
 
