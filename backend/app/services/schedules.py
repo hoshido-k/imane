@@ -7,7 +7,7 @@ from datetime import datetime
 from typing import List, Optional
 
 from app.core.firebase import get_firestore_client
-from app.utils.timezone import now_jst
+from app.utils.timezone import now_jst, to_jst
 from app.schemas.schedule import (
     LocationScheduleCreate,
     LocationScheduleInDB,
@@ -50,7 +50,7 @@ class ScheduleService:
         # デバッグ：受信した start_time を確認
         import logging
         logger = logging.getLogger(__name__)
-        logger.info(f"[DEBUG] 受信した start_time: {schedule_data.start_time}")
+        logger.info(f"[DEBUG] 受信した start_time (JST): {to_jst(schedule_data.start_time)}")
         logger.info(f"[DEBUG] start_time のタイムゾーン: {schedule_data.start_time.tzinfo}")
         logger.info(f"[DEBUG] 現在のJST時刻: {now}")
 
@@ -74,7 +74,8 @@ class ScheduleService:
 
         # Firestoreに保存
         schedule_ref = self.db.collection(self.collection_name).document(schedule_id)
-        logger.info(f"[DEBUG] Firestoreに保存する start_time: {schedule_dict.get('start_time')}")
+        saved_time = schedule_dict.get('start_time')
+        logger.info(f"[DEBUG] Firestoreに保存する start_time (JST): {to_jst(saved_time) if saved_time else None}")
         schedule_ref.set(schedule_dict)
 
         return LocationScheduleInDB(**schedule_dict)
@@ -106,15 +107,16 @@ class ScheduleService:
         # デバッグ：Firestoreから取得した start_time を確認
         import logging
         logger = logging.getLogger(__name__)
-        logger.info(f"[DEBUG] Firestoreから取得した start_time: {schedule_data.get('start_time')}")
-        logger.info(f"[DEBUG] start_time の型: {type(schedule_data.get('start_time'))}")
+        raw_start_time = schedule_data.get('start_time')
+        logger.info(f"[DEBUG] Firestoreから取得した start_time (JST): {to_jst(raw_start_time) if raw_start_time else None}")
+        logger.info(f"[DEBUG] start_time の型: {type(raw_start_time)}")
 
         # 権限チェック: 作成者本人のみアクセス可能
         if schedule_data.get("user_id") != user_id:
             raise ValueError("このスケジュールにアクセスする権限がありません")
 
         result = LocationScheduleInDB(**schedule_data)
-        logger.info(f"[DEBUG] LocationScheduleInDB の start_time: {result.start_time}")
+        logger.info(f"[DEBUG] LocationScheduleInDB の start_time (JST): {to_jst(result.start_time)}")
         logger.info(f"[DEBUG] start_time のタイムゾーン: {result.start_time.tzinfo}")
         return result
 
