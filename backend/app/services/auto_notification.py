@@ -7,7 +7,7 @@
 
 import logging
 import uuid
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from typing import List
 
 from app.config import settings
@@ -17,11 +17,9 @@ from app.schemas.notification import NotificationHistoryInDB, NotificationType
 from app.schemas.schedule import LocationScheduleInDB
 from app.services.notifications import NotificationService
 from app.services.users import UserService
+from app.utils.timezone import now_jst, JST, jst_now_plus
 
 logger = logging.getLogger(__name__)
-
-# 日本時間のタイムゾーン（JST = UTC+9）
-JST = timezone(timedelta(hours=9))
 
 
 class AutoNotificationService:
@@ -127,7 +125,7 @@ class AutoNotificationService:
             保存された通知履歴
         """
         history_id = str(uuid.uuid4())
-        now = datetime.now(UTC)
+        now = now_jst()
         auto_delete_at = now + timedelta(hours=settings.DATA_RETENTION_HOURS)
 
         history_dict = {
@@ -273,7 +271,7 @@ class AutoNotificationService:
             return []
 
         # 滞在時間を計算
-        now = datetime.now(UTC)
+        now = now_jst()
         stay_duration = now - schedule.arrived_at
         stay_minutes = int(stay_duration.total_seconds() / 60)
 
@@ -484,7 +482,7 @@ class AutoNotificationService:
             schedule_data = doc.to_dict()
             arrived_schedules.append(LocationScheduleInDB(**schedule_data))
 
-        now = datetime.now(UTC)
+        now = now_jst()
         total_sent = 0
 
         for schedule in arrived_schedules:
@@ -551,7 +549,7 @@ class AutoNotificationService:
         Returns:
             削除した件数
         """
-        now = datetime.now(UTC)
+        now = now_jst()
 
         query = self.db.collection(self.notification_history_collection).where(
             "auto_delete_at", "<=", now

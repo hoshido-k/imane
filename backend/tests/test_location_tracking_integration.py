@@ -6,10 +6,11 @@
 """
 
 import pytest
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta
 from unittest.mock import AsyncMock, patch
 
 from app.schemas.common import Coordinates
+from app.utils.timezone import now_jst
 from app.schemas.location import LocationUpdateRequest
 from app.schemas.schedule import (
     LocationScheduleCreate,
@@ -49,15 +50,15 @@ def test_user():
         username="integration_testuser",
         display_name="統合テストユーザー",
         fcm_tokens=["test_fcm_token"],
-        created_at=datetime.now(UTC),
-        updated_at=datetime.now(UTC),
+        created_at=now_jst(),
+        updated_at=now_jst(),
     )
 
 
 @pytest.fixture
 def test_schedule_data():
     """テストスケジュールデータ"""
-    now = datetime.now(UTC)
+    now = now_jst()
     return LocationScheduleCreate(
         destination_name="テスト目的地",
         destination_address="東京都渋谷区テスト町1-2-3",
@@ -80,7 +81,7 @@ async def test_location_recording(location_service, test_user):
     location_data = LocationUpdateRequest(
         coords=Coordinates(lat=35.6580, lng=139.7016),
         accuracy=10.0,
-        recorded_at=datetime.now(UTC),
+        recorded_at=now_jst(),
     )
 
     # 位置情報を記録

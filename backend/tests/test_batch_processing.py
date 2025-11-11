@@ -5,10 +5,11 @@
 """
 
 import pytest
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from app.schemas.common import Coordinates
+from app.utils.timezone import now_jst
 from app.schemas.schedule import LocationScheduleInDB, ScheduleStatus
 from app.services.auto_notification import AutoNotificationService
 from app.services.cleanup import CleanupService
@@ -29,7 +30,7 @@ def cleanup_service():
 @pytest.fixture
 def sample_arrived_schedule():
     """到着済みスケジュールのサンプル（60分滞在済み）"""
-    now = datetime.now(UTC)
+    now = now_jst()
     return LocationScheduleInDB(
         id="schedule_arrived_123",
         user_id="user_arrived_123",
@@ -110,8 +111,8 @@ async def test_check_and_send_stay_notifications(
             username="testuser",
             display_name="テストユーザー",
             fcm_tokens=["fcm_token_123"],
-            created_at=datetime.now(UTC),
-            updated_at=datetime.now(UTC),
+            created_at=now_jst(),
+            updated_at=now_jst(),
         )
         mock_user_service = MockUserService.return_value
         mock_user_service.get_user_by_uid = AsyncMock(return_value=mock_user)
@@ -136,7 +137,7 @@ async def test_check_and_send_stay_notifications_insufficient_duration(
 ):
     """滞在時間が不足している場合のテスト"""
     # 到着から30分しか経過していない
-    sample_arrived_schedule.arrived_at = datetime.now(UTC) - timedelta(minutes=30)
+    sample_arrived_schedule.arrived_at = now_jst() - timedelta(minutes=30)
 
     mock_schedule_doc = MagicMock()
     mock_schedule_doc.to_dict.return_value = sample_arrived_schedule.model_dump()
@@ -154,7 +155,7 @@ async def test_check_and_send_stay_notifications_insufficient_duration(
 @pytest.mark.asyncio
 async def test_cleanup_old_locations(cleanup_service):
     """古い位置情報履歴のクリーンアップテスト"""
-    now = datetime.now(UTC)
+    now = now_jst()
 
     # 24時間以上前の位置情報履歴をモック
     old_location_doc = MagicMock()
@@ -180,7 +181,7 @@ async def test_cleanup_old_locations(cleanup_service):
 @pytest.mark.asyncio
 async def test_cleanup_old_notification_history(cleanup_service):
     """古い通知履歴のクリーンアップテスト"""
-    now = datetime.now(UTC)
+    now = now_jst()
 
     # 24時間以上前の通知履歴をモック
     old_notification_doc = MagicMock()
@@ -207,7 +208,7 @@ async def test_cleanup_old_notification_history(cleanup_service):
 @pytest.mark.asyncio
 async def test_update_expired_schedules_status(cleanup_service):
     """期限切れスケジュールのステータス更新テスト"""
-    now = datetime.now(UTC)
+    now = now_jst()
 
     # 終了時刻を過ぎたスケジュール
     expired_schedule_doc = MagicMock()
@@ -238,7 +239,7 @@ async def test_update_expired_schedules_status(cleanup_service):
 @pytest.mark.asyncio
 async def test_cleanup_expired_schedules(cleanup_service):
     """期限切れスケジュールの削除テスト"""
-    now = datetime.now(UTC)
+    now = now_jst()
 
     # 終了から24時間以上経過したスケジュール
     old_schedule_doc = MagicMock()
@@ -271,7 +272,7 @@ async def test_cleanup_expired_schedules(cleanup_service):
 @pytest.mark.asyncio
 async def test_get_cleanup_stats(cleanup_service):
     """クリーンアップ統計情報取得のテスト"""
-    now = datetime.now(UTC)
+    now = now_jst()
 
     # モックデータ
     location_docs = [MagicMock() for _ in range(3)]

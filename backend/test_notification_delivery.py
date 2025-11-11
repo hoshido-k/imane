@@ -19,9 +19,10 @@ from pathlib import Path
 # プロジェクトルートをPythonパスに追加
 sys.path.insert(0, str(Path(__file__).parent))
 
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta
 
 from app.core.firebase import get_firestore_client, initialize_firebase
+from app.utils.timezone import now_jst
 from app.schemas.common import Coordinates
 from app.schemas.notification import NotificationType
 from app.schemas.schedule import LocationScheduleInDB, ScheduleStatus
@@ -189,7 +190,7 @@ async def create_test_schedule(user_id: str, notify_to_user_id: str) -> Location
     # 東京駅を目的地として設定
     tokyo_station = Coordinates(lat=35.681236, lng=139.767125)
 
-    now = datetime.now(UTC)
+    now = now_jst()
     schedule_data = {
         "id": f"test-schedule-{now.timestamp()}",
         "user_id": user_id,

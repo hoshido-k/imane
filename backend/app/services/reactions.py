@@ -3,12 +3,13 @@
 """
 
 import uuid
-from datetime import UTC, datetime
+from datetime import datetime
 from typing import List, Optional
 
 from firebase_admin import firestore
 
 from app.core.firebase import get_firestore_client
+from app.utils.timezone import now_jst
 from app.schemas.reaction import (
     ReactionCreate,
     ReactionInDB,
@@ -79,7 +80,7 @@ class ReactionService:
             "from_user_id": from_user_id,
             "to_user_id": to_user_id,
             "message": reaction_data.message,
-            "created_at": datetime.now(UTC),
+            "created_at": now_jst(),
             "status": ReactionStatus.PENDING.value,
         }
 

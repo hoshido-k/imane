@@ -5,11 +5,12 @@
 """
 
 import logging
-from datetime import UTC, datetime
+from datetime import datetime
 from typing import List, Optional, Tuple
 
 from app.config import settings
 from app.core.firebase import get_firestore_client
+from app.utils.timezone import now_jst
 from app.schemas.common import Coordinates
 from app.schemas.schedule import LocationScheduleInDB, ScheduleStatus
 from app.services.schedules import ScheduleService
@@ -209,7 +210,7 @@ class GeofencingService:
         )
 
         # 現在時刻を取得
-        now = datetime.now(UTC)
+        now = now_jst()
 
         # 各スケジュールに対してジオフェンス判定
         for schedule in all_schedules:

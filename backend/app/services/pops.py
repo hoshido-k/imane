@@ -3,13 +3,14 @@
 """
 
 import uuid
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta
 from typing import List, Optional
 
 import pygeohash as gh
 from firebase_admin import firestore
 
 from app.core.firebase import get_firestore_client
+from app.utils.timezone import now_jst
 from app.schemas.pop import (
     PopCreate,
     PopInDB,
@@ -51,7 +52,7 @@ class PopService:
         )
 
         # 有効期限を計算
-        now = datetime.now(UTC)
+        now = now_jst()
         expires_at = now + timedelta(minutes=pop_data.duration_minutes)
 
         # ポップIDを生成
@@ -124,7 +125,7 @@ class PopService:
         # 有効なポップのみ取得する場合
         if search_request.only_active:
             query = query.where("status", "==", PopStatus.ACTIVE.value)
-            query = query.where("expires_at", ">", datetime.now(UTC))
+            query = query.where("expires_at", ">", now_jst())
 
         # カテゴリフィルター
         if search_request.categories:
@@ -170,7 +171,7 @@ class PopService:
 
         if not include_expired:
             query = query.where("status", "==", PopStatus.ACTIVE.value)
-            query = query.where("expires_at", ">", datetime.now(UTC))
+            query = query.where("expires_at", ">", now_jst())
 
         query = query.order_by("created_at", direction=firestore.Query.DESCENDING)
 
@@ -288,7 +289,7 @@ class PopService:
         query = (
             self.db.collection(self.collection)
             .where("status", "==", PopStatus.ACTIVE.value)
-            .where("expires_at", "<=", datetime.now(UTC))
+            .where("expires_at", "<=", now_jst())
         )
 
         docs = query.stream()

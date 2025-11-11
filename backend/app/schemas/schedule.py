@@ -30,11 +30,12 @@ Firestoreのschedules コレクション構造:
 
 from datetime import datetime
 from enum import Enum
-from typing import List, Optional
+from typing import List, Optional, Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_serializer
 
 from app.schemas.common import Coordinates
+from app.utils.timezone import now_jst, to_jst
 
 
 class NotifyToUser(BaseModel):
@@ -109,8 +110,8 @@ class LocationScheduleInDB(LocationScheduleBase):
     arrived_at: Optional[datetime] = Field(None, description="到着日時")
     departed_at: Optional[datetime] = Field(None, description="退出日時")
     favorite: bool = Field(default=False, description="お気に入り")
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=now_jst)
+    updated_at: datetime = Field(default_factory=now_jst)
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -149,6 +150,15 @@ class LocationScheduleResponse(BaseModel):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+    @field_serializer('start_time', 'end_time', 'arrived_at', 'departed_at', 'created_at', 'updated_at')
+    def serialize_datetime(self, dt: Optional[datetime], _info) -> Optional[str]:
+        """datetimeをJSTタイムゾーン付きのISO 8601形式でシリアライズ"""
+        if dt is None:
+            return None
+        # JSTタイムゾーンに変換してISO形式で出力
+        jst_dt = to_jst(dt)
+        return jst_dt.isoformat()
 
 
 class LocationScheduleListResponse(BaseModel):

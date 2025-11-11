@@ -5,9 +5,10 @@
 """
 
 import logging
-from datetime import UTC, datetime
+from datetime import datetime
 
 from app.core.firebase import get_firestore_client
+from app.utils.timezone import now_jst
 from app.services.auto_notification import AutoNotificationService
 from app.services.location import LocationService
 
@@ -62,7 +63,7 @@ class CleanupService:
         Returns:
             削除した件数
         """
-        now = datetime.now(UTC)
+        now = now_jst()
 
         # 終了時刻が現在時刻より24時間以上前のスケジュールを取得
         # ただし、statusがexpiredまたはcompletedのもののみ
@@ -153,7 +154,7 @@ class CleanupService:
         """
         from datetime import timedelta
 
-        now = datetime.now(UTC)
+        now = now_jst()
 
         # end_time + 24時間前の時刻を計算
         cutoff_time = now - timedelta(hours=24)
@@ -207,7 +208,7 @@ class CleanupService:
         Returns:
             統計情報の辞書
         """
-        now = datetime.now(UTC)
+        now = now_jst()
 
         # 削除対象の位置情報履歴数
         location_query = self.db.collection("location_history").where("auto_delete_at", "<=", now)

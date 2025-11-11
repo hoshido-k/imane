@@ -28,6 +28,8 @@ from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.utils.timezone import now_jst, JST
+
 
 class PopCategory(str, Enum):
     """ポップのカテゴリ"""
@@ -99,7 +101,7 @@ class PopInDB(PopBase):
 
     pop_id: str = Field(..., description="ポップID")
     user_id: str = Field(..., description="投稿者のUID")
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=now_jst)
     expires_at: datetime = Field(..., description="有効期限")
     duration_minutes: int = Field(..., description="有効期間（分）")
     reaction_count: int = Field(default=0, description="リアクション数")
@@ -111,16 +113,14 @@ class PopInDB(PopBase):
 
     def is_active(self) -> bool:
         """ポップが有効かチェック"""
-        from datetime import timezone
-        now = datetime.now(timezone.utc)
+        now = datetime.now(JST)
         return self.status == PopStatus.ACTIVE and self.expires_at > now
 
     def remaining_minutes(self) -> int:
         """残り時間（分）を計算"""
         if not self.is_active():
             return 0
-        from datetime import timezone
-        now = datetime.now(timezone.utc)
+        now = datetime.now(JST)
         delta = self.expires_at - now
         return max(0, int(delta.total_seconds() / 60))
 

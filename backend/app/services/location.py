@@ -3,10 +3,11 @@
 """
 
 import uuid
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta
 from typing import List, Optional
 
 from app.core.firebase import get_firestore_client
+from app.utils.timezone import now_jst
 from app.schemas.common import Coordinates
 from app.schemas.location import (
     LocationHistoryInDB,
@@ -44,7 +45,7 @@ class LocationService:
         """
         # 新しい位置情報履歴IDを生成
         history_id = str(uuid.uuid4())
-        now = datetime.now(UTC)
+        now = now_jst()
         recorded_at = location_data.recorded_at or now
         auto_delete_at = recorded_at + timedelta(hours=24)
 
@@ -196,7 +197,7 @@ class LocationService:
         Returns:
             削除した件数
         """
-        now = datetime.now(UTC)
+        now = now_jst()
 
         query = self.db.collection(self.collection_name).where("auto_delete_at", "<=", now)
 

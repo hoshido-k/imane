@@ -3,10 +3,11 @@
 """
 
 import uuid
-from datetime import UTC, datetime
+from datetime import datetime
 from typing import List, Optional
 
 from app.core.firebase import get_firestore_client
+from app.utils.timezone import now_jst
 from app.schemas.schedule import (
     LocationScheduleCreate,
     LocationScheduleInDB,
@@ -44,7 +45,14 @@ class ScheduleService:
 
         # 新しいスケジュールIDを生成
         schedule_id = str(uuid.uuid4())
-        now = datetime.now(UTC)
+        now = now_jst()
+
+        # デバッグ：受信した start_time を確認
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"[DEBUG] 受信した start_time: {schedule_data.start_time}")
+        logger.info(f"[DEBUG] start_time のタイムゾーン: {schedule_data.start_time.tzinfo}")
+        logger.info(f"[DEBUG] 現在のJST時刻: {now}")
 
         # スケジュールデータを作成
         schedule_dict = schedule_data.model_dump()
@@ -66,6 +74,7 @@ class ScheduleService:
 
         # Firestoreに保存
         schedule_ref = self.db.collection(self.collection_name).document(schedule_id)
+        logger.info(f"[DEBUG] Firestoreに保存する start_time: {schedule_dict.get('start_time')}")
         schedule_ref.set(schedule_dict)
 
         return LocationScheduleInDB(**schedule_dict)
@@ -94,11 +103,20 @@ class ScheduleService:
 
         schedule_data = schedule_doc.to_dict()
 
+        # デバッグ：Firestoreから取得した start_time を確認
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"[DEBUG] Firestoreから取得した start_time: {schedule_data.get('start_time')}")
+        logger.info(f"[DEBUG] start_time の型: {type(schedule_data.get('start_time'))}")
+
         # 権限チェック: 作成者本人のみアクセス可能
         if schedule_data.get("user_id") != user_id:
             raise ValueError("このスケジュールにアクセスする権限がありません")
 
-        return LocationScheduleInDB(**schedule_data)
+        result = LocationScheduleInDB(**schedule_data)
+        logger.info(f"[DEBUG] LocationScheduleInDB の start_time: {result.start_time}")
+        logger.info(f"[DEBUG] start_time のタイムゾーン: {result.start_time.tzinfo}")
+        return result
 
     async def get_schedules_by_user(
         self, user_id: str, status: Optional[ScheduleStatus] = None
@@ -218,7 +236,7 @@ class ScheduleService:
         if start_time >= end_time:
             raise ValueError("開始時刻は終了時刻より前である必要があります")
 
-        update_dict["updated_at"] = datetime.now(UTC)
+        update_dict["updated_at"] = now_jst()
 
         # Firestoreを更新
         schedule_ref.update(update_dict)
@@ -256,7 +274,7 @@ class ScheduleService:
 
         update_dict = {
             "status": status.value,
-            "updated_at": datetime.now(UTC),
+            "updated_at": now_jst(),
         }
 
         if arrived_at:
