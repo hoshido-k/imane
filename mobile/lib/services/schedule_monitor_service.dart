@@ -76,8 +76,9 @@ class ScheduleMonitorService {
         return;
       }
 
-      final now = DateTime.now();
-      print('[$timestamp] [ScheduleMonitor] 現在時刻: $now');
+      // UTC時刻で比較（タイムゾーンの問題を回避）
+      final nowUtc = DateTime.now().toUtc();
+      print('[$timestamp] [ScheduleMonitor] 現在時刻 (UTC): $nowUtc');
 
       bool hasActiveOrArrived = false;
       bool shouldStartTracking = false;
@@ -85,26 +86,26 @@ class ScheduleMonitorService {
       for (var schedule in schedules) {
         final status = schedule['status'] as String;
         final startTimeStr = schedule['start_time'] as String;
-        final startTime = DateTime.parse(startTimeStr).toLocal(); // ローカル時刻に変換
+        final startTimeUtc = DateTime.parse(startTimeStr); // UTCのまま
+        final startTimeLocal = startTimeUtc.toLocal(); // ローカル時刻（表示用）
 
         print('[$timestamp] [ScheduleMonitor] --- スケジュール ---');
         print('  ID: ${schedule['id']}');
         print('  status: $status');
-        print('  start_time (UTC): $startTimeStr');
-        print('  start_time (Local): $startTime');
-        print('  現在時刻 (Local): $now');
+        print('  start_time (UTC): $startTimeUtc');
+        print('  start_time (JST表示): $startTimeLocal');
 
         // ACTIVEまたはARRIVEDのスケジュールがあるかチェック
         if (status == 'active' || status == 'arrived') {
           hasActiveOrArrived = true;
           print('  → ACTIVE/ARRIVED状態を検出');
 
-          // start_timeが到達しているかチェック
-          if (now.isAfter(startTime) || now.isAtSameMomentAs(startTime)) {
+          // start_timeが到達しているかチェック（UTC同士で比較）
+          if (nowUtc.isAfter(startTimeUtc) || nowUtc.isAtSameMomentAs(startTimeUtc)) {
             shouldStartTracking = true;
             print('  → ✅ start_time到達！追跡開始が必要');
           } else {
-            final remainingMinutes = startTime.difference(now).inMinutes;
+            final remainingMinutes = startTimeUtc.difference(nowUtc).inMinutes;
             print('  → ⏰ start_timeまで残り${remainingMinutes}分');
           }
         } else {
