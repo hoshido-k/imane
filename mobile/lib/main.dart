@@ -157,25 +157,29 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
 
   /// Initialize FCM and Location services after login
   Future<void> _initializeServices() async {
-    try {
-      print('[AuthCheck] Initializing services...');
+    print('[AuthCheck] Initializing services...');
 
-      // Initialize FCM service
+    // Initialize FCM service (non-blocking)
+    try {
       final fcmService = FCMService();
       await fcmService.initialize();
       print('[AuthCheck] FCM service initialized');
+    } catch (e) {
+      print('[AuthCheck] FCM service initialization failed (non-critical): $e');
+      // FCM failure should not block other services
+    }
 
-      // Start schedule monitoring
+    // Start schedule monitoring (critical for location tracking)
+    try {
       // 位置情報追跡はstart_timeから自動的に開始されます
       final scheduleMonitor = ScheduleMonitorService();
       scheduleMonitor.startMonitoring();
       print('[AuthCheck] Schedule monitoring started');
-
-      print('[AuthCheck] All services initialized successfully');
     } catch (e) {
-      print('[AuthCheck] Error initializing services: $e');
-      // Don't block login if services fail to initialize
+      print('[AuthCheck] Schedule monitoring initialization failed: $e');
     }
+
+    print('[AuthCheck] All services initialization completed');
   }
 
   @override
