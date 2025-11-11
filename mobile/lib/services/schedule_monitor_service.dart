@@ -87,29 +87,10 @@ class ScheduleMonitorService {
         final status = schedule['status'] as String;
         final startTimeStr = schedule['start_time'] as String;
 
-        // TODO: JST時刻計算の問題
-        // 現在の実装では、APIレスポンスがUTC(Z)で返ってきた場合、
-        // toLocal()を使用してローカル時刻（デバイスのタイムゾーン）に変換している。
-        // しかし、これはデバイスのタイムゾーン設定に依存するため、
-        // デバイスがJST以外のタイムゾーンに設定されている場合、正しく動作しない。
-        //
-        // 【問題】
-        // - バックエンドがUTC(Z)で時刻を返している（本来はJST+09:00で返すべき）
-        // - Flutter側でtoLocal()を使うと、デバイスのタイムゾーンに依存してしまう
-        // - start_timeとnowの比較で9時間のズレが発生している
-        //
-        // 【修正方針】
-        // 1. バックエンドのfield_serializerを修正し、+09:00付きで返すようにする
-        // 2. Flutter側でも明示的にJSTとして扱う（timezone パッケージの使用を検討）
-        //
-        // APIレスポンスの時刻をJSTとして解釈
-        // APIが+09:00付きで返してくれば正しく解釈される
-        // Zで返してきても、それをJSTとして扱う（システム全体がJST統一のため）
-        DateTime startTime = DateTime.parse(startTimeStr);
-        if (startTime.isUtc) {
-          // UTCマーカー(Z)がついている場合は、ローカル時刻（JST）に変換
-          startTime = startTime.toLocal();
-        }
+        // APIレスポンスのJST時刻をパース
+        // バックエンドは+09:00付きのISO 8601形式で返すため、DateTime.parseで正しく解釈される
+        // その後toLocal()でデバイスのローカル時刻に変換して比較
+        final startTime = DateTime.parse(startTimeStr).toLocal();
 
         print('[$timestamp] [ScheduleMonitor] --- スケジュール ---');
         print('  ID: ${schedule['id']}');
