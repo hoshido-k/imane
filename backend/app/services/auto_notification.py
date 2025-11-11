@@ -7,7 +7,7 @@
 
 import logging
 import uuid
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime, timedelta, timezone
 from typing import List
 
 from app.config import settings
@@ -19,6 +19,9 @@ from app.services.notifications import NotificationService
 from app.services.users import UserService
 
 logger = logging.getLogger(__name__)
+
+# 日本時間のタイムゾーン（JST = UTC+9）
+JST = timezone(timedelta(hours=9))
 
 
 class AutoNotificationService:
@@ -53,8 +56,9 @@ class AutoNotificationService:
         Returns:
             フォーマットされたメッセージ
         """
-        now = datetime.now(UTC)
-        time_str = now.strftime("%H:%M")
+        # 日本時間（JST）で現在時刻を取得
+        now_jst = datetime.now(JST)
+        time_str = now_jst.strftime("%H:%M")
         return f"今ね、{user_name}さんが{destination_name}へ到着したよ\n到着時刻: {time_str}"
 
     def _format_stay_message(
@@ -94,8 +98,9 @@ class AutoNotificationService:
         Returns:
             フォーマットされたメッセージ
         """
-        now = datetime.now(UTC)
-        time_str = now.strftime("%H:%M")
+        # 日本時間（JST）で現在時刻を取得
+        now_jst = datetime.now(JST)
+        time_str = now_jst.strftime("%H:%M")
         return f"今ね、{user_name}さんが{destination_name}から出発したよ\n出発時刻: {time_str}"
 
     async def _save_notification_history(
