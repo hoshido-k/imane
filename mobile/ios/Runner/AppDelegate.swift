@@ -20,8 +20,31 @@ import GoogleMaps
       // This will cause the app to crash when trying to use maps
     }
 
+    // Register for remote notifications (required for FCM on iOS)
+    if #available(iOS 10.0, *) {
+      UNUserNotificationCenter.current().delegate = self as UNUserNotificationCenterDelegate
+    }
+
     // Register plugins AFTER initializing Google Maps
     GeneratedPluginRegistrant.register(with: self)
+
+    // Register for APNs (Apple Push Notification service)
+    application.registerForRemoteNotifications()
+
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+  }
+
+  // Handle APNs token registration
+  override func application(_ application: UIApplication,
+                           didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+    print("✓ APNs token registered successfully")
+    // Firebase Messaging will automatically receive this token
+    super.application(application, didRegisterForRemoteNotificationsWithDeviceToken: deviceToken)
+  }
+
+  // Handle APNs token registration failure
+  override func application(_ application: UIApplication,
+                           didFailToRegisterForRemoteNotificationsWithError error: Error) {
+    print("❌ Failed to register for remote notifications: \(error.localizedDescription)")
   }
 }
