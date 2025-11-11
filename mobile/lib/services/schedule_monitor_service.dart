@@ -137,6 +137,11 @@ class ScheduleMonitorService {
             print('[$timestamp] [ScheduleMonitor] 🔄 追跡を再開します');
             _isTracking = false; // 状態をリセット
             await _startTracking(); // 再開
+          } else {
+            // 追跡中でもbackground_locationのコールバックが呼ばれない場合があるため
+            // 定期的に現在地を取得して送信（シミュレーター対応）
+            print('[$timestamp] [ScheduleMonitor] 📍 定期的な位置情報更新を実行');
+            await _manualLocationUpdate();
           }
         }
       } else if (!hasActiveOrArrived) {
@@ -189,6 +194,52 @@ class ScheduleMonitorService {
       final timestamp = DateTime.now().toIso8601String();
       print('[$timestamp] [ScheduleMonitor] ❌ 追跡開始エラー: $e');
       _isTracking = false;
+    }
+  }
+
+  /// 手動で位置情報を更新（シミュレーター用）
+  Future<void> _manualLocationUpdate() async {
+    try {
+      final timestamp = DateTime.now().toIso8601String();
+      print('[$timestamp] [ScheduleMonitor] 現在地を手動取得中...');
+
+      final position = await _locationService.getCurrentLocation();
+
+      if (position == null) {
+        print('[$timestamp] [ScheduleMonitor] 現在地の取得失敗');
+        return;
+      }
+
+      print('[$timestamp] [ScheduleMonitor] 現在地取得成功:');
+      print('  - Latitude: ${position.latitude}');
+      print('  - Longitude: ${position.longitude}');
+      print('  - Accuracy: ${position.accuracy}m');
+
+      // バックエンドに送信
+      final apiService = ApiService();
+      final response = await apiService.post(
+        '/location/update',
+        body: {
+          'coords': {
+            'lat': position.latitude,
+            'lng': position.longitude,
+          },
+          'accuracy': position.accuracy,
+        },
+        requiresAuth: true,
+      );
+
+      print('[$timestamp] [ScheduleMonitor] 位置情報送信完了');
+      print('  - Response: $response');
+
+      // 通知がトリガーされたかチェック
+      final triggeredNotifications = response['triggered_notifications'] as List?;
+      if (triggeredNotifications != null && triggeredNotifications.isNotEmpty) {
+        print('[$timestamp] [ScheduleMonitor] ✅ ${triggeredNotifications.length}件の通知がトリガーされました');
+      }
+    } catch (e) {
+      final timestamp = DateTime.now().toIso8601String();
+      print('[$timestamp] [ScheduleMonitor] 手動位置更新エラー: $e');
     }
   }
 
