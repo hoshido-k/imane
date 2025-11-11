@@ -29,7 +29,7 @@ class LocationService {
 
   // Location update interval (in milliseconds)
   // TODO: 本番環境では10分 (10 * 60 * 1000) に戻す
-  static const int _updateIntervalMs = 1 * 5 * 1000; // 1 minute for testing
+  static const int _updateIntervalMs = 1 * 60 * 1000; // 1 minute (60 seconds) for testing
 
   // Minimum distance filter in meters
   static const double _distanceFilterMeters = 50.0;
