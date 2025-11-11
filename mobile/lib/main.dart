@@ -16,6 +16,7 @@ import 'screens/debug/location_test_screen.dart';
 import 'services/auth_service.dart';
 import 'services/fcm_service.dart';
 import 'services/location_service.dart';
+import 'services/app_lifecycle_observer.dart';
 
 /// Background message handler (must be top-level function)
 @pragma('vm:entry-point')
@@ -60,8 +61,31 @@ void main() async {
   runApp(const ImaneApp());
 }
 
-class ImaneApp extends StatelessWidget {
+class ImaneApp extends StatefulWidget {
   const ImaneApp({super.key});
+
+  @override
+  State<ImaneApp> createState() => _ImaneAppState();
+}
+
+class _ImaneAppState extends State<ImaneApp> {
+  final AppLifecycleObserver _lifecycleObserver = AppLifecycleObserver();
+
+  @override
+  void initState() {
+    super.initState();
+    // Register lifecycle observer
+    WidgetsBinding.instance.addObserver(_lifecycleObserver);
+    print('[ImaneApp] AppLifecycleObserver registered');
+  }
+
+  @override
+  void dispose() {
+    // Unregister lifecycle observer
+    WidgetsBinding.instance.removeObserver(_lifecycleObserver);
+    print('[ImaneApp] AppLifecycleObserver unregistered');
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {

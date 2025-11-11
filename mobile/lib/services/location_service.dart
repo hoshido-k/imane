@@ -432,16 +432,20 @@ class LocationService {
 
   /// Stop foreground auto-update
   void stopForegroundAutoUpdate() {
+    final timestamp = DateTime.now().toIso8601String();
+
     if (!_isForegroundAutoUpdateEnabled) {
-      print('[LocationService] Foreground auto-update is not running');
+      print('[$timestamp] [LocationService] Foreground auto-update is not running');
       return;
     }
 
-    print('[LocationService] Stopping foreground auto-update...');
+    print('[$timestamp] [LocationService] ⚠️ === Stopping foreground auto-update ===');
+    print('[$timestamp] [LocationService] Called from:');
+    print(StackTrace.current);
     _foregroundTimer?.cancel();
     _foregroundTimer = null;
     _isForegroundAutoUpdateEnabled = false;
-    print('[LocationService] Foreground auto-update stopped');
+    print('[$timestamp] [LocationService] ✓ Foreground auto-update stopped');
   }
 
   /// Send current location manually (for debugging)
