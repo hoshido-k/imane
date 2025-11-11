@@ -12,7 +12,6 @@ import 'screens/friends/friends_screen.dart';
 import 'screens/friends/add_friend_screen.dart';
 import 'screens/friends/friend_requests_screen.dart';
 import 'screens/profile/profile_screen.dart';
-import 'screens/debug/location_test_screen.dart';
 import 'services/auth_service.dart';
 import 'services/fcm_service.dart';
 import 'services/location_service.dart';
@@ -104,7 +103,6 @@ class _ImaneAppState extends State<ImaneApp> {
         '/friends/add': (context) => const AddFriendScreen(),
         '/friends/requests': (context) => const FriendRequestsScreen(),
         '/profile': (context) => const ProfileScreen(),
-        '/debug/location': (context) => const LocationTestScreen(),
       },
     );
   }

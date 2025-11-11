@@ -113,15 +113,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               );
             },
           ),
-          const SizedBox(height: 16),
-          _buildSettingsCard(
-            icon: Icons.bug_report_outlined,
-            title: '位置情報デバッグ',
-            subtitle: '位置情報の手動送信とテスト',
-            onTap: () {
-              Navigator.of(context).pushNamed('/debug/location');
-            },
-          ),
           const SizedBox(height: 32),
           // Logout button
           SizedBox(
