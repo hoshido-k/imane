@@ -48,8 +48,8 @@ class PopupNotificationService {
       ),
     );
 
-    // Insert overlay using the navigator key's overlay
-    final overlay = Overlay.of(context);
+    // Insert overlay using the root overlay (MaterialApp level)
+    final overlay = Overlay.of(context, rootOverlay: true);
     overlay.insert(_currentOverlay!);
   }
 
