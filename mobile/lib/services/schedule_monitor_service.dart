@@ -78,7 +78,7 @@ class ScheduleMonitorService {
 
       // 内部的にはUTC時刻で比較（タイムゾーンの問題を回避）
       final nowUtc = DateTime.now().toUtc();
-      final nowJst = nowUtc.toLocal(); // 表示用JST
+      final nowJst = nowUtc.add(const Duration(hours: 9)); // UTC+9 = JST
       print('[$timestamp] [ScheduleMonitor] 現在時刻 (JST): $nowJst');
 
       bool hasActiveOrArrived = false;
@@ -88,7 +88,7 @@ class ScheduleMonitorService {
         final status = schedule['status'] as String;
         final startTimeStr = schedule['start_time'] as String;
         final startTimeUtc = DateTime.parse(startTimeStr); // UTCのまま（比較用）
-        final startTimeJst = startTimeUtc.toLocal(); // JST表示用
+        final startTimeJst = startTimeUtc.add(const Duration(hours: 9)); // UTC+9 = JST
 
         print('[$timestamp] [ScheduleMonitor] --- スケジュール ---');
         print('  ID: ${schedule['id']}');
