@@ -153,10 +153,6 @@ class ScheduleMonitorService {
       final timestamp = DateTime.now().toIso8601String();
       print('[$timestamp] [ScheduleMonitor] === 位置情報追跡開始 ===');
 
-      // フォアグラウンド自動更新を開始
-      await _locationService.startForegroundAutoUpdate();
-      print('[$timestamp] [ScheduleMonitor] ✓ フォアグラウンド自動更新開始');
-
       // バックグラウンド追跡を開始（権限がある場合）
       final hasPermission = await _locationService.hasAlwaysPermission();
       if (hasPermission) {
@@ -180,10 +176,6 @@ class ScheduleMonitorService {
     try {
       final timestamp = DateTime.now().toIso8601String();
       print('[$timestamp] [ScheduleMonitor] === 位置情報追跡停止 ===');
-
-      // フォアグラウンド自動更新を停止
-      _locationService.stopForegroundAutoUpdate();
-      print('[$timestamp] [ScheduleMonitor] ✓ フォアグラウンド自動更新停止');
 
       // バックグラウンド追跡を停止
       await _locationService.stopTracking();
