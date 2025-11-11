@@ -53,13 +53,32 @@ class FCMService {
         print('[FCMService] User declined or has not accepted notification permission');
       }
 
-      // Get FCM token
-      _fcmToken = await _firebaseMessaging.getToken();
-      print('[FCMService] FCM Token: $_fcmToken');
+      // For iOS: Get APNs token first before FCM token
+      try {
+        final apnsToken = await _firebaseMessaging.getAPNSToken();
+        if (apnsToken != null) {
+          print('[FCMService] APNs Token obtained: ${apnsToken.substring(0, 10)}...');
+        } else {
+          print('[FCMService] APNs Token is null (likely running on simulator)');
+        }
+      } catch (e) {
+        print('[FCMService] Warning: Could not get APNs token (this is expected on simulator): $e');
+      }
 
-      if (_fcmToken != null) {
-        // Register token with backend
-        await _registerToken(_fcmToken!);
+      // Get FCM token (may fail on simulator, but that's OK)
+      try {
+        _fcmToken = await _firebaseMessaging.getToken();
+        print('[FCMService] FCM Token obtained: $_fcmToken');
+
+        if (_fcmToken != null) {
+          // Register token with backend
+          await _registerToken(_fcmToken!);
+        } else {
+          print('[FCMService] FCM Token is null (simulator mode - notifications will not work)');
+        }
+      } catch (e) {
+        print('[FCMService] Could not get FCM token (this is expected on simulator): $e');
+        print('[FCMService] Running in simulator mode - push notifications will not work');
       }
 
       // Listen to token refresh
@@ -73,10 +92,11 @@ class FCMService {
       _setupMessageHandlers();
 
       _isInitialized = true;
-      print('[FCMService] Initialization complete');
+      print('[FCMService] Initialization complete (simulator mode: FCM token = ${_fcmToken != null ? "available" : "unavailable"})');
     } catch (e) {
       print('[FCMService] Initialization error: $e');
-      rethrow;
+      // Don't rethrow - allow app to continue even if FCM fails
+      _isInitialized = false;
     }
   }
 
@@ -84,7 +104,7 @@ class FCMService {
   Future<void> _registerToken(String token) async {
     try {
       await _apiService.post(
-        '/api/v1/notifications/fcm-token',
+        '/notifications/fcm-token',
         body: {
           'fcm_token': token,
         },
@@ -194,7 +214,7 @@ class FCMService {
     try {
       // Backend API call to remove token
       await _apiService.delete(
-        '/api/v1/notifications/fcm-token',
+        '/notifications/fcm-token',
         body: {
           'fcm_token': _fcmToken!,
         },

@@ -130,9 +130,32 @@ class NotificationService:
             ),
         )
 
-        # FCMで送信
+        # FCMで送信（個別送信に変更）
         try:
-            response = messaging.send_multicast(multicast_message)
+            # send_multicast の代わりに send_each を使用
+            messages = []
+            for token in tokens:
+                messages.append(
+                    messaging.Message(
+                        notification=messaging.Notification(
+                            title=title,
+                            body=body,
+                        ),
+                        data={k: str(v) for k, v in data.items()} if data else None,
+                        token=token,
+                        apns=messaging.APNSConfig(
+                            payload=messaging.APNSPayload(
+                                aps=messaging.Aps(
+                                    alert=messaging.ApsAlert(title=title, body=body),
+                                    sound="default",
+                                    badge=1,
+                                )
+                            )
+                        ),
+                    )
+                )
+
+            response = messaging.send_each(messages)
             logger.info(
                 f"[通知送信] FCM送信完了: {response.success_count}/{len(tokens)} 成功, "
                 f"{response.failure_count} 失敗"
