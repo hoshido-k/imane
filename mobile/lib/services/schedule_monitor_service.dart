@@ -20,16 +20,28 @@ class ScheduleMonitorService {
   /// 監視を開始（1分ごとにチェック）
   void startMonitoring() {
     final timestamp = DateTime.now().toIso8601String();
+    print('[$timestamp] [ScheduleMonitor] ========================================');
     print('[$timestamp] [ScheduleMonitor] 監視開始');
+    print('[$timestamp] [ScheduleMonitor] ========================================');
+
+    // 既存のタイマーをキャンセル
+    if (_monitorTimer != null) {
+      print('[$timestamp] [ScheduleMonitor] 既存のタイマーをキャンセル');
+      _monitorTimer?.cancel();
+    }
 
     // 即座に1回チェック
+    print('[$timestamp] [ScheduleMonitor] 初回チェックを実行');
     _checkSchedules();
 
     // 1分ごとにチェック
-    _monitorTimer?.cancel();
     _monitorTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
+      final t = DateTime.now().toIso8601String();
+      print('[$t] [ScheduleMonitor] ⏰ タイマー実行（1分経過）');
       _checkSchedules();
     });
+
+    print('[$timestamp] [ScheduleMonitor] タイマー設定完了（1分間隔）');
   }
 
   /// 監視を停止
@@ -43,72 +55,92 @@ class ScheduleMonitorService {
 
   /// アクティブなスケジュールをチェック
   Future<void> _checkSchedules() async {
-    try {
-      final timestamp = DateTime.now().toIso8601String();
-      print('[$timestamp] [ScheduleMonitor] スケジュールチェック開始');
+    final timestamp = DateTime.now().toIso8601String();
+    print('[$timestamp] [ScheduleMonitor] === スケジュールチェック開始 ===');
 
+    try {
       // 自分のスケジュールを取得
       final response = await _apiService.get('/schedules');
-      final schedules = response['schedules'] as List<dynamic>;
+      print('[$timestamp] [ScheduleMonitor] API応答: $response');
 
+      final schedules = response['schedules'] as List<dynamic>;
       print('[$timestamp] [ScheduleMonitor] スケジュール数: ${schedules.length}');
 
       if (schedules.isEmpty) {
         // スケジュールがない場合は追跡停止
+        print('[$timestamp] [ScheduleMonitor] スケジュールなし');
         if (_isTracking) {
-          print('[$timestamp] [ScheduleMonitor] スケジュールなし → 追跡停止');
+          print('[$timestamp] [ScheduleMonitor] 追跡中なので停止します');
           await _stopTracking();
         }
         return;
       }
 
       final now = DateTime.now();
+      print('[$timestamp] [ScheduleMonitor] 現在時刻: $now');
+
       bool hasActiveOrArrived = false;
       bool shouldStartTracking = false;
 
       for (var schedule in schedules) {
         final status = schedule['status'] as String;
         final startTimeStr = schedule['start_time'] as String;
-        final startTime = DateTime.parse(startTimeStr);
+        final startTime = DateTime.parse(startTimeStr).toLocal(); // ローカル時刻に変換
 
-        print('[$timestamp] [ScheduleMonitor] スケジュール: ${schedule['id']}');
-        print('  - status: $status');
-        print('  - start_time: $startTime');
-        print('  - 現在時刻: $now');
+        print('[$timestamp] [ScheduleMonitor] --- スケジュール ---');
+        print('  ID: ${schedule['id']}');
+        print('  status: $status');
+        print('  start_time (UTC): $startTimeStr');
+        print('  start_time (Local): $startTime');
+        print('  現在時刻 (Local): $now');
 
         // ACTIVEまたはARRIVEDのスケジュールがあるかチェック
         if (status == 'active' || status == 'arrived') {
           hasActiveOrArrived = true;
+          print('  → ACTIVE/ARRIVED状態を検出');
 
           // start_timeが到達しているかチェック
           if (now.isAfter(startTime) || now.isAtSameMomentAs(startTime)) {
             shouldStartTracking = true;
-            print('[$timestamp] [ScheduleMonitor] start_time到達 → 追跡開始が必要');
+            print('  → ✅ start_time到達！追跡開始が必要');
           } else {
             final remainingMinutes = startTime.difference(now).inMinutes;
-            print('[$timestamp] [ScheduleMonitor] start_timeまで残り${remainingMinutes}分');
+            print('  → ⏰ start_timeまで残り${remainingMinutes}分');
           }
+        } else {
+          print('  → status=${status}のため対象外');
         }
       }
+
+      print('[$timestamp] [ScheduleMonitor] チェック結果:');
+      print('  - hasActiveOrArrived: $hasActiveOrArrived');
+      print('  - shouldStartTracking: $shouldStartTracking');
+      print('  - _isTracking: $_isTracking');
 
       // 追跡の開始/停止を判断
       if (hasActiveOrArrived && shouldStartTracking) {
         if (!_isTracking) {
-          print('[$timestamp] [ScheduleMonitor] 位置情報追跡を開始します');
+          print('[$timestamp] [ScheduleMonitor] 🚀 位置情報追跡を開始します');
           await _startTracking();
         } else {
-          print('[$timestamp] [ScheduleMonitor] 既に追跡中');
+          print('[$timestamp] [ScheduleMonitor] ℹ️ 既に追跡中');
         }
       } else if (!hasActiveOrArrived) {
         if (_isTracking) {
-          print('[$timestamp] [ScheduleMonitor] アクティブな予定なし → 追跡停止');
+          print('[$timestamp] [ScheduleMonitor] 🛑 アクティブな予定なし → 追跡停止');
           await _stopTracking();
+        } else {
+          print('[$timestamp] [ScheduleMonitor] ℹ️ アクティブな予定なし、追跡もなし');
         }
+      } else {
+        print('[$timestamp] [ScheduleMonitor] ℹ️ start_time未到達、待機中');
       }
-    } catch (e) {
-      final timestamp = DateTime.now().toIso8601String();
-      print('[$timestamp] [ScheduleMonitor] エラー: $e');
+    } catch (e, stackTrace) {
+      print('[$timestamp] [ScheduleMonitor] ❌ エラー発生: $e');
+      print('[$timestamp] [ScheduleMonitor] スタックトレース: $stackTrace');
     }
+
+    print('[$timestamp] [ScheduleMonitor] === スケジュールチェック完了 ===');
   }
 
   /// 位置情報追跡を開始
