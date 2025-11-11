@@ -128,6 +128,16 @@ class ScheduleMonitorService {
           await _startTracking();
         } else {
           print('[$timestamp] [ScheduleMonitor] ℹ️ 既に追跡中');
+          // LocationServiceの実際の状態を確認
+          final actuallyTracking = _locationService.isTracking;
+          print('[$timestamp] [ScheduleMonitor] LocationService.isTracking = $actuallyTracking');
+
+          if (!actuallyTracking) {
+            print('[$timestamp] [ScheduleMonitor] ⚠️ 状態不整合検出！ScheduleMonitorは追跡中だがLocationServiceは停止中');
+            print('[$timestamp] [ScheduleMonitor] 🔄 追跡を再開します');
+            _isTracking = false; // 状態をリセット
+            await _startTracking(); // 再開
+          }
         }
       } else if (!hasActiveOrArrived) {
         if (_isTracking) {
@@ -155,19 +165,30 @@ class ScheduleMonitorService {
 
       // バックグラウンド追跡を開始（権限がある場合）
       final hasPermission = await _locationService.hasAlwaysPermission();
-      if (hasPermission) {
-        final trackingStarted = await _locationService.startTracking();
-        if (trackingStarted) {
-          print('[$timestamp] [ScheduleMonitor] ✓ バックグラウンド追跡開始');
-        }
-      } else {
-        print('[$timestamp] [ScheduleMonitor] バックグラウンド権限なし');
+      print('[$timestamp] [ScheduleMonitor] Always権限チェック: $hasPermission');
+
+      if (!hasPermission) {
+        print('[$timestamp] [ScheduleMonitor] ❌ バックグラウンド権限なし');
+        print('[$timestamp] [ScheduleMonitor] ⚠️ 設定 → プライバシー → 位置情報サービス → imane → "常に"を選択してください');
+        // 権限がない場合は _isTracking を true にしない
+        return;
       }
 
-      _isTracking = true;
+      print('[$timestamp] [ScheduleMonitor] 📍 LocationService.startTracking() を呼び出します...');
+      final trackingStarted = await _locationService.startTracking();
+      print('[$timestamp] [ScheduleMonitor] 📍 startTracking() の結果: $trackingStarted');
+
+      if (trackingStarted) {
+        print('[$timestamp] [ScheduleMonitor] ✓ バックグラウンド追跡開始成功');
+        _isTracking = true;
+      } else {
+        print('[$timestamp] [ScheduleMonitor] ❌ バックグラウンド追跡開始失敗');
+        _isTracking = false;
+      }
     } catch (e) {
       final timestamp = DateTime.now().toIso8601String();
-      print('[$timestamp] [ScheduleMonitor] 追跡開始エラー: $e');
+      print('[$timestamp] [ScheduleMonitor] ❌ 追跡開始エラー: $e');
+      _isTracking = false;
     }
   }
 
