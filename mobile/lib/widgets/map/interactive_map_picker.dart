@@ -508,7 +508,7 @@ class _InteractiveMapPickerState extends State<InteractiveMapPicker> {
             right: 0,
             child: Container(
               // Extend white background below safe area to hide Google logo
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
               decoration: BoxDecoration(
                 color: Colors.white,
                 boxShadow: [
@@ -520,6 +520,7 @@ class _InteractiveMapPickerState extends State<InteractiveMapPicker> {
                 ],
               ),
               child: SafeArea(
+                top: false, // Don't add top padding
                 child: Padding(
                   padding: const EdgeInsets.only(bottom: 16),
                   child: Column(
