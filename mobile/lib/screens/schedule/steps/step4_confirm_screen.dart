@@ -168,7 +168,7 @@ class Step4ConfirmScreen extends StatelessWidget {
           _buildInfoRow(
             icon: Icons.location_on,
             label: '目的地',
-            value: '${location.name} - ${location.address}',
+            value: '${location.name}',
           ),
           const SizedBox(height: 16),
           _buildInfoRow(

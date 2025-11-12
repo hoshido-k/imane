@@ -20,7 +20,7 @@ class LocationConfig {
   /// バックエンドの LOCATION_UPDATE_INTERVAL_MINUTES と一致させる必要があります。
   ///
   /// Default: 5 minutes = 300,000ms (本番環境)
-  static const int locationUpdateIntervalMs = 5 * 60 * 1000; // 5分
+  static const int locationUpdateIntervalMs = 1 * 60 * 1000; // 5分
 
   /// スケジュール監視タイマー間隔（分）
   ///
@@ -28,7 +28,7 @@ class LocationConfig {
   /// 判断するタイマーの実行間隔。
   ///
   /// Default: 5 minutes (本番環境)
-  static const int scheduleMonitorIntervalMinutes = 5;
+  static const int scheduleMonitorIntervalMinutes = 1;
 
   /// 滞在時間通知のデフォルト値（分）
   ///
@@ -37,7 +37,7 @@ class LocationConfig {
   /// この値はフォールバック用のデフォルト値です。
   ///
   /// Default: 60 minutes
-  static const int defaultStayDurationMinutes = 60;
+  static const int defaultStayDurationMinutes = 1;
 
   /// テスト用設定
   ///
