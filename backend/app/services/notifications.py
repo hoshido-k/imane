@@ -6,19 +6,20 @@ Firestoreでの通知履歴管理を行います。
 """
 
 import logging
-from datetime import datetime
 from typing import Any, List, Optional
 
 from firebase_admin import messaging
 from google.cloud.firestore_v1 import FieldFilter
 
 from app.core.firebase import get_firestore_client
-from app.utils.timezone import now_jst
 from app.schemas.notification import (
     NotificationResponse,
+    NotificationSettings,
+    NotificationSettingsUpdate,
     NotificationType,
 )
 from app.services.users import UserService
+from app.utils.timezone import now_jst
 
 logger = logging.getLogger(__name__)
 
@@ -92,45 +93,9 @@ class NotificationService:
         logger.info(f"[通知送信] FCMトークン数: {len(user.fcm_tokens)}")
 
         # FCMメッセージを構築
-        # 複数のトークンに送信する場合はMulticastMessageを使用
         tokens = user.fcm_tokens
 
-        # データペイロードに通知タイプを追加
-        data_payload = {
-            "type": notification_type.value,
-            **data,
-        }
-
-        # 文字列型に変換（FCMのdataフィールドは文字列のみ受け付ける）
-        data_payload_str = {k: str(v) for k, v in data_payload.items()}
-
-        multicast_message = messaging.MulticastMessage(
-            notification=messaging.Notification(
-                title=title,
-                body=body,
-            ),
-            data=data_payload_str,
-            tokens=tokens,
-            # Android固有の設定
-            android=messaging.AndroidConfig(
-                priority="high",
-                notification=messaging.AndroidNotification(
-                    channel_id="bubble_notifications",
-                    sound="default",
-                ),
-            ),
-            # iOS固有の設定
-            apns=messaging.APNSConfig(
-                payload=messaging.APNSPayload(
-                    aps=messaging.Aps(
-                        sound="default",
-                        badge=1,
-                    ),
-                ),
-            ),
-        )
-
-        # FCMで送信（個別送信に変更）
+        # FCMで送信（個別送信）
         try:
             # send_multicast の代わりに send_each を使用
             messages = []
@@ -447,4 +412,100 @@ class NotificationService:
 
         # 通知を削除
         notification_ref.delete()
-        logger.info(f"通知を削除しました: {notification_id}")
+
+    async def get_notification_settings(self, user_id: str) -> NotificationSettings:
+        """
+        ユーザーの通知設定を取得
+
+        Args:
+            user_id: ユーザID
+
+        Returns:
+            通知設定（存在しない場合はデフォルト値）
+        """
+        settings_ref = self.db.collection("notification_settings").document(user_id)
+        settings_doc = settings_ref.get()
+
+        if not settings_doc.exists:
+            # デフォルト設定を返す
+            logger.info(f"[通知設定] ユーザー {user_id} の設定が存在しないため、デフォルト値を返します")
+            return NotificationSettings(
+                user_id=user_id,
+                notify_arrival=True,
+                notify_stay=True,
+                notify_departure=True,
+                notify_sound=True,
+                notify_badge=True,
+                updated_at=now_jst(),
+            )
+
+        settings_data = settings_doc.to_dict()
+        logger.info(f"[通知設定] ユーザー {user_id} の設定を取得しました: {settings_data}")
+        return NotificationSettings(**settings_data)
+
+    async def update_notification_settings(
+        self, user_id: str, updates: NotificationSettingsUpdate
+    ) -> NotificationSettings:
+        """
+        ユーザーの通知設定を更新
+
+        Args:
+            user_id: ユーザID
+            updates: 更新する設定
+
+        Returns:
+            更新後の通知設定
+        """
+        settings_ref = self.db.collection("notification_settings").document(user_id)
+        settings_doc = settings_ref.get()
+
+        # 現在の設定を取得
+        if settings_doc.exists:
+            current_settings = settings_doc.to_dict()
+        else:
+            # 新規作成
+            current_settings = {
+                "user_id": user_id,
+                "notify_arrival": True,
+                "notify_stay": True,
+                "notify_departure": True,
+                "notify_sound": True,
+                "notify_badge": True,
+            }
+
+        # 更新データをマージ
+        update_dict = updates.model_dump(exclude_unset=True, exclude_none=True)
+        current_settings.update(update_dict)
+        current_settings["updated_at"] = now_jst()
+
+        # Firestoreに保存
+        settings_ref.set(current_settings)
+
+        logger.info(f"[通知設定] ユーザー {user_id} の設定を更新しました: {update_dict}")
+        return NotificationSettings(**current_settings)
+
+    async def should_send_notification(
+        self, user_id: str, notification_type: NotificationType
+    ) -> bool:
+        """
+        ユーザーの設定に基づいて通知を送信すべきかチェック
+
+        Args:
+            user_id: ユーザID
+            notification_type: 通知タイプ
+
+        Returns:
+            True: 送信すべき, False: 送信しない
+        """
+        settings = await self.get_notification_settings(user_id)
+
+        # 通知タイプに応じてチェック
+        if notification_type == NotificationType.ARRIVAL:
+            return settings.notify_arrival
+        elif notification_type == NotificationType.STAY:
+            return settings.notify_stay
+        elif notification_type == NotificationType.DEPARTURE:
+            return settings.notify_departure
+
+        # その他の通知タイプはデフォルトでTrue
+        return True

@@ -142,3 +142,29 @@ class NotificationHistoryInDB(BaseModel):
     auto_delete_at: datetime = Field(..., description="自動削除日時（24時間後）")
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class NotificationSettings(BaseModel):
+    """通知設定（ユーザーごと）"""
+
+    user_id: str = Field(..., description="ユーザID")
+    notify_arrival: bool = Field(default=True, description="到着通知を受け取る")
+    notify_stay: bool = Field(default=True, description="滞在通知を受け取る")
+    notify_departure: bool = Field(default=True, description="出発通知を受け取る")
+    notify_sound: bool = Field(default=True, description="通知音を有効にする")
+    notify_badge: bool = Field(default=True, description="バッジを有効にする")
+    updated_at: datetime = Field(default_factory=now_jst, description="更新日時")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class NotificationSettingsUpdate(BaseModel):
+    """通知設定更新リクエスト"""
+
+    notify_arrival: Optional[bool] = Field(None, description="到着通知を受け取る")
+    notify_stay: Optional[bool] = Field(None, description="滞在通知を受け取る")
+    notify_departure: Optional[bool] = Field(None, description="出発通知を受け取る")
+    notify_sound: Optional[bool] = Field(None, description="通知音を有効にする")
+    notify_badge: Optional[bool] = Field(None, description="バッジを有効にする")
+
+    model_config = ConfigDict(from_attributes=True)

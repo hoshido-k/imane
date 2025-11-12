@@ -12,6 +12,8 @@ from app.schemas.notification import (
     NotificationListResponse,
     NotificationMarkReadRequest,
     NotificationResponse,
+    NotificationSettings,
+    NotificationSettingsUpdate,
     PushNotificationRequest,
 )
 from app.schemas.user import UserInDB
@@ -250,3 +252,61 @@ async def send_test_notification(
         return notification
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.get("/settings", response_model=NotificationSettings)
+async def get_notification_settings(
+    current_user: UserInDB = Depends(get_current_user),
+    notification_service: NotificationService = Depends(lambda: NotificationService()),
+):
+    """
+    通知設定を取得
+
+    現在のユーザーの通知設定（到着/滞在/出発通知のON/OFF）を取得します。
+
+    Args:
+        current_user: 現在のユーザー
+        notification_service: 通知サービス
+
+    Returns:
+        通知設定
+    """
+    try:
+        settings = await notification_service.get_notification_settings(current_user.uid)
+        return settings
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"通知設定の取得に失敗しました: {str(e)}",
+        )
+
+
+@router.put("/settings", response_model=NotificationSettings)
+async def update_notification_settings(
+    settings_update: NotificationSettingsUpdate,
+    current_user: UserInDB = Depends(get_current_user),
+    notification_service: NotificationService = Depends(lambda: NotificationService()),
+):
+    """
+    通知設定を更新
+
+    通知設定（到着/滞在/出発通知のON/OFF、サウンド、バッジ）を更新します。
+
+    Args:
+        settings_update: 更新する設定
+        current_user: 現在のユーザー
+        notification_service: 通知サービス
+
+    Returns:
+        更新後の通知設定
+    """
+    try:
+        settings = await notification_service.update_notification_settings(
+            current_user.uid, settings_update
+        )
+        return settings
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"通知設定の更新に失敗しました: {str(e)}",
+        )
