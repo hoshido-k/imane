@@ -84,10 +84,25 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 140),
 
                   // Logo/Title
-                  Text(
-                    'imane',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.displayLarge,
+                  Column(
+                    children: [
+                      Text(
+                        'imane',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.displayLarge,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '大切な人に「今ね、」を届ける',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: AppColors.textSecondary,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                          letterSpacing: -0.31,
+                        ),
+                      ),
+                    ],
                   ),
 
                   const SizedBox(height: 40),
