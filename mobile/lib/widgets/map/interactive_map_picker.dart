@@ -525,9 +525,9 @@ class _InteractiveMapPickerState extends State<InteractiveMapPicker> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                    // Selected location info
-                    if (_selectedLocation != null)
-                      Container(
+                      // Selected location info
+                      if (_selectedLocation != null)
+                        Container(
                         padding: const EdgeInsets.all(12),
                         margin: const EdgeInsets.only(bottom: 12),
                         decoration: BoxDecoration(
@@ -569,61 +569,62 @@ class _InteractiveMapPickerState extends State<InteractiveMapPicker> {
                         ),
                       ),
 
-                    Row(
-                      children: [
-                        // Current location button
-                        Container(
-                          width: 56,
-                          height: 56,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(28),
-                            border: Border.all(color: AppColors.primary),
-                          ),
-                          child: IconButton(
-                            icon: Icon(
-                              Icons.my_location,
-                              color: AppColors.primary,
-                            ),
-                            onPressed: _isLoadingLocation
-                                ? null
-                                : () => _getCurrentLocation(showErrorMessage: true),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-
-                        // Confirm button
-                        Expanded(
-                          child: SizedBox(
+                      Row(
+                        children: [
+                          // Current location button
+                          Container(
+                            width: 56,
                             height: 56,
-                            child: ElevatedButton(
-                              onPressed: _selectedLocation != null ? _onConfirmLocation : null,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primary,
-                                foregroundColor: Colors.white,
-                                disabledBackgroundColor: AppColors.inputBorder,
-                                disabledForegroundColor: AppColors.textSecondary,
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(28),
-                                ),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(28),
+                              border: Border.all(color: AppColors.primary),
+                            ),
+                            child: IconButton(
+                              icon: Icon(
+                                Icons.my_location,
+                                color: AppColors.primary,
                               ),
-                              child: const Text(
-                                'この場所を選択',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
+                              onPressed: _isLoadingLocation
+                                  ? null
+                                  : () => _getCurrentLocation(showErrorMessage: true),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+
+                          // Confirm button
+                          Expanded(
+                            child: SizedBox(
+                              height: 56,
+                              child: ElevatedButton(
+                                onPressed: _selectedLocation != null ? _onConfirmLocation : null,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primary,
+                                  foregroundColor: Colors.white,
+                                  disabledBackgroundColor: AppColors.inputBorder,
+                                  disabledForegroundColor: AppColors.textSecondary,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(28),
+                                  ),
+                                ),
+                                child: const Text(
+                                  'この場所を選択',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
+                        ],
+                      ),
                   ],
                 ),
               ),
             ),
+          ),
           ),
 
           // Loading overlay
