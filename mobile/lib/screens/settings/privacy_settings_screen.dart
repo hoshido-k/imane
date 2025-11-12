@@ -50,29 +50,19 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
               _buildDataRetentionCard(
                 icon: Icons.location_history,
                 title: '位置情報履歴',
-                retention: '24時間',
                 description: '取得された位置情報は24時間後に自動削除されます',
               ),
               const SizedBox(height: 12),
               _buildDataRetentionCard(
                 icon: Icons.notifications,
                 title: '通知履歴',
-                retention: '24時間',
                 description: '送信された通知は24時間後に自動削除されます',
               ),
               const SizedBox(height: 12),
               _buildDataRetentionCard(
                 icon: Icons.schedule,
                 title: 'スケジュール',
-                retention: '終了後24時間',
                 description: 'スケジュールは終了時刻から24時間後に削除されます',
-              ),
-              const SizedBox(height: 12),
-              _buildDataRetentionCard(
-                icon: Icons.favorite,
-                title: 'お気に入り位置',
-                retention: '削除するまで保持',
-                description: 'お気に入りは手動で削除するまで保存されます',
               ),
               const SizedBox(height: 32),
 
@@ -160,7 +150,6 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
   Widget _buildDataRetentionCard({
     required IconData icon,
     required String title,
-    required String retention,
     required String description,
   }) {
     return Container(
@@ -197,38 +186,14 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: Color(0xFF3D3D3D),
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        retention,
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    ),
-                  ],
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF3D3D3D),
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(

@@ -120,6 +120,8 @@ class _LocationSettingsScreenState extends State<LocationSettingsScreen> {
 
                     // Settings section
                     _buildSectionTitle('位置情報の設定'),
+                    const SizedBox(height: 8),
+                    _buildDevelopmentNotice(),
                     const SizedBox(height: 16),
                     _buildInfoCard(
                       icon: Icons.timer,
@@ -455,6 +457,41 @@ class _LocationSettingsScreenState extends State<LocationSettingsScreen> {
                   ),
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDevelopmentNotice() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF3E0),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: const Color(0xFFFF9800).withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.construction,
+            color: Color(0xFFFF9800),
+            size: 16,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              '各設定項目は今後のアップデートで変更可能になる予定です',
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 11,
+                fontWeight: FontWeight.w400,
+                color: AppColors.textPrimary,
+              ),
             ),
           ),
         ],
