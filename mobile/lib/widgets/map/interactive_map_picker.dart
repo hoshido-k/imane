@@ -369,6 +369,11 @@ class _InteractiveMapPickerState extends State<InteractiveMapPicker> {
             mapToolbarEnabled: false,
             buildingsEnabled: true,
             trafficEnabled: false,
+            // Add padding to hide the Google logo in the bottom left
+            padding: const EdgeInsets.only(
+              bottom: 100,  // Push logo below visible area
+              left: 100,    // Push logo to the left
+            ),
           ),
 
           // Top search bar
