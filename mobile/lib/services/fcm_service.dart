@@ -1,4 +1,5 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'api_service.dart';
 import 'popup_notification_service.dart';
 import 'local_notification_service.dart';
@@ -158,8 +159,37 @@ class FCMService {
   }
 
   /// Handle incoming message (foreground)
-  void _handleMessage(RemoteMessage message) {
+  Future<void> _handleMessage(RemoteMessage message) async {
     print('[FCMService] Handling foreground message: ${message.messageId}');
+
+    // Extract notification data
+    final data = message.data;
+    final notification = message.notification;
+    final notificationType = data['type'] ?? 'arrival';
+
+    // Check notification preferences from SharedPreferences
+    final prefs = await SharedPreferences.getInstance();
+    bool shouldShow = true;
+
+    switch (notificationType) {
+      case 'arrival':
+        shouldShow = prefs.getBool('notify_arrival') ?? true;
+        break;
+      case 'stay':
+        shouldShow = prefs.getBool('notify_stay') ?? true;
+        break;
+      case 'departure':
+        shouldShow = prefs.getBool('notify_departure') ?? true;
+        break;
+    }
+
+    // If user has disabled this notification type, skip it
+    if (!shouldShow) {
+      print('[FCMService] Notification type $notificationType is disabled in settings, skipping');
+      return;
+    }
+
+    print('[FCMService] Notification type $notificationType is enabled, showing notification');
 
     // 1. Show system notification banner (iOS/Android)
     final localNotificationService = LocalNotificationService();
@@ -168,15 +198,11 @@ class FCMService {
     // 2. Show in-app popup notification
     final popupService = PopupNotificationService();
 
-    // Extract notification data
-    final data = message.data;
-    final notification = message.notification;
-
     // Prepare data for popup
     final Map<String, dynamic> popupData = {
       'title': notification?.title ?? data['title'] ?? '通知',
       'body': notification?.body ?? data['body'] ?? '',
-      'type': data['type'] ?? 'arrival',
+      'type': notificationType,
       'map_link': data['map_link'],
       ...data,
     };
@@ -249,4 +275,30 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     print('[FCMService] Notification Title: ${message.notification!.title}');
     print('[FCMService] Notification Body: ${message.notification!.body}');
   }
+
+  // Check notification preferences from SharedPreferences
+  final prefs = await SharedPreferences.getInstance();
+  final notificationType = message.data['type'] ?? 'arrival';
+  bool shouldShow = true;
+
+  switch (notificationType) {
+    case 'arrival':
+      shouldShow = prefs.getBool('notify_arrival') ?? true;
+      break;
+    case 'stay':
+      shouldShow = prefs.getBool('notify_stay') ?? true;
+      break;
+    case 'departure':
+      shouldShow = prefs.getBool('notify_departure') ?? true;
+      break;
+  }
+
+  // If user has disabled this notification type, skip it
+  if (!shouldShow) {
+    print('[FCMService] Background: Notification type $notificationType is disabled in settings, skipping');
+    return;
+  }
+
+  print('[FCMService] Background: Notification type $notificationType is enabled');
+  // System notification will be shown automatically by the OS
 }

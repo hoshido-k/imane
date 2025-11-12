@@ -1,5 +1,6 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Local notification service for showing system notification banners
 /// This is used to display notifications when the app is in foreground
@@ -71,24 +72,55 @@ class LocalNotificationService {
     final body = notification?.body ?? data['body'] ?? '';
     final type = data['type'] as String?;
 
-    // iOS notification details
-    const DarwinNotificationDetails iOSDetails = DarwinNotificationDetails(
+    // Check notification preferences from SharedPreferences
+    final prefs = await SharedPreferences.getInstance();
+    final notificationType = type ?? 'arrival';
+    bool shouldShow = true;
+
+    switch (notificationType) {
+      case 'arrival':
+        shouldShow = prefs.getBool('notify_arrival') ?? true;
+        break;
+      case 'stay':
+        shouldShow = prefs.getBool('notify_stay') ?? true;
+        break;
+      case 'departure':
+        shouldShow = prefs.getBool('notify_departure') ?? true;
+        break;
+    }
+
+    // Check sound and badge settings
+    final enableSound = prefs.getBool('notify_sound') ?? true;
+    final enableBadge = prefs.getBool('notify_badge') ?? true;
+
+    // If user has disabled this notification type, skip it
+    if (!shouldShow) {
+      print('[LocalNotificationService] Notification type $notificationType is disabled in settings, skipping');
+      return;
+    }
+
+    print('[LocalNotificationService] Notification type $notificationType is enabled, showing notification');
+
+    // iOS notification details (apply user preferences)
+    final DarwinNotificationDetails iOSDetails = DarwinNotificationDetails(
       presentAlert: true,
-      presentBadge: true,
-      presentSound: true,
+      presentBadge: enableBadge,
+      presentSound: enableSound,
     );
 
-    // Android notification details
-    const AndroidNotificationDetails androidDetails =
+    // Android notification details (apply user preferences)
+    final AndroidNotificationDetails androidDetails =
         AndroidNotificationDetails(
       'imane_notifications', // channel id
       'imane通知', // channel name
       channelDescription: '到着・滞在・出発通知',
       importance: Importance.high,
       priority: Priority.high,
+      playSound: enableSound,
+      enableVibration: enableSound, // Vibrate with sound
     );
 
-    const NotificationDetails notificationDetails = NotificationDetails(
+    final NotificationDetails notificationDetails = NotificationDetails(
       iOS: iOSDetails,
       android: androidDetails,
     );
