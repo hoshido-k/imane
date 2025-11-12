@@ -209,10 +209,10 @@ class FCMService {
     };
 
     // Show popup
-    popupService.showFromFCM(popupData, onTap: () async {
+    popupService.showFromFCM(popupData, onTap: () {
       print('[FCMService] Popup notification tapped');
-      // Handle tap action (open map link if available)
-      await _handleNotificationTap(message);
+      // Handle tap action (just open app, not map)
+      _handleNotificationTap(message);
     });
   }
 
@@ -242,17 +242,12 @@ class FCMService {
 
     final data = message.data;
     final type = data['type'];
-    final mapLink = data['map_link'];
 
     print('[FCMService] Notification type: $type');
+    print('[FCMService] Opening app (map link available in notification actions)');
 
-    // Open map link if available (for arrival and stay notifications)
-    if (mapLink != null && mapLink.isNotEmpty) {
-      print('[FCMService] Map link found: $mapLink');
-      await _openMapLink(mapLink);
-    } else {
-      print('[FCMService] No map link available for this notification');
-    }
+    // アプリを開くだけ（地図は通知アクションボタンから開く）
+    // TODO: Navigate to appropriate screen based on notification type
   }
 
   /// Unregister FCM token from backend

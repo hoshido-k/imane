@@ -24,19 +24,35 @@ class LocalNotificationService {
       return;
     }
 
-    // iOS initialization settings
-    const DarwinInitializationSettings initializationSettingsDarwin =
+    // Define notification actions for iOS
+    const DarwinNotificationActionOption actionOptions =
+        DarwinNotificationActionOption.foreground;
+
+    const DarwinNotificationAction openMapAction = DarwinNotificationAction(
+      'open_map',
+      '地図で開く',
+      options: actionOptions,
+    );
+
+    const DarwinNotificationCategory mapCategory = DarwinNotificationCategory(
+      'map_notification',
+      actions: [openMapAction],
+    );
+
+    // iOS initialization settings with action categories
+    final DarwinInitializationSettings initializationSettingsDarwin =
         DarwinInitializationSettings(
       requestAlertPermission: true,
       requestBadgePermission: true,
       requestSoundPermission: true,
+      notificationCategories: [mapCategory],
     );
 
     // Android initialization settings
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    const InitializationSettings initializationSettings =
+    final InitializationSettings initializationSettings =
         InitializationSettings(
       android: initializationSettingsAndroid,
       iOS: initializationSettingsDarwin,
@@ -53,7 +69,9 @@ class LocalNotificationService {
 
   /// Handle notification tap
   Future<void> _onNotificationTapped(NotificationResponse response) async {
-    print('[LocalNotificationService] Notification tapped: ${response.payload}');
+    print('[LocalNotificationService] Notification tapped');
+    print('[LocalNotificationService] Action ID: ${response.actionId}');
+    print('[LocalNotificationService] Payload: ${response.payload}');
 
     if (response.payload == null || response.payload!.isEmpty) {
       print('[LocalNotificationService] No payload data');
@@ -65,11 +83,18 @@ class LocalNotificationService {
       final payloadData = jsonDecode(response.payload!);
       final mapLink = payloadData['map_link'] as String?;
 
-      if (mapLink != null && mapLink.isNotEmpty) {
-        print('[LocalNotificationService] Opening map link: $mapLink');
-        await _openMapLink(mapLink);
+      // Check if "地図で開く" action button was tapped
+      if (response.actionId == 'open_map') {
+        print('[LocalNotificationService] "地図で開く" action tapped');
+        if (mapLink != null && mapLink.isNotEmpty) {
+          await _openMapLink(mapLink);
+        } else {
+          print('[LocalNotificationService] No map link in payload');
+        }
       } else {
-        print('[LocalNotificationService] No map link in payload');
+        // Regular notification tap - just open the app
+        print('[LocalNotificationService] Opening app (default action)');
+        // TODO: Navigate to appropriate screen
       }
     } catch (e) {
       print('[LocalNotificationService] Error parsing payload: $e');
@@ -142,14 +167,19 @@ class LocalNotificationService {
 
     print('[LocalNotificationService] Notification type $notificationType is enabled, showing notification');
 
-    // iOS notification details (apply user preferences)
+    // Check if map link is available
+    final mapLink = data['map_link'] as String?;
+    final hasMapLink = mapLink != null && mapLink.isNotEmpty;
+
+    // iOS notification details (apply user preferences and action category)
     final DarwinNotificationDetails iOSDetails = DarwinNotificationDetails(
       presentAlert: true,
       presentBadge: enableBadge,
       presentSound: enableSound,
+      categoryIdentifier: hasMapLink ? 'map_notification' : null, // Add action buttons if map link is available
     );
 
-    // Android notification details (apply user preferences)
+    // Android notification details with action button (apply user preferences)
     final AndroidNotificationDetails androidDetails =
         AndroidNotificationDetails(
       'imane_notifications', // channel id
@@ -159,6 +189,14 @@ class LocalNotificationService {
       priority: Priority.high,
       playSound: enableSound,
       enableVibration: enableSound, // Vibrate with sound
+      actions: hasMapLink ? [
+        const AndroidNotificationAction(
+          'open_map',
+          '地図で開く',
+          showsUserInterface: true,
+          cancelNotification: false,
+        ),
+      ] : null,
     );
 
     final NotificationDetails notificationDetails = NotificationDetails(
