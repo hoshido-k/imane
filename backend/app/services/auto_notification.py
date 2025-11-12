@@ -17,7 +17,7 @@ from app.schemas.notification import NotificationHistoryInDB, NotificationType
 from app.schemas.schedule import LocationScheduleInDB
 from app.services.notifications import NotificationService
 from app.services.users import UserService
-from app.utils.timezone import now_jst, JST, jst_now_plus
+from app.utils.timezone import JST, now_jst
 
 logger = logging.getLogger(__name__)
 
@@ -203,6 +203,16 @@ class AutoNotificationService:
         # 通知先ユーザーに送信
         for to_user_id in schedule.notify_to_user_ids:
             try:
+                # ユーザーの通知設定をチェック
+                should_send = await self.notification_service.should_send_notification(
+                    to_user_id, NotificationType.ARRIVAL
+                )
+                if not should_send:
+                    logger.info(
+                        f"[到着通知] ユーザー {to_user_id} は到着通知をOFFにしているためスキップ"
+                    )
+                    continue
+
                 logger.info(f"[到着通知] 通知送信中: {schedule.user_id} -> {to_user_id}")
 
                 # プッシュ通知を送信（save_to_db=Trueで明示的に指定）
@@ -323,6 +333,16 @@ class AutoNotificationService:
         # 通知先ユーザーに送信
         for to_user_id in schedule.notify_to_user_ids:
             try:
+                # ユーザーの通知設定をチェック
+                should_send = await self.notification_service.should_send_notification(
+                    to_user_id, NotificationType.STAY
+                )
+                if not should_send:
+                    logger.info(
+                        f"[滞在通知] ユーザー {to_user_id} は滞在通知をOFFにしているためスキップ"
+                    )
+                    continue
+
                 logger.info(f"[滞在通知] 通知送信中: {schedule.user_id} -> {to_user_id}")
 
                 # プッシュ通知を送信（save_to_db=Trueで明示的に指定）
@@ -418,6 +438,16 @@ class AutoNotificationService:
         # 通知先ユーザーに送信
         for to_user_id in schedule.notify_to_user_ids:
             try:
+                # ユーザーの通知設定をチェック
+                should_send = await self.notification_service.should_send_notification(
+                    to_user_id, NotificationType.DEPARTURE
+                )
+                if not should_send:
+                    logger.info(
+                        f"[退出通知] ユーザー {to_user_id} は退出通知をOFFにしているためスキップ"
+                    )
+                    continue
+
                 logger.info(f"[退出通知] 通知送信中: {schedule.user_id} -> {to_user_id}")
 
                 # プッシュ通知を送信（save_to_db=Trueで明示的に指定）

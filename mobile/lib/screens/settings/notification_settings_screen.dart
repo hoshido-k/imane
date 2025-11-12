@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_colors.dart';
+import '../../services/api_service.dart';
 
 /// Notification settings screen
 class NotificationSettingsScreen extends StatefulWidget {
@@ -13,6 +14,8 @@ class NotificationSettingsScreen extends StatefulWidget {
 
 class _NotificationSettingsScreenState
     extends State<NotificationSettingsScreen> {
+  final ApiService _apiService = ApiService();
+
   // Notification preferences
   bool _enableArrivalNotifications = true;
   bool _enableStayNotifications = true;
@@ -41,8 +44,32 @@ class _NotificationSettingsScreenState
   }
 
   Future<void> _savePreference(String key, bool value) async {
+    // ローカルに保存
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(key, value);
+
+    // バックエンドにも同期
+    try {
+      await _apiService.put(
+        '/notifications/settings',
+        body: {
+          key: value,
+        },
+        requiresAuth: true,
+      );
+      print('[NotificationSettings] バックエンドに設定を同期しました: $key = $value');
+    } catch (e) {
+      print('[NotificationSettings] バックエンドへの同期に失敗しました: $e');
+      // エラーメッセージを表示
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('通知設定の同期に失敗しました'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+    }
   }
 
   @override
