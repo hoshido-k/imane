@@ -11,14 +11,31 @@ class LocationSettingsScreen extends StatefulWidget {
   State<LocationSettingsScreen> createState() => _LocationSettingsScreenState();
 }
 
-class _LocationSettingsScreenState extends State<LocationSettingsScreen> {
+class _LocationSettingsScreenState extends State<LocationSettingsScreen>
+    with WidgetsBindingObserver {
   PermissionStatus _locationPermissionStatus = PermissionStatus.denied;
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _checkPermissionStatus();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // アプリがフォアグラウンドに戻ったときに状態を再チェック
+    if (state == AppLifecycleState.resumed) {
+      print('[LocationSettings] App resumed, checking permission status...');
+      _checkPermissionStatus();
+    }
   }
 
   Future<void> _checkPermissionStatus() async {

@@ -139,6 +139,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   _pickImage(ImageSource.gallery);
                 },
               ),
+              // プロフィール画像を削除（画像が設定されている場合のみ表示）
+              if (_profileImageUrl != null && _profileImageUrl!.isNotEmpty)
+                ListTile(
+                  leading: const Icon(Icons.delete_outline, color: AppColors.error),
+                  title: const Text(
+                    'プロフィール画像を削除',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 16,
+                      letterSpacing: -0.3125,
+                      color: AppColors.error,
+                    ),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _deleteProfileImage();
+                  },
+                ),
               const SizedBox(height: 8),
               // キャンセル
               Padding(
@@ -200,6 +218,85 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('画像の選択に失敗しました'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  /// プロフィール画像を削除
+  Future<void> _deleteProfileImage() async {
+    // 確認ダイアログを表示
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('プロフィール画像を削除'),
+        content: const Text('プロフィール画像を削除しますか？'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('キャンセル'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.error,
+            ),
+            child: const Text('削除'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    setState(() {
+      _isUploadingImage = true;
+    });
+
+    try {
+      print('[ProfileScreen] Deleting profile image...');
+
+      // DELETEリクエストを送信
+      final token = _authService.apiService.accessToken;
+      final response = await http.delete(
+        Uri.parse('${ApiConfig.baseUrl}/users/me/profile-image'),
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      print('[ProfileScreen] Delete response status: ${response.statusCode}');
+      print('[ProfileScreen] Delete response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        setState(() {
+          _profileImageUrl = null;
+          _isUploadingImage = false;
+        });
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('プロフィール画像を削除しました'),
+              backgroundColor: AppColors.primary,
+            ),
+          );
+        }
+      } else {
+        throw Exception('Delete failed: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('[ProfileScreen] Error deleting image: $e');
+      setState(() {
+        _isUploadingImage = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('画像の削除に失敗しました'),
             backgroundColor: Colors.red,
           ),
         );
