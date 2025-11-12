@@ -1,8 +1,10 @@
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../main.dart' show navigatorKey;
 
 /// Local notification service for showing system notification banners
 /// This is used to display notifications when the app is in foreground
@@ -78,12 +80,23 @@ class LocalNotificationService {
           print('[LocalNotificationService] No map link in payload');
         }
       } else {
-        // Regular notification tap - just open the app
-        print('[LocalNotificationService] Opening app (default action)');
-        // TODO: Navigate to appropriate screen
+        // Regular notification tap - navigate to notification history
+        print('[LocalNotificationService] Opening notification history screen');
+        _navigateToNotificationHistory();
       }
     } catch (e) {
       print('[LocalNotificationService] Error parsing payload: $e');
+    }
+  }
+
+  /// Navigate to notification history screen
+  void _navigateToNotificationHistory() {
+    final context = navigatorKey.currentContext;
+    if (context != null) {
+      print('[LocalNotificationService] Navigating to /notifications/history');
+      Navigator.of(context).pushNamed('/notifications/history');
+    } else {
+      print('[LocalNotificationService] Navigator context is null, cannot navigate');
     }
   }
 

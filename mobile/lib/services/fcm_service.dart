@@ -5,6 +5,7 @@ import 'api_service.dart';
 import 'popup_notification_service.dart';
 import 'local_notification_service.dart';
 import '../models/notification_history.dart';
+import '../main.dart' show navigatorKey;
 
 /// FCM (Firebase Cloud Messaging) service for imane
 /// Handles push notification registration and receiving
@@ -244,10 +245,22 @@ class FCMService {
     final type = data['type'];
 
     print('[FCMService] Notification type: $type');
-    print('[FCMService] Opening app (map link available in notification actions)');
+    print('[FCMService] Opening notification history screen');
 
-    // アプリを開くだけ（地図は通知アクションボタンから開く）
-    // TODO: Navigate to appropriate screen based on notification type
+    // Navigate to notification history screen
+    _navigateToNotificationHistory();
+  }
+
+  /// Navigate to notification history screen
+  void _navigateToNotificationHistory() {
+    // Import navigatorKey from main.dart
+    final context = navigatorKey.currentContext;
+    if (context != null) {
+      print('[FCMService] Navigating to /notifications/history');
+      Navigator.of(context).pushNamed('/notifications/history');
+    } else {
+      print('[FCMService] Navigator context is null, cannot navigate');
+    }
   }
 
   /// Unregister FCM token from backend
