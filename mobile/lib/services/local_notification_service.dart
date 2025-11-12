@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// Local notification service for showing system notification banners
 /// This is used to display notifications when the app is in foreground
@@ -50,9 +52,48 @@ class LocalNotificationService {
   }
 
   /// Handle notification tap
-  void _onNotificationTapped(NotificationResponse response) {
+  Future<void> _onNotificationTapped(NotificationResponse response) async {
     print('[LocalNotificationService] Notification tapped: ${response.payload}');
-    // TODO: Navigate to appropriate screen based on payload
+
+    if (response.payload == null || response.payload!.isEmpty) {
+      print('[LocalNotificationService] No payload data');
+      return;
+    }
+
+    try {
+      // Parse payload JSON
+      final payloadData = jsonDecode(response.payload!);
+      final mapLink = payloadData['map_link'] as String?;
+
+      if (mapLink != null && mapLink.isNotEmpty) {
+        print('[LocalNotificationService] Opening map link: $mapLink');
+        await _openMapLink(mapLink);
+      } else {
+        print('[LocalNotificationService] No map link in payload');
+      }
+    } catch (e) {
+      print('[LocalNotificationService] Error parsing payload: $e');
+    }
+  }
+
+  /// Open map link in external app
+  Future<void> _openMapLink(String mapLink) async {
+    try {
+      final uri = Uri.parse(mapLink);
+      print('[LocalNotificationService] Opening map link: $mapLink');
+
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(
+          uri,
+          mode: LaunchMode.externalApplication,
+        );
+        print('[LocalNotificationService] Map link opened successfully');
+      } else {
+        print('[LocalNotificationService] Cannot launch URL: $mapLink');
+      }
+    } catch (e) {
+      print('[LocalNotificationService] Error opening map link: $e');
+    }
   }
 
   /// Show notification from FCM RemoteMessage
@@ -128,13 +169,21 @@ class LocalNotificationService {
     // Generate unique notification ID based on message ID or timestamp
     final notificationId = message.messageId?.hashCode ?? DateTime.now().millisecondsSinceEpoch;
 
+    // Prepare payload with notification data (including map link)
+    final payloadData = {
+      'message_id': message.messageId,
+      'type': type,
+      'map_link': data['map_link'],
+    };
+    final payload = jsonEncode(payloadData);
+
     try {
       await _notificationsPlugin.show(
         notificationId,
         title,
         body,
         notificationDetails,
-        payload: message.messageId,
+        payload: payload,
       );
       print('[LocalNotificationService] Notification shown successfully');
     } catch (e) {
