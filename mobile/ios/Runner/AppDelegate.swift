@@ -1,6 +1,7 @@
 import Flutter
 import UIKit
 import GoogleMaps
+import UserNotifications
 
 @main
 @objc class AppDelegate: FlutterAppDelegate {
@@ -23,6 +24,9 @@ import GoogleMaps
     // Register for remote notifications (required for FCM on iOS)
     if #available(iOS 10.0, *) {
       UNUserNotificationCenter.current().delegate = self as UNUserNotificationCenterDelegate
+
+      // Register notification action categories
+      registerNotificationActions()
     }
 
     // Register plugins AFTER initializing Google Maps
@@ -32,6 +36,29 @@ import GoogleMaps
     application.registerForRemoteNotifications()
 
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+  }
+
+  // Register notification actions for iOS
+  @available(iOS 10.0, *)
+  private func registerNotificationActions() {
+    // Define "Open in Maps" action
+    let openMapAction = UNNotificationAction(
+      identifier: "OPEN_MAP_ACTION",
+      title: "地図で開く",
+      options: [.foreground]
+    )
+
+    // Define notification category with actions
+    let mapCategory = UNNotificationCategory(
+      identifier: "MAP_NOTIFICATION",
+      actions: [openMapAction],
+      intentIdentifiers: [],
+      options: []
+    )
+
+    // Register the category
+    UNUserNotificationCenter.current().setNotificationCategories([mapCategory])
+    print("✓ Notification actions registered: MAP_NOTIFICATION")
   }
 
   // Handle APNs token registration
@@ -46,5 +73,45 @@ import GoogleMaps
   override func application(_ application: UIApplication,
                            didFailToRegisterForRemoteNotificationsWithError error: Error) {
     print("❌ Failed to register for remote notifications: \(error.localizedDescription)")
+  }
+
+  // Handle notification action button taps
+  @available(iOS 10.0, *)
+  override func userNotificationCenter(
+    _ center: UNUserNotificationCenter,
+    didReceive response: UNNotificationResponse,
+    withCompletionHandler completionHandler: @escaping () -> Void
+  ) {
+    let userInfo = response.notification.request.content.userInfo
+
+    // Check if "Open in Maps" action was tapped
+    if response.actionIdentifier == "OPEN_MAP_ACTION" {
+      print("✓ Open Map action tapped")
+
+      // Get map link from notification data
+      if let mapLink = userInfo["map_link"] as? String,
+         let url = URL(string: mapLink) {
+        print("Opening map URL: \(mapLink)")
+
+        // Open map URL in external app (Maps app)
+        if UIApplication.shared.canOpenURL(url) {
+          UIApplication.shared.open(url, options: [:]) { success in
+            if success {
+              print("✓ Map URL opened successfully")
+            } else {
+              print("❌ Failed to open map URL")
+            }
+          }
+        }
+      } else {
+        print("❌ No map link found in notification")
+      }
+    } else {
+      // Default tap - open app
+      print("✓ Notification tapped (default action)")
+    }
+
+    // Call Flutter's notification handler
+    super.userNotificationCenter(center, didReceive: response, withCompletionHandler: completionHandler)
   }
 }

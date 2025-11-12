@@ -24,35 +24,21 @@ class LocalNotificationService {
       return;
     }
 
-    // Define notification actions for iOS
-    const DarwinNotificationActionOption actionOptions =
-        DarwinNotificationActionOption.foreground;
-
-    const DarwinNotificationAction openMapAction = DarwinNotificationAction(
-      'open_map',
-      '地図で開く',
-      options: actionOptions,
-    );
-
-    const DarwinNotificationCategory mapCategory = DarwinNotificationCategory(
-      'map_notification',
-      actions: [openMapAction],
-    );
-
-    // iOS initialization settings with action categories
-    final DarwinInitializationSettings initializationSettingsDarwin =
+    // iOS initialization settings
+    // Note: iOS notification actions require UNNotificationCategory setup
+    // which is not yet supported in this version of flutter_local_notifications
+    const DarwinInitializationSettings initializationSettingsDarwin =
         DarwinInitializationSettings(
       requestAlertPermission: true,
       requestBadgePermission: true,
       requestSoundPermission: true,
-      notificationCategories: [mapCategory],
     );
 
     // Android initialization settings
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    final InitializationSettings initializationSettings =
+    const InitializationSettings initializationSettings =
         InitializationSettings(
       android: initializationSettingsAndroid,
       iOS: initializationSettingsDarwin,
@@ -167,41 +153,15 @@ class LocalNotificationService {
 
     print('[LocalNotificationService] Notification type $notificationType is enabled, showing notification');
 
-    // Check if map link is available
-    final mapLink = data['map_link'] as String?;
-    final hasMapLink = mapLink != null && mapLink.isNotEmpty;
-
-    // iOS notification details (apply user preferences and action category)
+    // iOS notification details (apply user preferences)
     final DarwinNotificationDetails iOSDetails = DarwinNotificationDetails(
       presentAlert: true,
       presentBadge: enableBadge,
       presentSound: enableSound,
-      categoryIdentifier: hasMapLink ? 'map_notification' : null, // Add action buttons if map link is available
-    );
-
-    // Android notification details with action button (apply user preferences)
-    final AndroidNotificationDetails androidDetails =
-        AndroidNotificationDetails(
-      'imane_notifications', // channel id
-      'imane通知', // channel name
-      channelDescription: '到着・滞在・出発通知',
-      importance: Importance.high,
-      priority: Priority.high,
-      playSound: enableSound,
-      enableVibration: enableSound, // Vibrate with sound
-      actions: hasMapLink ? [
-        const AndroidNotificationAction(
-          'open_map',
-          '地図で開く',
-          showsUserInterface: true,
-          cancelNotification: false,
-        ),
-      ] : null,
     );
 
     final NotificationDetails notificationDetails = NotificationDetails(
       iOS: iOSDetails,
-      android: androidDetails,
     );
 
     // Generate unique notification ID based on message ID or timestamp
