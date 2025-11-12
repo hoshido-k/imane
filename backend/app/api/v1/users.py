@@ -153,6 +153,40 @@ async def get_user(
     )
 
 
+@router.delete("/me")
+async def delete_my_account(
+    current_user: UserInDB = Depends(get_current_user),
+    user_service: UserService = Depends(lambda: UserService()),
+):
+    """
+    自分のアカウントを完全に削除
+
+    ユーザーアカウントとすべての関連データ（フレンド、スケジュール、位置情報履歴など）を削除します。
+    この操作は取り消せません。
+
+    Args:
+        current_user: 現在のユーザー
+        user_service: ユーザーサービス
+
+    Returns:
+        削除完了メッセージ
+    """
+    try:
+        await user_service.delete_user(current_user.uid)
+        return {
+            "message": "アカウントを削除しました",
+            "deleted_user_id": current_user.uid,
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as e:
+        print(f"[delete_my_account] Exception: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"アカウントの削除に失敗しました: {str(e)}",
+        )
+
+
 @router.post("/me/profile-image")
 async def upload_profile_image(
     file: UploadFile = File(...),
@@ -198,7 +232,7 @@ async def upload_profile_image(
 
     try:
         # Upload to Firebase Storage and update user profile
-        print(f"[upload_profile_image] Uploading to Firebase Storage...")
+        print("[upload_profile_image] Uploading to Firebase Storage...")
         image_url = await user_service.upload_profile_image(
             current_user.uid, contents, file.content_type
         )

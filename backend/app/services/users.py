@@ -3,14 +3,13 @@
 """
 
 import uuid
-from datetime import datetime
 from typing import List, Optional
 
 from google.cloud.firestore_v1 import FieldFilter
 
 from app.core.firebase import get_firestore_client, get_storage_bucket
-from app.utils.timezone import now_jst
 from app.schemas.user import UserInDB, UserUpdate
+from app.utils.timezone import now_jst
 
 
 class UserService:
@@ -276,3 +275,109 @@ class UserService:
         except Exception as e:
             print(f"[UserService] Error uploading profile image: {e}")
             raise ValueError(f"画像のアップロードに失敗しました: {str(e)}")
+
+    async def delete_user(self, uid: str) -> None:
+        """
+        ユーザーアカウントとすべての関連データを削除
+
+        Args:
+            uid: ユーザID
+
+        Raises:
+            ValueError: ユーザーが見つからない場合
+        """
+        # ユーザーの存在確認
+        user_ref = self.db.collection("users").document(uid)
+        user_doc = user_ref.get()
+
+        if not user_doc.exists:
+            raise ValueError("ユーザーが見つかりません")
+
+        try:
+            print(f"[UserService] Deleting user account: {uid}")
+
+            # 1. フレンド関係の削除
+            # 自分から送ったフレンドリクエスト
+            from_friends = self.db.collection("friends").where(
+                filter=FieldFilter("from_user_id", "==", uid)
+            ).stream()
+            for friend_doc in from_friends:
+                friend_doc.reference.delete()
+                print(f"[UserService] Deleted friend relationship (from): {friend_doc.id}")
+
+            # 自分宛に送られたフレンドリクエスト
+            to_friends = self.db.collection("friends").where(
+                filter=FieldFilter("to_user_id", "==", uid)
+            ).stream()
+            for friend_doc in to_friends:
+                friend_doc.reference.delete()
+                print(f"[UserService] Deleted friend relationship (to): {friend_doc.id}")
+
+            # 2. スケジュールの削除
+            schedules = self.db.collection("schedules").where(
+                filter=FieldFilter("user_id", "==", uid)
+            ).stream()
+            for schedule_doc in schedules:
+                schedule_doc.reference.delete()
+                print(f"[UserService] Deleted schedule: {schedule_doc.id}")
+
+            # 3. お気に入り位置の削除
+            favorites = self.db.collection("favorites").where(
+                filter=FieldFilter("user_id", "==", uid)
+            ).stream()
+            for favorite_doc in favorites:
+                favorite_doc.reference.delete()
+                print(f"[UserService] Deleted favorite: {favorite_doc.id}")
+
+            # 4. 位置情報履歴の削除
+            location_history = self.db.collection("location_history").where(
+                filter=FieldFilter("user_id", "==", uid)
+            ).stream()
+            for location_doc in location_history:
+                location_doc.reference.delete()
+                print(f"[UserService] Deleted location history: {location_doc.id}")
+
+            # 5. 通知履歴の削除（送信元）
+            from_notifications = self.db.collection("notification_history").where(
+                filter=FieldFilter("from_user_id", "==", uid)
+            ).stream()
+            for notification_doc in from_notifications:
+                notification_doc.reference.delete()
+                print(f"[UserService] Deleted notification (from): {notification_doc.id}")
+
+            # 6. 通知履歴の削除（送信先）
+            to_notifications = self.db.collection("notification_history").where(
+                filter=FieldFilter("to_user_id", "==", uid)
+            ).stream()
+            for notification_doc in to_notifications:
+                notification_doc.reference.delete()
+                print(f"[UserService] Deleted notification (to): {notification_doc.id}")
+
+            # 7. FCMトークンの削除
+            fcm_tokens = self.db.collection("fcm_tokens").where(
+                filter=FieldFilter("user_id", "==", uid)
+            ).stream()
+            for token_doc in fcm_tokens:
+                token_doc.reference.delete()
+                print(f"[UserService] Deleted FCM token: {token_doc.id}")
+
+            # 8. ユーザードキュメントの削除
+            user_ref.delete()
+            print(f"[UserService] Deleted user document: {uid}")
+
+            # 9. プロフィール画像の削除（Storage）
+            try:
+                bucket = get_storage_bucket()
+                blobs = bucket.list_blobs(prefix=f"profile_images/{uid}/")
+                for blob in blobs:
+                    blob.delete()
+                    print(f"[UserService] Deleted profile image: {blob.name}")
+            except Exception as e:
+                # ストレージの削除エラーは無視（ファイルが存在しない場合など）
+                print(f"[UserService] Error deleting profile images: {e}")
+
+            print(f"[UserService] User account deletion completed: {uid}")
+
+        except Exception as e:
+            print(f"[UserService] Error deleting user account: {e}")
+            raise ValueError(f"アカウントの削除に失敗しました: {str(e)}")
