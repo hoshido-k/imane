@@ -139,7 +139,18 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
   @override
   void initState() {
     super.initState();
-    _checkAuth();
+    _showSplashAndCheckAuth();
+  }
+
+  Future<void> _showSplashAndCheckAuth() async {
+    print('[AuthCheck] Showing splash screen...');
+
+    // Show splash screen for at least 2 seconds
+    final splashDuration = Future.delayed(const Duration(seconds: 2));
+    final authCheck = _checkAuth();
+
+    // Wait for both splash duration and auth check to complete
+    await Future.wait([splashDuration, authCheck]);
   }
 
   Future<void> _checkAuth() async {
@@ -213,23 +224,10 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFE8E4DF),
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'imane',
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 48,
-                fontWeight: FontWeight.w400,
-                color: const Color(0xFFB85D4D),
-              ),
-            ),
-            const SizedBox(height: 24),
-            const CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation(Color(0xFFB85D4D)),
-            ),
-          ],
+        child: Image.asset(
+          'assets/images/app_icon.png',
+          width: 120,
+          height: 120,
         ),
       ),
     );
