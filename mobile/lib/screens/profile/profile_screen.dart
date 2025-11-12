@@ -6,6 +6,7 @@ import 'package:http_parser/http_parser.dart';
 import 'dart:convert';
 import '../../core/constants/app_colors.dart';
 import '../../services/auth_service.dart';
+import '../../services/api_service.dart';
 
 /// プロフィール設定画面
 class ProfileScreen extends StatefulWidget {
@@ -221,7 +222,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       // マルチパートリクエストを作成
       final request = http.MultipartRequest(
         'POST',
-        Uri.parse('http://localhost:8000/api/v1/users/me/profile-image'),
+        Uri.parse('${ApiConfig.baseUrl}/users/me/profile-image'),
       );
 
       // 認証トークンを追加
