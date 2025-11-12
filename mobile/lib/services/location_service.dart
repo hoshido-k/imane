@@ -298,6 +298,14 @@ class LocationService {
     }
   }
 
+  /// Shorten location name for display
+  String _shortenLocationName(String locationName, {int maxLength = 15}) {
+    if (locationName.length <= maxLength) {
+      return locationName;
+    }
+    return '${locationName.substring(0, maxLength)}...';
+  }
+
   /// Handle notifications triggered by backend
   void _handleTriggeredNotifications(Map<String, dynamic> response, Location location) {
     try {
@@ -327,31 +335,28 @@ class LocationService {
         );
 
         final destinationName = scheduleUpdate?['destination_name'] as String? ?? '目的地';
-        final distance = scheduleUpdate?['distance'] as double?;
+        final shortLocation = _shortenLocationName(destinationName);
 
         // Create notification title and body based on type
         final notificationType = NotificationType.fromString(type);
         final String title;
-        String body; // Non-final to allow modification
+        final String body;
         final String? mapLink;
 
         switch (notificationType) {
           case NotificationType.arrival:
-            title = '到着通知';
-            body = '今ね、$destinationNameへ到着したよ';
-            if (distance != null) {
-              body += '\n距離: ${distance.toStringAsFixed(0)}m';
-            }
+            title = '📍 ${shortLocation}に到着';
+            body = '今ね、到着したよ';
             mapLink = 'https://www.google.com/maps?q=${location.latitude},${location.longitude}';
             break;
           case NotificationType.stay:
-            title = '滞在通知';
-            body = '今ね、$destinationNameに滞在しているよ';
+            title = '📍 ${shortLocation}で滞在中';
+            body = '今ね、滞在中だよ';
             mapLink = 'https://www.google.com/maps?q=${location.latitude},${location.longitude}';
             break;
           case NotificationType.departure:
-            title = '出発通知';
-            body = '今ね、${destinationName}から出発したよ';
+            title = '📍 ${shortLocation}から出発';
+            body = '今ね、出発したよ';
             mapLink = null;
             break;
         }
