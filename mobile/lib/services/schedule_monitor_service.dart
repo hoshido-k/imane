@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'package:mobile/services/api_service.dart';
-import 'package:mobile/services/location_service.dart';
+import 'package:imane/services/api_service.dart';
+import 'package:imane/services/location_service.dart';
 import '../core/config/location_config.dart';
 
 /// スケジュール監視サービス

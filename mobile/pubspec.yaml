@@ -1,5 +1,5 @@
-name: mobile
-description: "A new Flutter project."
+name: imane
+description: "位置情報ベースの自動通知アプリ - 大切な人に「今ね、」を届ける"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -43,6 +43,8 @@ dependencies:
   firebase_auth: ^5.3.3
   cloud_firestore: ^5.5.2
   firebase_messaging: ^15.1.5
+  firebase_crashlytics: ^4.1.5
+  firebase_analytics: ^11.3.5
   flutter_local_notifications: ^18.0.1
 
   # Google Maps

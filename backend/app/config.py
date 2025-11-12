@@ -30,6 +30,9 @@ class Settings(BaseSettings):
     # バッチ処理設定
     BATCH_TOKEN: Optional[str] = None  # 本番環境では必須
 
+    # CORS設定
+    ALLOWED_ORIGINS: str = "*"  # カンマ区切りで複数指定可能（例: "https://app.example.com,https://admin.example.com"）
+
     class Config:
         env_file = ".env"
         case_sensitive = True
