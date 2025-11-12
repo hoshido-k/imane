@@ -276,6 +276,42 @@ class UserService:
             print(f"[UserService] Error uploading profile image: {e}")
             raise ValueError(f"画像のアップロードに失敗しました: {str(e)}")
 
+    async def delete_profile_image(self, uid: str) -> None:
+        """
+        プロフィール画像を削除
+
+        Args:
+            uid: ユーザID
+
+        Raises:
+            ValueError: ユーザーが見つからない場合
+        """
+        # ユーザーの存在確認
+        user = await self.get_user_by_uid(uid)
+        if not user:
+            raise ValueError("ユーザーが見つかりません")
+
+        try:
+            # Firebase Storageから画像を削除
+            bucket = get_storage_bucket()
+            blobs = bucket.list_blobs(prefix=f"profile_images/{uid}/")
+            for blob in blobs:
+                blob.delete()
+                print(f"[UserService] Deleted profile image: {blob.name}")
+
+            # ユーザーのprofile_image_urlをNullに設定
+            user_ref = self.db.collection("users").document(uid)
+            user_ref.update({
+                "profile_image_url": None,
+                "updated_at": now_jst()
+            })
+
+            print(f"[UserService] Profile image deleted for user: {uid}")
+
+        except Exception as e:
+            print(f"[UserService] Error deleting profile image: {e}")
+            raise ValueError(f"プロフィール画像の削除に失敗しました: {str(e)}")
+
     async def delete_user(self, uid: str) -> None:
         """
         ユーザーアカウントとすべての関連データを削除

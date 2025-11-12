@@ -506,25 +506,29 @@ class _InteractiveMapPickerState extends State<InteractiveMapPicker> {
             bottom: 0,
             left: 0,
             right: 0,
-            child: SafeArea(
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 8,
-                      offset: const Offset(0, -2),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Selected location info
-                    if (_selectedLocation != null)
-                      Container(
+            child: Container(
+              // Extend white background below safe area to hide Google logo
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, -2),
+                  ),
+                ],
+              ),
+              child: SafeArea(
+                top: false, // Don't add top padding
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Selected location info
+                      if (_selectedLocation != null)
+                        Container(
                         padding: const EdgeInsets.all(12),
                         margin: const EdgeInsets.only(bottom: 12),
                         decoration: BoxDecoration(
@@ -566,61 +570,62 @@ class _InteractiveMapPickerState extends State<InteractiveMapPicker> {
                         ),
                       ),
 
-                    Row(
-                      children: [
-                        // Current location button
-                        Container(
-                          width: 56,
-                          height: 56,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(28),
-                            border: Border.all(color: AppColors.primary),
-                          ),
-                          child: IconButton(
-                            icon: Icon(
-                              Icons.my_location,
-                              color: AppColors.primary,
-                            ),
-                            onPressed: _isLoadingLocation
-                                ? null
-                                : () => _getCurrentLocation(showErrorMessage: true),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-
-                        // Confirm button
-                        Expanded(
-                          child: SizedBox(
+                      Row(
+                        children: [
+                          // Current location button
+                          Container(
+                            width: 56,
                             height: 56,
-                            child: ElevatedButton(
-                              onPressed: _selectedLocation != null ? _onConfirmLocation : null,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primary,
-                                foregroundColor: Colors.white,
-                                disabledBackgroundColor: AppColors.inputBorder,
-                                disabledForegroundColor: AppColors.textSecondary,
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(28),
-                                ),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(28),
+                              border: Border.all(color: AppColors.primary),
+                            ),
+                            child: IconButton(
+                              icon: Icon(
+                                Icons.my_location,
+                                color: AppColors.primary,
                               ),
-                              child: const Text(
-                                'この場所を選択',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
+                              onPressed: _isLoadingLocation
+                                  ? null
+                                  : () => _getCurrentLocation(showErrorMessage: true),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+
+                          // Confirm button
+                          Expanded(
+                            child: SizedBox(
+                              height: 56,
+                              child: ElevatedButton(
+                                onPressed: _selectedLocation != null ? _onConfirmLocation : null,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primary,
+                                  foregroundColor: Colors.white,
+                                  disabledBackgroundColor: AppColors.inputBorder,
+                                  disabledForegroundColor: AppColors.textSecondary,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(28),
+                                  ),
+                                ),
+                                child: const Text(
+                                  'この場所を選択',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
+                        ],
+                      ),
                   ],
                 ),
               ),
             ),
+          ),
           ),
 
           // Loading overlay
