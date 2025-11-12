@@ -572,6 +572,14 @@ class _ScheduleCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Status badge in upper right corner
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              _buildStatusBadge(schedule.status),
+            ],
+          ),
+          const SizedBox(height: 12),
           // Show creator if this is a friend's schedule
           if (showCreator && schedule.creator != null) ...[
             _buildInfoRow(
@@ -763,5 +771,63 @@ class _ScheduleCard extends StatelessWidget {
     // Display all names separated by commas
     final names = notifyToUsers.map((user) => user.displayName).toList();
     return names.join(', ');
+  }
+
+  /// Build status badge
+  Widget _buildStatusBadge(ScheduleStatus status) {
+    Color backgroundColor;
+    Color textColor;
+    IconData icon;
+
+    switch (status) {
+      case ScheduleStatus.active:
+        backgroundColor = const Color(0xFFE3F2FD); // Light blue
+        textColor = const Color(0xFF1976D2); // Blue
+        icon = Icons.check_circle_outline;
+        break;
+      case ScheduleStatus.arrived:
+        backgroundColor = const Color(0xFFFFF3E0); // Light orange
+        textColor = const Color(0xFFF57C00); // Orange
+        icon = Icons.location_on;
+        break;
+      case ScheduleStatus.completed:
+        backgroundColor = const Color(0xFFE8F5E9); // Light green
+        textColor = const Color(0xFF388E3C); // Green
+        icon = Icons.check_circle;
+        break;
+      case ScheduleStatus.expired:
+        backgroundColor = const Color(0xFFEEEEEE); // Light gray
+        textColor = const Color(0xFF757575); // Gray
+        icon = Icons.schedule;
+        break;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 16,
+            color: textColor,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            status.displayName,
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: textColor,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

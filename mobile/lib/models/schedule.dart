@@ -245,7 +245,7 @@ enum ScheduleStatus {
   String get displayName {
     switch (this) {
       case ScheduleStatus.active:
-        return 'アクティブ';
+        return '進行中';
       case ScheduleStatus.arrived:
         return '到着済み';
       case ScheduleStatus.completed:
