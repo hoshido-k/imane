@@ -15,6 +15,7 @@ import 'screens/profile/profile_screen.dart';
 import 'screens/settings/notification_settings_screen.dart';
 import 'screens/settings/location_settings_screen.dart';
 import 'screens/settings/privacy_settings_screen.dart';
+import 'screens/notification/notification_history_screen.dart';
 import 'services/auth_service.dart';
 import 'services/fcm_service.dart';
 import 'services/location_service.dart';
@@ -115,6 +116,7 @@ class _ImaneAppState extends State<ImaneApp> {
         '/settings/notifications': (context) => const NotificationSettingsScreen(),
         '/settings/location': (context) => const LocationSettingsScreen(),
         '/settings/privacy': (context) => const PrivacySettingsScreen(),
+        '/notifications/history': (context) => const NotificationHistoryScreen(),
       },
     );
   }

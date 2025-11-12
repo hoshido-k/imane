@@ -100,6 +100,20 @@ class NotificationService:
             # send_multicast の代わりに send_each を使用
             messages = []
             for token in tokens:
+                # Check if map link is available for notification actions
+                has_map_link = data and data.get("map_link")
+
+                # Build APS configuration with category for iOS notification actions
+                aps_config = messaging.Aps(
+                    alert=messaging.ApsAlert(title=title, body=body),
+                    sound="default",
+                    badge=1,
+                )
+
+                # Add category if map link is available (enables "Open in Maps" action button)
+                if has_map_link:
+                    aps_config.category = "MAP_NOTIFICATION"
+
                 messages.append(
                     messaging.Message(
                         notification=messaging.Notification(
@@ -109,13 +123,7 @@ class NotificationService:
                         data={k: str(v) for k, v in data.items()} if data else None,
                         token=token,
                         apns=messaging.APNSConfig(
-                            payload=messaging.APNSPayload(
-                                aps=messaging.Aps(
-                                    alert=messaging.ApsAlert(title=title, body=body),
-                                    sound="default",
-                                    badge=1,
-                                )
-                            )
+                            payload=messaging.APNSPayload(aps=aps_config)
                         ),
                     )
                 )

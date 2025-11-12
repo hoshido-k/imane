@@ -1,9 +1,12 @@
+import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'api_service.dart';
 import 'popup_notification_service.dart';
 import 'local_notification_service.dart';
 import '../models/notification_history.dart';
+import '../main.dart' show navigatorKey;
 
 /// FCM (Firebase Cloud Messaging) service for imane
 /// Handles push notification registration and receiving
@@ -210,23 +213,54 @@ class FCMService {
     // Show popup
     popupService.showFromFCM(popupData, onTap: () {
       print('[FCMService] Popup notification tapped');
-      // Handle tap action (e.g., navigate to notification history screen)
+      // Handle tap action (just open app, not map)
       _handleNotificationTap(message);
     });
   }
 
+  /// Open map link in external app
+  Future<void> _openMapLink(String mapLink) async {
+    try {
+      final uri = Uri.parse(mapLink);
+      print('[FCMService] Opening map link: $mapLink');
+
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(
+          uri,
+          mode: LaunchMode.externalApplication, // Open in external app (Google Maps, Apple Maps, etc.)
+        );
+        print('[FCMService] Map link opened successfully');
+      } else {
+        print('[FCMService] Cannot launch URL: $mapLink');
+      }
+    } catch (e) {
+      print('[FCMService] Error opening map link: $e');
+    }
+  }
+
   /// Handle notification tap
-  void _handleNotificationTap(RemoteMessage message) {
-    // TODO: Navigate to appropriate screen based on notification data
+  Future<void> _handleNotificationTap(RemoteMessage message) async {
     print('[FCMService] Handling notification tap: ${message.messageId}');
 
     final data = message.data;
-    if (data.containsKey('type')) {
-      final type = data['type'];
-      print('[FCMService] Notification type: $type');
+    final type = data['type'];
 
-      // Navigate based on notification type
-      // This will be implemented when we have navigation context
+    print('[FCMService] Notification type: $type');
+    print('[FCMService] Opening notification history screen');
+
+    // Navigate to notification history screen
+    _navigateToNotificationHistory();
+  }
+
+  /// Navigate to notification history screen
+  void _navigateToNotificationHistory() {
+    // Import navigatorKey from main.dart
+    final context = navigatorKey.currentContext;
+    if (context != null) {
+      print('[FCMService] Navigating to /notifications/history');
+      Navigator.of(context).pushNamed('/notifications/history');
+    } else {
+      print('[FCMService] Navigator context is null, cannot navigate');
     }
   }
 

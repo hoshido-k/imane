@@ -1,6 +1,10 @@
+import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../main.dart' show navigatorKey;
 
 /// Local notification service for showing system notification banners
 /// This is used to display notifications when the app is in foreground
@@ -23,6 +27,8 @@ class LocalNotificationService {
     }
 
     // iOS initialization settings
+    // Note: iOS notification actions require UNNotificationCategory setup
+    // which is not yet supported in this version of flutter_local_notifications
     const DarwinInitializationSettings initializationSettingsDarwin =
         DarwinInitializationSettings(
       requestAlertPermission: true,
@@ -50,9 +56,68 @@ class LocalNotificationService {
   }
 
   /// Handle notification tap
-  void _onNotificationTapped(NotificationResponse response) {
-    print('[LocalNotificationService] Notification tapped: ${response.payload}');
-    // TODO: Navigate to appropriate screen based on payload
+  Future<void> _onNotificationTapped(NotificationResponse response) async {
+    print('[LocalNotificationService] Notification tapped');
+    print('[LocalNotificationService] Action ID: ${response.actionId}');
+    print('[LocalNotificationService] Payload: ${response.payload}');
+
+    if (response.payload == null || response.payload!.isEmpty) {
+      print('[LocalNotificationService] No payload data');
+      return;
+    }
+
+    try {
+      // Parse payload JSON
+      final payloadData = jsonDecode(response.payload!);
+      final mapLink = payloadData['map_link'] as String?;
+
+      // Check if "地図で開く" action button was tapped
+      if (response.actionId == 'open_map') {
+        print('[LocalNotificationService] "地図で開く" action tapped');
+        if (mapLink != null && mapLink.isNotEmpty) {
+          await _openMapLink(mapLink);
+        } else {
+          print('[LocalNotificationService] No map link in payload');
+        }
+      } else {
+        // Regular notification tap - navigate to notification history
+        print('[LocalNotificationService] Opening notification history screen');
+        _navigateToNotificationHistory();
+      }
+    } catch (e) {
+      print('[LocalNotificationService] Error parsing payload: $e');
+    }
+  }
+
+  /// Navigate to notification history screen
+  void _navigateToNotificationHistory() {
+    final context = navigatorKey.currentContext;
+    if (context != null) {
+      print('[LocalNotificationService] Navigating to /notifications/history');
+      Navigator.of(context).pushNamed('/notifications/history');
+    } else {
+      print('[LocalNotificationService] Navigator context is null, cannot navigate');
+    }
+  }
+
+  /// Open map link in external app
+  Future<void> _openMapLink(String mapLink) async {
+    try {
+      final uri = Uri.parse(mapLink);
+      print('[LocalNotificationService] Opening map link: $mapLink');
+
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(
+          uri,
+          mode: LaunchMode.externalApplication,
+        );
+        print('[LocalNotificationService] Map link opened successfully');
+      } else {
+        print('[LocalNotificationService] Cannot launch URL: $mapLink');
+      }
+    } catch (e) {
+      print('[LocalNotificationService] Error opening map link: $e');
+    }
   }
 
   /// Show notification from FCM RemoteMessage
@@ -108,25 +173,20 @@ class LocalNotificationService {
       presentSound: enableSound,
     );
 
-    // Android notification details (apply user preferences)
-    final AndroidNotificationDetails androidDetails =
-        AndroidNotificationDetails(
-      'imane_notifications', // channel id
-      'imane通知', // channel name
-      channelDescription: '到着・滞在・出発通知',
-      importance: Importance.high,
-      priority: Priority.high,
-      playSound: enableSound,
-      enableVibration: enableSound, // Vibrate with sound
-    );
-
     final NotificationDetails notificationDetails = NotificationDetails(
       iOS: iOSDetails,
-      android: androidDetails,
     );
 
     // Generate unique notification ID based on message ID or timestamp
     final notificationId = message.messageId?.hashCode ?? DateTime.now().millisecondsSinceEpoch;
+
+    // Prepare payload with notification data (including map link)
+    final payloadData = {
+      'message_id': message.messageId,
+      'type': type,
+      'map_link': data['map_link'],
+    };
+    final payload = jsonEncode(payloadData);
 
     try {
       await _notificationsPlugin.show(
@@ -134,7 +194,7 @@ class LocalNotificationService {
         title,
         body,
         notificationDetails,
-        payload: message.messageId,
+        payload: payload,
       );
       print('[LocalNotificationService] Notification shown successfully');
     } catch (e) {

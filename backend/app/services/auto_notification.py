@@ -43,31 +43,41 @@ class AutoNotificationService:
         """
         return f"https://www.google.com/maps?q={coords.lat},{coords.lng}"
 
-    def _format_arrival_message(self, user_name: str, destination_name: str) -> str:
+    def _shorten_location_name(self, location_name: str, max_length: int = 15) -> str:
+        """
+        場所名を短縮（通知タイトル用）
+
+        Args:
+            location_name: 元の場所名
+            max_length: 最大文字数（デフォルト15文字）
+
+        Returns:
+            短縮された場所名
+        """
+        if len(location_name) <= max_length:
+            return location_name
+        return location_name[:max_length] + "..."
+
+    def _format_arrival_message(self, user_name: str) -> str:
         """
         到着通知メッセージをフォーマット
 
         Args:
             user_name: ユーザー名
-            destination_name: 目的地名
 
         Returns:
             フォーマットされたメッセージ
         """
-        # 日本時間（JST）で現在時刻を取得
-        now_jst = datetime.now(JST)
-        time_str = now_jst.strftime("%H:%M")
-        return f"今ね、{user_name}さんが{destination_name}へ到着したよ\n到着時刻: {time_str}"
+        return f"今ね、{user_name}さんが到着したよ"
 
     def _format_stay_message(
-        self, user_name: str, destination_name: str, stay_duration_minutes: int
+        self, user_name: str, stay_duration_minutes: int
     ) -> str:
         """
         滞在通知メッセージをフォーマット
 
         Args:
             user_name: ユーザー名
-            destination_name: 目的地名
             stay_duration_minutes: 滞在時間（分）
 
         Returns:
@@ -83,23 +93,19 @@ class AutoNotificationService:
         else:
             duration_str = f"{minutes}分"
 
-        return f"今ね、{user_name}さんは{destination_name}に{duration_str}滞在しているよ"
+        return f"今ね、{user_name}さんが{duration_str}滞在中だよ"
 
-    def _format_departure_message(self, user_name: str, destination_name: str) -> str:
+    def _format_departure_message(self, user_name: str) -> str:
         """
         退出通知メッセージをフォーマット
 
         Args:
             user_name: ユーザー名
-            destination_name: 目的地名
 
         Returns:
             フォーマットされたメッセージ
         """
-        # 日本時間（JST）で現在時刻を取得
-        now_jst = datetime.now(JST)
-        time_str = now_jst.strftime("%H:%M")
-        return f"今ね、{user_name}さんが{destination_name}から出発したよ\n出発時刻: {time_str}"
+        return f"今ね、{user_name}さんが出発したよ"
 
     async def _save_notification_history(
         self,
@@ -195,8 +201,9 @@ class AutoNotificationService:
         logger.info(f"[到着通知] 送信者: {user_name} ({schedule.user_id})")
 
         # メッセージと地図リンクを生成
-        message = self._format_arrival_message(user_name, schedule.destination_name)
+        message = self._format_arrival_message(user_name)
         map_link = self._generate_map_link(current_coords)
+        short_location = self._shorten_location_name(schedule.destination_name)
 
         notification_ids = []
 
@@ -218,7 +225,7 @@ class AutoNotificationService:
                 # プッシュ通知を送信（save_to_db=Trueで明示的に指定）
                 await self.notification_service.send_push_notification(
                     user_id=to_user_id,
-                    title=f"{user_name}さんが到着",
+                    title=f"📍 {short_location}に到着",
                     body=message + f"\nここにいるよ → {map_link}",
                     notification_type=NotificationType.ARRIVAL,
                     data={
@@ -325,8 +332,9 @@ class AutoNotificationService:
         logger.info(f"[滞在通知] 送信者: {user_name} ({schedule.user_id})")
 
         # メッセージと地図リンクを生成
-        message = self._format_stay_message(user_name, schedule.destination_name, stay_minutes)
+        message = self._format_stay_message(user_name, stay_minutes)
         map_link = self._generate_map_link(current_coords)
+        short_location = self._shorten_location_name(schedule.destination_name)
 
         notification_ids = []
 
@@ -348,7 +356,7 @@ class AutoNotificationService:
                 # プッシュ通知を送信（save_to_db=Trueで明示的に指定）
                 await self.notification_service.send_push_notification(
                     user_id=to_user_id,
-                    title=f"{user_name}さんが滞在中",
+                    title=f"📍 {short_location}で滞在中",
                     body=message + f"\nここにいるよ → {map_link}",
                     notification_type=NotificationType.STAY,
                     data={
@@ -430,8 +438,9 @@ class AutoNotificationService:
         logger.info(f"[退出通知] 送信者: {user_name} ({schedule.user_id})")
 
         # メッセージを生成（退出通知では現在地リンクは不要）
-        message = self._format_departure_message(user_name, schedule.destination_name)
+        message = self._format_departure_message(user_name)
         map_link = self._generate_map_link(schedule.destination_coords)
+        short_location = self._shorten_location_name(schedule.destination_name)
 
         notification_ids = []
 
@@ -453,7 +462,7 @@ class AutoNotificationService:
                 # プッシュ通知を送信（save_to_db=Trueで明示的に指定）
                 await self.notification_service.send_push_notification(
                     user_id=to_user_id,
-                    title=f"{user_name}さんが出発",
+                    title=f"📍 {short_location}から出発",
                     body=message,
                     notification_type=NotificationType.DEPARTURE,
                     data={
