@@ -369,11 +369,6 @@ class _InteractiveMapPickerState extends State<InteractiveMapPicker> {
             mapToolbarEnabled: false,
             buildingsEnabled: true,
             trafficEnabled: false,
-            // Add padding to hide the Google logo in the bottom left
-            padding: const EdgeInsets.only(
-              bottom: 100,  // Push logo below visible area
-              left: 100,    // Push logo to the left
-            ),
           ),
 
           // Top search bar
@@ -511,22 +506,25 @@ class _InteractiveMapPickerState extends State<InteractiveMapPicker> {
             bottom: 0,
             left: 0,
             right: 0,
-            child: SafeArea(
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 8,
-                      offset: const Offset(0, -2),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
+            child: Container(
+              // Extend white background below safe area to hide Google logo
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, -2),
+                  ),
+                ],
+              ),
+              child: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
                     // Selected location info
                     if (_selectedLocation != null)
                       Container(
