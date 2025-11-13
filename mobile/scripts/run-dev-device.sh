@@ -37,7 +37,7 @@ fi
 echo ""
 
 # 実機IPアドレスを環境変数から取得（デフォルト値を使用）
-API_HOST=${API_HOST:-192.168.0.41}
+API_HOST=${API_HOST:-192.168.0.14}
 
 echo "Using API host: $API_HOST"
 echo ""
