@@ -254,7 +254,7 @@ class _InteractiveMapPickerState extends State<InteractiveMapPicker> {
         if (mounted && showErrorMessage) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('位置情報の許可が必要です。設定から許可してください。'),
+              content: const Text('位置情報の許可が必要です。設定から「常に許可」を選択してください。'),
               backgroundColor: AppColors.error,
               action: SnackBarAction(
                 label: '設定',
