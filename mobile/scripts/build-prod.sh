@@ -38,7 +38,7 @@ if [[ $PROD_API_URL == *"api.imane.app"* ]]; then
 fi
 
 # 本番環境用ビルド
-flutter build ios \
+fvm flutter build ios \
   --dart-define=API_BASE_URL=$PROD_API_URL \
   --dart-define=ENVIRONMENT=production \
   --release

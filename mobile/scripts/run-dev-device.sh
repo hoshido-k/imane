@@ -23,7 +23,7 @@ echo "Using API host: $API_HOST"
 echo ""
 
 # 開発環境の設定でFlutterアプリを起動
-flutter run \
+fvm flutter run \
   --dart-define=API_BASE_URL=http://$API_HOST:8000/api/v1 \
   --dart-define=ENVIRONMENT=development
 

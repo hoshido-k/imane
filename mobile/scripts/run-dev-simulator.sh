@@ -17,7 +17,7 @@ fi
 echo ""
 
 # 開発環境の設定でFlutterアプリを起動
-flutter run \
+fvm flutter run \
   --dart-define=API_BASE_URL=http://localhost:8000/api/v1 \
   --dart-define=ENVIRONMENT=development \
   -d "iPhone 17"
