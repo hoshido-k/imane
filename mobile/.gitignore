@@ -61,6 +61,11 @@ app.*.map.json
 # Generated files
 **/lib/firebase_options.dart
 
+# API Keys and environment variables (contains sensitive data)
+.env
+.env.*
+!.env.example
+
 # Flutter plugins
 .flutter-plugins
 .flutter-plugins-dependencies
