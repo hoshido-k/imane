@@ -5,13 +5,14 @@ import 'package:http/http.dart' as http;
 /// Flutter起動時の --dart-define で環境を指定します
 ///
 /// 使用例:
-/// - 開発環境: flutter run --dart-define=API_BASE_URL=http://localhost:8000/api/v1 --dart-define=ENVIRONMENT=development
+/// - 開発環境（シミュレーター）: flutter run --dart-define=API_BASE_URL=http://localhost:8000/api/v1 --dart-define=ENVIRONMENT=development
+/// - 開発環境（実機）: flutter run --dart-define=API_BASE_URL=http://192.168.0.41:8000/api/v1 --dart-define=ENVIRONMENT=development
 /// - 本番環境: flutter build ios --dart-define=API_BASE_URL=https://api.imane.app/api/v1 --dart-define=ENVIRONMENT=production
 class ApiConfig {
   // Flutter起動時の --dart-define で設定
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://192.168.0.14:8000/api/v1', // デフォルトは開発環境（実機用）
+    defaultValue: 'http://192.168.0.41:8000/api/v1', // デフォルトは開発環境（実機用）
   );
 
   static const String environment = String.fromEnvironment(
@@ -24,7 +25,7 @@ class ApiConfig {
 
   // ローカル開発用の定数（参考用）
   static const String localSimulator = 'http://localhost:8000/api/v1';
-  static const String localDevice = 'http://192.168.0.14:8000/api/v1';
+  static const String localDevice = 'http://192.168.0.41:8000/api/v1';
   static const String androidEmulator = 'http://10.0.2.2:8000/api/v1';
 }
 
