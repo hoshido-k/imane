@@ -44,6 +44,7 @@ def sample_user1() -> UserInDB:
     """テスト用ユーザー1"""
     return UserInDB(
         uid="test_user_1",
+        username="testuser1",
         email="user1@example.com",
         display_name="テストユーザー1",
         profile_image_url=None,
@@ -66,6 +67,7 @@ def sample_user2() -> UserInDB:
     """テスト用ユーザー2"""
     return UserInDB(
         uid="test_user_2",
+        username="testuser2",
         email="user2@example.com",
         display_name="テストユーザー2",
         profile_image_url=None,
@@ -88,6 +90,7 @@ def sample_user3() -> UserInDB:
     """テスト用ユーザー3"""
     return UserInDB(
         uid="test_user_3",
+        username="testuser3",
         email="user3@example.com",
         display_name="テストユーザー3",
         profile_image_url=None,

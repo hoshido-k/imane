@@ -1,0 +1,248 @@
+rules_version = '2';
+
+// imane Firestore セキュリティルール
+// 最終更新: 2025-11-12
+//
+// デプロイ方法:
+// firebase deploy --only firestore:rules
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ==========================================
+    // ヘルパー関数
+    // ==========================================
+
+    // 認証済みユーザーかどうか
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // 自分自身のユーザーIDかどうか
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // フレンド関係にあるかどうか（簡易版）
+    function isFriend(userId) {
+      return isAuthenticated() &&
+        exists(/databases/$(database)/documents/friendships/$(request.auth.uid + '_' + userId));
+    }
+
+    // ==========================================
+    // users コレクション
+    // ==========================================
+    match /users/{userId} {
+      // 読み取り: 自分自身 または フレンド
+      allow read: if isOwner(userId) || isFriend(userId);
+
+      // 作成: 自分自身のみ
+      allow create: if isOwner(userId) &&
+        request.resource.data.uid == userId &&
+        request.resource.data.username is string &&
+        request.resource.data.email is string &&
+        request.resource.data.display_name is string;
+
+      // 更新: 自分自身のみ
+      allow update: if isOwner(userId);
+
+      // 削除: 自分自身のみ
+      allow delete: if isOwner(userId);
+    }
+
+    // ==========================================
+    // schedules コレクション（位置情報スケジュール）
+    // ==========================================
+    match /schedules/{scheduleId} {
+      // 読み取り: スケジュール作成者 または 通知先ユーザー
+      allow read: if isAuthenticated() && (
+        resource.data.user_id == request.auth.uid ||
+        request.auth.uid in resource.data.notify_to_user_ids
+      );
+
+      // 作成: 認証済みユーザー（自分のスケジュールのみ）
+      allow create: if isAuthenticated() &&
+        request.resource.data.user_id == request.auth.uid &&
+        request.resource.data.destination_name is string &&
+        request.resource.data.destination_coords.lat is number &&
+        request.resource.data.destination_coords.lng is number &&
+        request.resource.data.notify_to_user_ids is list;
+
+      // 更新: スケジュール作成者のみ
+      allow update: if isAuthenticated() &&
+        resource.data.user_id == request.auth.uid;
+
+      // 削除: スケジュール作成者のみ
+      allow delete: if isAuthenticated() &&
+        resource.data.user_id == request.auth.uid;
+    }
+
+    // ==========================================
+    // favorites コレクション（お気に入り場所）
+    // ==========================================
+    match /favorites/{favoriteId} {
+      // 読み取り: 自分のお気に入りのみ
+      allow read: if isAuthenticated() &&
+        resource.data.user_id == request.auth.uid;
+
+      // 作成: 認証済みユーザー（自分のお気に入りのみ）
+      allow create: if isAuthenticated() &&
+        request.resource.data.user_id == request.auth.uid &&
+        request.resource.data.name is string &&
+        request.resource.data.coords.lat is number &&
+        request.resource.data.coords.lng is number;
+
+      // 更新: 自分のお気に入りのみ
+      allow update: if isAuthenticated() &&
+        resource.data.user_id == request.auth.uid;
+
+      // 削除: 自分のお気に入りのみ
+      allow delete: if isAuthenticated() &&
+        resource.data.user_id == request.auth.uid;
+    }
+
+    // ==========================================
+    // location_history コレクション（位置情報履歴）
+    // ==========================================
+    match /location_history/{historyId} {
+      // 読み取り: 自分の位置情報のみ
+      allow read: if isAuthenticated() &&
+        resource.data.user_id == request.auth.uid;
+
+      // 作成: バックエンドからのみ（通常はサーバーサイドから書き込み）
+      allow create: if false;
+
+      // 更新: 禁止
+      allow update: if false;
+
+      // 削除: バックエンドからのみ（24時間後の自動削除）
+      allow delete: if false;
+    }
+
+    // ==========================================
+    // notification_history コレクション（通知履歴）
+    // ==========================================
+    match /notification_history/{notificationId} {
+      // 読み取り: 送信者 または 受信者
+      allow read: if isAuthenticated() && (
+        resource.data.from_user_id == request.auth.uid ||
+        resource.data.to_user_id == request.auth.uid
+      );
+
+      // 作成: バックエンドからのみ
+      allow create: if false;
+
+      // 更新: 禁止
+      allow update: if false;
+
+      // 削除: バックエンドからのみ（24時間後の自動削除）
+      allow delete: if false;
+    }
+
+    // ==========================================
+    // friendships コレクション（フレンド関係）
+    // ==========================================
+    match /friendships/{friendshipId} {
+      // 読み取り: 関係者のみ
+      allow read: if isAuthenticated() && (
+        resource.data.user_id == request.auth.uid ||
+        resource.data.friend_id == request.auth.uid
+      );
+
+      // 作成: 認証済みユーザー
+      allow create: if isAuthenticated() && (
+        request.resource.data.user_id == request.auth.uid ||
+        request.resource.data.friend_id == request.auth.uid
+      );
+
+      // 更新: 関係者のみ
+      allow update: if isAuthenticated() && (
+        resource.data.user_id == request.auth.uid ||
+        resource.data.friend_id == request.auth.uid
+      );
+
+      // 削除: 関係者のみ
+      allow delete: if isAuthenticated() && (
+        resource.data.user_id == request.auth.uid ||
+        resource.data.friend_id == request.auth.uid
+      );
+    }
+
+    // ==========================================
+    // friend_requests コレクション（フレンドリクエスト）
+    // ==========================================
+    match /friend_requests/{requestId} {
+      // 読み取り: 送信者 または 受信者
+      allow read: if isAuthenticated() && (
+        resource.data.from_user_id == request.auth.uid ||
+        resource.data.to_user_id == request.auth.uid
+      );
+
+      // 作成: 認証済みユーザー（送信者のみ）
+      allow create: if isAuthenticated() &&
+        request.resource.data.from_user_id == request.auth.uid &&
+        request.resource.data.to_user_id is string &&
+        request.resource.data.to_user_id != request.auth.uid;
+
+      // 更新: 受信者のみ（承認・拒否）
+      allow update: if isAuthenticated() &&
+        resource.data.to_user_id == request.auth.uid;
+
+      // 削除: 送信者 または 受信者
+      allow delete: if isAuthenticated() && (
+        resource.data.from_user_id == request.auth.uid ||
+        resource.data.to_user_id == request.auth.uid
+      );
+    }
+
+    // ==========================================
+    // pops コレクション（Pop通知）
+    // ==========================================
+    match /pops/{popId} {
+      // 読み取り: 送信者 または 受信者
+      allow read: if isAuthenticated() && (
+        resource.data.from_user_id == request.auth.uid ||
+        resource.data.to_user_id == request.auth.uid
+      );
+
+      // 作成: 認証済みユーザー（送信者のみ）
+      allow create: if isAuthenticated() &&
+        request.resource.data.from_user_id == request.auth.uid &&
+        request.resource.data.to_user_id is string;
+
+      // 更新: 受信者のみ（既読フラグ更新）
+      allow update: if isAuthenticated() &&
+        resource.data.to_user_id == request.auth.uid;
+
+      // 削除: 送信者のみ
+      allow delete: if isAuthenticated() &&
+        resource.data.from_user_id == request.auth.uid;
+    }
+
+    // ==========================================
+    // reactions コレクション（リアクション）
+    // ==========================================
+    match /reactions/{reactionId} {
+      // 読み取り: すべての認証済みユーザー（フレンド間で共有）
+      allow read: if isAuthenticated();
+
+      // 作成: 認証済みユーザー
+      allow create: if isAuthenticated() &&
+        request.resource.data.from_user_id == request.auth.uid;
+
+      // 更新: 禁止（リアクションは変更不可）
+      allow update: if false;
+
+      // 削除: リアクション送信者のみ
+      allow delete: if isAuthenticated() &&
+        resource.data.from_user_id == request.auth.uid;
+    }
+
+    // ==========================================
+    // デフォルト: すべて拒否
+    // ==========================================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

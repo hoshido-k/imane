@@ -39,7 +39,7 @@ env/
 .env.production
 
 # Firebase credentials
-serviceAccountKey.json
+serviceAccountKey*.json
 *-firebase-adminsdk-*.json
 
 # Logs
@@ -58,3 +58,8 @@ htmlcov/
 # uv
 .venv/
 uv.lock
+
+# Cloud Functions
+functions/lib/
+functions/node_modules/
+functions/.runtimeconfig.json

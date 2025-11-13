@@ -2,16 +2,31 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 /// APIベースURL
-/// TODO: 本番環境では環境変数から取得
+/// Flutter起動時の --dart-define で環境を指定します
+///
+/// 使用例:
+/// - 開発環境（シミュレーター）: flutter run --dart-define=API_BASE_URL=http://localhost:8000/api/v1 --dart-define=ENVIRONMENT=development
+/// - 開発環境（実機）: flutter run --dart-define=API_BASE_URL=http://192.168.0.41:8000/api/v1 --dart-define=ENVIRONMENT=development
+/// - 本番環境: flutter build ios --dart-define=API_BASE_URL=https://api.imane.app/api/v1 --dart-define=ENVIRONMENT=production
 class ApiConfig {
-  // ローカル開発用（iOSシミュレーター）
-  // static const String baseUrl = 'http://localhost:8000/api/v1';
+  // Flutter起動時の --dart-define で設定
+  static const String baseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'http://192.168.0.41:8000/api/v1', // デフォルトは開発環境（実機用）
+  );
 
-  // Android エミュレーター用の場合は以下を使用
-  // static const String baseUrl = 'http://10.0.2.2:8000/api/v1';
+  static const String environment = String.fromEnvironment(
+    'ENVIRONMENT',
+    defaultValue: 'development',
+  );
 
-  // 実機の場合はPCのIPアドレスを使用（あなたのMacのIPアドレスに置き換えてください）
-  static const String baseUrl = 'http://192.168.0.41:8000/api/v1';
+  static bool get isProduction => environment == 'production';
+  static bool get isDevelopment => environment == 'development';
+
+  // ローカル開発用の定数（参考用）
+  static const String localSimulator = 'http://localhost:8000/api/v1';
+  static const String localDevice = 'http://192.168.0.41:8000/api/v1';
+  static const String androidEmulator = 'http://10.0.2.2:8000/api/v1';
 }
 
 /// API通信の基盤サービス
@@ -31,6 +46,12 @@ class ApiService {
       : baseUrl = baseUrl ?? ApiConfig.baseUrl {
     // リダイレクトを自動で追従するHTTPクライアントを作成
     _client = http.Client();
+
+    // 開発環境でのみ環境情報をログ出力
+    if (ApiConfig.isDevelopment) {
+      print('[ApiService] Environment: ${ApiConfig.environment}');
+      print('[ApiService] Base URL: ${this.baseUrl}');
+    }
   }
 
   /// アクセストークンを設定

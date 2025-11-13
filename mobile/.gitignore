@@ -55,8 +55,13 @@ app.*.map.json
 **/ios/Flutter/Flutter.podspec
 
 # Firebase configuration files (contains sensitive data)
+# The active configuration files are ignored, but -Dev/-Prod templates are tracked
 **/ios/Runner/GoogleService-Info.plist
+!**/ios/Runner/GoogleService-Info-Dev.plist
+!**/ios/Runner/GoogleService-Info-Prod.plist
 **/android/app/google-services.json
+!**/android/app/google-services-dev.json
+!**/android/app/google-services-prod.json
 
 # Generated files
 **/lib/firebase_options.dart
