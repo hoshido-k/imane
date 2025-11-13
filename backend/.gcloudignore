@@ -1,0 +1,47 @@
+# .gcloudignore for Cloud Build
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Logs
+*.log
+
+# Test files
+tests/
+
+# Documentation (not needed for runtime)
+*.md
+docs/
+
+# Scripts (not needed for runtime)
+scripts/
+
+# Development files
+.env.example
+.env.development
+.env.backup
+
+# DO NOT IGNORE - These are needed for build
+!uv.lock
+!pyproject.toml
+!.env.production
+!serviceAccountKey-prod.json
