@@ -99,9 +99,8 @@ class _Step2LocationScreenState extends State<Step2LocationScreen> {
       final permission = await _locationService.checkPermission();
       print('[Step2Location] Current permission: $permission');
 
-      // If permission is not "always" or "whileInUse", show prompt
-      if (permission != LocationPermission.always &&
-          permission != LocationPermission.whileInUse) {
+      // Only allow if permission is "always" - show prompt for all other cases including "whileInUse"
+      if (permission != LocationPermission.always) {
         _hasShownPermissionPrompt = true;
         _showPermissionPromptDialog();
       }
@@ -218,14 +217,28 @@ class _Step2LocationScreenState extends State<Step2LocationScreen> {
     final permission = await _locationService.checkPermission();
     print('[Step2Location] Permission after settings: $permission');
 
-    if (permission == LocationPermission.always ||
-        permission == LocationPermission.whileInUse) {
+    if (permission == LocationPermission.always) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('位置情報が許可されました'),
+            content: Text('位置情報が「常に許可」に設定されました'),
             backgroundColor: Colors.green,
             duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } else if (permission == LocationPermission.whileInUse) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('「常に許可」を選択してください'),
+            backgroundColor: AppColors.error,
+            duration: const Duration(seconds: 3),
+            action: SnackBarAction(
+              label: '設定',
+              textColor: Colors.white,
+              onPressed: _openSettingsAndWaitForReturn,
+            ),
           ),
         );
       }
