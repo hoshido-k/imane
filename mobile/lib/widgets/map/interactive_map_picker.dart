@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:geolocator/geolocator.dart';
 import '../../core/constants/app_colors.dart';
 import '../../services/places_service.dart';
 import '../../services/location_service.dart';
@@ -32,6 +33,7 @@ class _InteractiveMapPickerState extends State<InteractiveMapPicker> {
   LocationData? _selectedLocation;
   bool _isLoadingLocation = false;
   bool _isSearching = false;
+  bool _hasShownPermissionPrompt = false; // Track if we've already shown the prompt
 
   // Search results
   List<PlacePrediction> _searchResults = [];
@@ -42,6 +44,8 @@ class _InteractiveMapPickerState extends State<InteractiveMapPicker> {
     super.initState();
     _initializeMap();
     _searchController.addListener(_onSearchTextChanged);
+    // Check permission and show prompt if needed
+    _checkPermissionAndPromptIfNeeded();
   }
 
   @override
@@ -50,6 +54,156 @@ class _InteractiveMapPickerState extends State<InteractiveMapPicker> {
     _debounceTimer?.cancel();
     _mapController?.dispose();
     super.dispose();
+  }
+
+  /// Check location permission and show prompt if not granted
+  Future<void> _checkPermissionAndPromptIfNeeded() async {
+    // Don't show prompt if we've already shown it in this session
+    if (_hasShownPermissionPrompt) return;
+
+    // Wait a moment for the screen to settle
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    if (!mounted) return;
+
+    try {
+      final permission = await _locationService.checkPermission();
+      print('[MapPicker] Current permission: $permission');
+
+      // If permission is not "always", show prompt
+      if (permission != LocationPermission.always &&
+          permission != LocationPermission.whileInUse) {
+        _hasShownPermissionPrompt = true;
+        _showPermissionPromptDialog();
+      }
+    } catch (e) {
+      print('[MapPicker] Error checking permission: $e');
+    }
+  }
+
+  /// Show dialog prompting user to enable location permission
+  void _showPermissionPromptDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.location_on, color: Colors.blue, size: 28),
+            SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                '位置情報の許可',
+                style: TextStyle(fontSize: 18),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'imaneは、あなたが目的地に到着したときに自動的に通知を送るため、位置情報の許可が必要です。',
+              style: TextStyle(fontSize: 14, height: 1.5),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF5F5F5),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.info_outline, size: 16, color: AppColors.primary),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'バックグラウンドでの追跡が必要です',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '設定で「常に許可」を選択してください。',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              '※ 手動で場所を選択する場合は「後で」を選択できます',
+              style: TextStyle(
+                fontSize: 11,
+                color: AppColors.textSecondary,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(
+              '後で',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _openSettingsAndWaitForReturn();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('設定を開く'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Open app settings and check permission again when user returns
+  Future<void> _openSettingsAndWaitForReturn() async {
+    await _locationService.openAppSettings();
+
+    // Wait for user to potentially change settings
+    await Future.delayed(const Duration(seconds: 2));
+
+    if (!mounted) return;
+
+    // Check permission again
+    final permission = await _locationService.checkPermission();
+    print('[MapPicker] Permission after settings: $permission');
+
+    if (permission == LocationPermission.always ||
+        permission == LocationPermission.whileInUse) {
+      // Permission granted - get current location
+      _getCurrentLocation();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('位置情報が許可されました'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _initializeMap() async {
