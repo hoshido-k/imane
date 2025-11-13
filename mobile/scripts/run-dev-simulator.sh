@@ -20,7 +20,7 @@ echo ""
 flutter run \
   --dart-define=API_BASE_URL=http://localhost:8000/api/v1 \
   --dart-define=ENVIRONMENT=development \
-  -d "iPhone 15 Pro"
+  -d "iPhone 17"
 
 echo ""
 echo "App started successfully!"
