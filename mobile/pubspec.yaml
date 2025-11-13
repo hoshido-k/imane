@@ -126,9 +126,10 @@ flutter:
   # see https://flutter.dev/to/font-from-package
 
 # Native splash screen configuration
+# TODO: Design a proper splash screen and re-enable
 flutter_native_splash:
-  color: "#E8E4DF"
-  image: assets/images/app_icon.png
+  color: "#FFFFFF"  # Clean white background for now
+  # image: assets/images/app_icon.png  # Disabled due to background mismatch
   android: false  # iOS-only for now
   ios: true
   web: false
