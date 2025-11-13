@@ -165,9 +165,6 @@ serviceAccountKey*.json
 !**/google-services-dev.json
 !**/google-services-prod.json
 
-# Google Maps API Key (Flutter)
-mobile/lib/core/config/api_keys.dart
-
 # Node.js
 node_modules/
 npm-debug.log*

@@ -98,14 +98,14 @@ flutter run \
 cd mobile
 
 # MacのIPアドレスを環境変数に設定
-export API_HOST=192.168.0.41  # あなたのMacのIPアドレス
+export API_HOST=192.168.0.14  # あなたのMacのIPアドレス
 
 # スクリプトを使用
 ./scripts/run-dev-device.sh
 
 # または手動で実行
 flutter run \
-  --dart-define=API_BASE_URL=http://192.168.0.41:8000/api/v1 \
+  --dart-define=API_BASE_URL=http://192.168.0.14:8000/api/v1 \
   --dart-define=ENVIRONMENT=development
 ```
 
@@ -199,7 +199,7 @@ cd backend
 
 # 2. 新しいターミナルでフロントエンドを起動（実機）
 cd mobile
-export API_HOST=192.168.0.41  # あなたのMacのIP
+export API_HOST=192.168.0.14  # あなたのMacのIP
 ./scripts/run-dev-device.sh
 ```
 

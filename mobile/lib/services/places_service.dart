@@ -82,7 +82,7 @@ class PlacesService {
   // Geocoding API (still uses legacy endpoint)
   static const String _geocodingBaseUrl = 'https://maps.googleapis.com/maps/api';
 
-  static const String _apiKey = ApiKeys.googleMapsApiKey;
+  static final String _apiKey = ApiKeys.googleMapsApiKey;
 
   /// Get autocomplete predictions for a search query using Places API (New)
   ///
