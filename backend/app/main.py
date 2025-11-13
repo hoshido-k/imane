@@ -13,6 +13,7 @@ from app.api.v1 import (
     schedules,
     users,
 )
+from app.config import settings
 from app.core.firebase import initialize_firebase
 
 # ロギング設定
@@ -32,9 +33,14 @@ app = FastAPI(
 )
 
 # CORS設定
+allowed_origins = (
+    settings.ALLOWED_ORIGINS.split(",")
+    if settings.ALLOWED_ORIGINS != "*"
+    else ["*"]
+)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 本番環境では適切に制限
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

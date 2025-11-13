@@ -82,15 +82,29 @@ uv run ruff format .
 ```bash
 cd mobile
 
+# IMPORTANT: First-time setup - Configure API keys
+cp .env.example .env
+# Edit .env and add your Google Maps API keys
+
 # Get dependencies
 flutter pub get
 
-# Run on iOS simulator
-flutter run
+# Run on iOS simulator (uses development API key)
+./scripts/run-dev-simulator.sh
 
-# Build for iOS
-flutter build ios
+# Run on iOS device (uses development API key)
+./scripts/run-dev-device.sh
+
+# Build for production (uses production API key)
+./scripts/build-prod.sh
 ```
+
+**Google Maps API Key Setup:**
+- API keys are managed via environment variables (`.env` file)
+- **Development key**: Used by `run-dev-*.sh` scripts
+- **Production key**: Used by `build-prod.sh` script
+- **NEVER commit** `.env` files or actual API keys to Git
+- See `mobile/docs/API_KEY_SETUP.md` for detailed setup instructions
 
 ## Key Configuration Files
 
@@ -132,11 +146,18 @@ This project is designed for local development with the following prerequisites:
 
 **Environment Setup:**
 1. Set up Firebase credentials (see backend/.env.example)
-2. Install backend dependencies:
+2. Set up Google Maps API keys for mobile app:
+   ```bash
+   cd mobile
+   cp .env.example .env
+   # Edit .env and add your GOOGLE_MAPS_API_KEY_DEV and GOOGLE_MAPS_API_KEY_PROD
+   # See mobile/docs/API_KEY_SETUP.md for detailed instructions
+   ```
+3. Install backend dependencies:
    ```bash
    cd backend && uv sync
    ```
-3. Install frontend dependencies:
+4. Install frontend dependencies:
    ```bash
    cd mobile && flutter pub get
    ```
@@ -146,8 +167,8 @@ This project is designed for local development with the following prerequisites:
 # Backend
 cd backend && uv run uvicorn app.main:app --reload
 
-# Frontend
-cd mobile && flutter run
+# Frontend (recommended: use provided scripts)
+cd mobile && ./scripts/run-dev-simulator.sh  # Auto-loads API keys from .env
 ```
 
 ### Formatters & Linters
@@ -212,6 +233,14 @@ When working on new features or fixes:
 - Never log user credentials, tokens, or precise location data
 - Firebase security rules should be configured properly
 - iOS location permission: "Always Allow" required for background tracking
+
+### API Key Security (Google Maps)
+- **Separate keys for dev/prod**: Always use different API keys for development and production
+- **Restriction settings**: Apply iOS bundle ID and API restrictions in Google Cloud Console
+- **Environment variables**: Store keys in `.env` files (never commit to Git)
+- **Key rotation**: Regularly rotate API keys for security
+- **Monitor usage**: Check Google Cloud Console for unusual API usage
+- **Implementation**: See `mobile/lib/core/config/api_keys.dart` and `mobile/docs/API_KEY_SETUP.md`
 
 ### Privacy & Data Retention
 - **Location history**: Auto-deleted after 24 hours

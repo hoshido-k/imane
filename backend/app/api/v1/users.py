@@ -251,3 +251,40 @@ async def upload_profile_image(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"画像のアップロードに失敗しました: {str(e)}",
         )
+
+
+@router.delete("/me/profile-image")
+async def delete_profile_image(
+    current_user: UserInDB = Depends(get_current_user),
+    user_service: UserService = Depends(lambda: UserService()),
+):
+    """
+    プロフィール画像を削除
+
+    プロフィール画像をFirebase Storageから削除し、プロフィール画像URLをNullに設定します。
+
+    Args:
+        current_user: 現在のユーザー
+        user_service: ユーザーサービス
+
+    Returns:
+        削除完了メッセージ
+    """
+    print(f"[delete_profile_image] User: {current_user.uid}")
+
+    try:
+        await user_service.delete_profile_image(current_user.uid)
+        print(f"[delete_profile_image] Delete successful for user: {current_user.uid}")
+
+        return {
+            "message": "プロフィール画像を削除しました",
+        }
+    except ValueError as e:
+        print(f"[delete_profile_image] ValueError: {e}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as e:
+        print(f"[delete_profile_image] Exception: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"プロフィール画像の削除に失敗しました: {str(e)}",
+        )

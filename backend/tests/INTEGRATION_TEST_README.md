@@ -21,7 +21,7 @@
 3. **サービスアカウントキーの生成**
    - Firebase Console > プロジェクト設定 > サービスアカウント
    - 「新しい秘密鍵を生成」をクリック
-   - ダウンロードしたJSONファイルを`backend/serviceAccountKey.json`に配置
+   - ダウンロードしたJSONファイルを`backend/serviceAccountKey-dev.json`に配置
 
 ### 2. 環境変数の設定
 
@@ -30,7 +30,7 @@
 ```bash
 # Firebase設定
 FIREBASE_PROJECT_ID=imane-dev  # 実際のプロジェクトID
-FIREBASE_CREDENTIALS_PATH=./serviceAccountKey.json
+FIREBASE_CREDENTIALS_PATH=./serviceAccountKey-dev.json
 
 # JWT設定
 SECRET_KEY=test-secret-key-for-integration-tests
@@ -164,8 +164,8 @@ async def setup_and_teardown(self):
 **原因**: サービスアカウントキーが見つからない
 
 **解決策**:
-1. `backend/serviceAccountKey.json`が存在するか確認
-2. `.env`の`FIREBASE_CREDENTIALS_PATH`を確認
+1. `backend/serviceAccountKey-dev.json`が存在するか確認
+2. `.env`の`FIREBASE_CREDENTIALS_PATH=./serviceAccountKey-dev.json`を確認
 3. パスが正しいか確認（相対パスまたは絶対パス）
 
 ### エラー: "Permission denied"

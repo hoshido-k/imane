@@ -55,11 +55,16 @@ app.*.map.json
 **/ios/Flutter/Flutter.podspec
 
 # Firebase configuration files (contains sensitive data)
-**/ios/Runner/GoogleService-Info.plist
-**/android/app/google-services.json
+**/ios/Runner/GoogleService-Info*.plist
+**/android/app/google-services*.json
 
 # Generated files
 **/lib/firebase_options.dart
+
+# API Keys and environment variables (contains sensitive data)
+.env
+.env.*
+!.env.example
 
 # Flutter plugins
 .flutter-plugins

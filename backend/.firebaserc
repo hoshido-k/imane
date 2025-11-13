@@ -1,0 +1,8 @@
+{
+  "projects": {
+    "dev": "imane-dev",
+    "prod": "imane-production"
+  },
+  "targets": {},
+  "etags": {}
+}

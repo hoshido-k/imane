@@ -1,0 +1,65 @@
+rules_version = '2';
+
+// imane Firebase Storage セキュリティルール
+// 最終更新: 2025-11-12
+//
+// デプロイ方法:
+// firebase deploy --only storage
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ==========================================
+    // ヘルパー関数
+    // ==========================================
+
+    // 認証済みユーザーかどうか
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // 自分自身のユーザーIDかどうか
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // 画像ファイルかどうか
+    function isImage() {
+      return request.resource.contentType.matches('image/.*');
+    }
+
+    // ファイルサイズが5MB以下かどうか
+    function isUnder5MB() {
+      return request.resource.size < 5 * 1024 * 1024;
+    }
+
+    // ==========================================
+    // profile_images/{userId}/{filename}
+    // プロフィール画像
+    // ==========================================
+    match /profile_images/{userId}/{filename} {
+      // 読み取り: すべての認証済みユーザー（フレンドが見られる）
+      allow read: if isAuthenticated();
+
+      // 作成: 自分のプロフィール画像のみ、5MB以下の画像ファイル
+      allow create: if isOwner(userId) &&
+        isImage() &&
+        isUnder5MB();
+
+      // 更新: 自分のプロフィール画像のみ
+      allow update: if isOwner(userId) &&
+        isImage() &&
+        isUnder5MB();
+
+      // 削除: 自分のプロフィール画像のみ
+      allow delete: if isOwner(userId);
+    }
+
+    // ==========================================
+    // デフォルト: すべて拒否
+    // ==========================================
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

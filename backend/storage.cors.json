@@ -1,0 +1,7 @@
+[
+  {
+    "origin": ["https://imane.app", "https://app.imane.app"],
+    "method": ["GET", "POST", "PUT", "DELETE"],
+    "maxAgeSeconds": 3600
+  }
+]

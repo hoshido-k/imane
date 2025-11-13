@@ -140,6 +140,8 @@ celerybeat.pid
 
 # Environments
 .env
+.env.development
+.env.production
 .env.local
 .env.*.local
 .envrc
@@ -151,13 +153,17 @@ env.bak/
 venv.bak/
 
 # Firebase認証情報
+# The active configuration files are ignored, but -dev/-prod templates are tracked
 firebase-credentials.json
-serviceAccountKey.json
+serviceAccountKey*.json
+!backend/serviceAccountKey-dev.json
+!backend/serviceAccountKey-prod.json
 **/GoogleService-Info.plist
+!**/GoogleService-Info-Dev.plist
+!**/GoogleService-Info-Prod.plist
 **/google-services.json
-
-# Google Maps API Key (Flutter)
-mobile/lib/core/config/api_keys.dart
+!**/google-services-dev.json
+!**/google-services-prod.json
 
 # Node.js
 node_modules/

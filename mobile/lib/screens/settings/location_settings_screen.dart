@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'package:geolocator/geolocator.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/config/location_config.dart';
+import '../../services/location_service.dart';
 
 /// Location settings screen
 class LocationSettingsScreen extends StatefulWidget {
@@ -11,20 +12,39 @@ class LocationSettingsScreen extends StatefulWidget {
   State<LocationSettingsScreen> createState() => _LocationSettingsScreenState();
 }
 
-class _LocationSettingsScreenState extends State<LocationSettingsScreen> {
-  PermissionStatus _locationPermissionStatus = PermissionStatus.denied;
+class _LocationSettingsScreenState extends State<LocationSettingsScreen>
+    with WidgetsBindingObserver {
+  LocationPermission _locationPermissionStatus = LocationPermission.denied;
   bool _isLoading = true;
+  final LocationService _locationService = LocationService();
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _checkPermissionStatus();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // アプリがフォアグラウンドに戻ったときに状態を再チェック
+    if (state == AppLifecycleState.resumed) {
+      print('[LocationSettings] App resumed, checking permission status...');
+      _checkPermissionStatus();
+    }
   }
 
   Future<void> _checkPermissionStatus() async {
     setState(() => _isLoading = true);
     try {
-      final status = await Permission.locationAlways.status;
+      final status = await _locationService.checkPermission();
+      print('[LocationSettings] Permission status: $status');
       setState(() {
         _locationPermissionStatus = status;
         _isLoading = false;
@@ -36,7 +56,7 @@ class _LocationSettingsScreenState extends State<LocationSettingsScreen> {
   }
 
   Future<void> _openLocationSettings() async {
-    await openAppSettings();
+    await _locationService.openAppSettings();
     // Refresh status when returning
     await Future.delayed(const Duration(seconds: 1));
     _checkPermissionStatus();
@@ -44,13 +64,13 @@ class _LocationSettingsScreenState extends State<LocationSettingsScreen> {
 
   String _getPermissionStatusText() {
     switch (_locationPermissionStatus) {
-      case PermissionStatus.granted:
+      case LocationPermission.always:
         return '常に許可';
-      case PermissionStatus.limited:
+      case LocationPermission.whileInUse:
         return '使用中のみ許可';
-      case PermissionStatus.denied:
+      case LocationPermission.denied:
         return '許可されていません';
-      case PermissionStatus.permanentlyDenied:
+      case LocationPermission.deniedForever:
         return '許可が拒否されています';
       default:
         return '不明';
@@ -59,12 +79,12 @@ class _LocationSettingsScreenState extends State<LocationSettingsScreen> {
 
   Color _getPermissionStatusColor() {
     switch (_locationPermissionStatus) {
-      case PermissionStatus.granted:
+      case LocationPermission.always:
         return const Color(0xFF4CAF50);
-      case PermissionStatus.limited:
+      case LocationPermission.whileInUse:
         return const Color(0xFFFF9800);
-      case PermissionStatus.denied:
-      case PermissionStatus.permanentlyDenied:
+      case LocationPermission.denied:
+      case LocationPermission.deniedForever:
         return AppColors.error;
       default:
         return AppColors.textSecondary;
@@ -73,12 +93,12 @@ class _LocationSettingsScreenState extends State<LocationSettingsScreen> {
 
   IconData _getPermissionStatusIcon() {
     switch (_locationPermissionStatus) {
-      case PermissionStatus.granted:
+      case LocationPermission.always:
         return Icons.check_circle;
-      case PermissionStatus.limited:
+      case LocationPermission.whileInUse:
         return Icons.warning;
-      case PermissionStatus.denied:
-      case PermissionStatus.permanentlyDenied:
+      case LocationPermission.denied:
+      case LocationPermission.deniedForever:
         return Icons.error;
       default:
         return Icons.help;
@@ -234,7 +254,7 @@ class _LocationSettingsScreenState extends State<LocationSettingsScreen> {
             ],
           ),
           const SizedBox(height: 16),
-          if (_locationPermissionStatus != PermissionStatus.granted) ...[
+          if (_locationPermissionStatus != LocationPermission.always) ...[
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(

@@ -67,7 +67,7 @@ DEBUG=True
 
 # Firebase設定
 FIREBASE_PROJECT_ID=your-project-id
-FIREBASE_CREDENTIALS_PATH=./serviceAccountKey.json
+FIREBASE_CREDENTIALS_PATH=./serviceAccountKey-dev.json
 
 # JWT設定
 SECRET_KEY=your-super-secret-jwt-key
@@ -96,11 +96,14 @@ python3 -c "import secrets; print(secrets.token_urlsafe(32))"
 
 ### 4. Firebase認証情報の設定
 
-Firebaseコンソールからサービスアカウントキーをダウンロードし、`serviceAccountKey.json`として保存:
+Firebaseコンソールからサービスアカウントキーをダウンロードし、環境に応じて保存:
 
 ```bash
-# ダウンロードしたファイルを配置
-mv ~/Downloads/your-project-xxxxx.json backend/serviceAccountKey.json
+# 開発環境用
+mv ~/Downloads/imane-dev-xxxxx.json backend/serviceAccountKey-dev.json
+
+# 本番環境用（準備時）
+mv ~/Downloads/imane-prod-xxxxx.json backend/serviceAccountKey-prod.json
 ```
 
 詳細は[FIREBASE_SETUP.md](../FIREBASE_SETUP.md)を参照。
@@ -168,10 +171,11 @@ backend/
 │   ├── test_schedules.py    # NEW
 │   ├── test_geofencing.py   # NEW
 │   └── ...
-├── pyproject.toml           # プロジェクト設定・依存関係
-├── uv.lock                  # ロックファイル
-├── .env.example             # 環境変数のサンプル
-└── serviceAccountKey.json   # Firebase認証情報（.gitignore済み）
+├── pyproject.toml              # プロジェクト設定・依存関係
+├── uv.lock                     # ロックファイル
+├── .env.example                # 環境変数のサンプル
+├── serviceAccountKey-dev.json  # Firebase認証情報・開発環境（.gitignore済み）
+└── serviceAccountKey-prod.json # Firebase認証情報・本番環境（.gitignore済み）
 ```
 
 ---
