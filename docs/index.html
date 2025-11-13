@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="imane（イマネ）- 位置情報ベース自動通知アプリ">
+    <title>imane - 今ね、ここにいるよ</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px 40px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .tagline {
+            font-size: 1.2em;
+            opacity: 0.9;
+            margin-bottom: 20px;
+        }
+
+        .description {
+            font-size: 1em;
+            opacity: 0.85;
+        }
+
+        main {
+            padding: 40px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        h2 {
+            color: #667eea;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .links {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .link-button {
+            display: block;
+            padding: 20px;
+            background: #f7f7f7;
+            border-radius: 10px;
+            text-decoration: none;
+            color: #333;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .link-button:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .link-button h3 {
+            font-size: 1.3em;
+            margin-bottom: 5px;
+        }
+
+        .link-button p {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .feature {
+            background: #f7f7f7;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .feature-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .feature h3 {
+            font-size: 1.1em;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        footer {
+            background: #f7f7f7;
+            padding: 30px;
+            text-align: center;
+            color: #666;
+        }
+
+        footer p {
+            margin: 5px 0;
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2em;
+            }
+
+            header, main {
+                padding: 30px 20px;
+            }
+
+            .features {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>imane（イマネ）</h1>
+            <p class="tagline">今ね、ここにいるよ</p>
+            <p class="description">位置情報ベースの自動通知アプリ - 大切な人に「今ね、」を自動で届ける</p>
+        </header>
+
+        <main>
+            <section class="section">
+                <h2>✨ 主な機能</h2>
+                <div class="features">
+                    <div class="feature">
+                        <div class="feature-icon">📍</div>
+                        <h3>到着通知</h3>
+                        <p>目的地に到着すると自動で通知</p>
+                    </div>
+                    <div class="feature">
+                        <div class="feature-icon">⏱️</div>
+                        <h3>滞在通知</h3>
+                        <p>60分滞在したら自動で通知</p>
+                    </div>
+                    <div class="feature">
+                        <div class="feature-icon">🚶</div>
+                        <h3>退出通知</h3>
+                        <p>目的地を出発したら自動で通知</p>
+                    </div>
+                    <div class="feature">
+                        <div class="feature-icon">🔒</div>
+                        <h3>プライバシー重視</h3>
+                        <p>24時間後に自動削除</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="section">
+                <h2>📄 ドキュメント</h2>
+                <div class="links">
+                    <a href="privacy-policy.html" class="link-button">
+                        <h3>🔐 プライバシーポリシー</h3>
+                        <p>個人情報の取り扱いについて</p>
+                    </a>
+                    <a href="terms-of-service.html" class="link-button">
+                        <h3>📜 利用規約</h3>
+                        <p>サービス利用に関する規約（準備中）</p>
+                    </a>
+                </div>
+            </section>
+
+            <section class="section">
+                <h2>📱 ダウンロード</h2>
+                <p style="text-align: center; padding: 20px; background: #f7f7f7; border-radius: 10px;">
+                    App Store公開準備中
+                </p>
+            </section>
+        </main>
+
+        <footer>
+            <p><strong>開発者</strong>: hoshido-k</p>
+            <p><strong>お問い合わせ</strong>: imane.app.contact@gmail.com</p>
+            <p>&copy; 2025 imane. All rights reserved.</p>
+        </footer>
+    </div>
+</body>
+</html>
