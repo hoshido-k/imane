@@ -44,28 +44,17 @@ else
 fi
 echo ""
 
-# 本番環境のAPI URLを確認
-PROD_API_URL=${PROD_API_URL:-https://api.imane.app/api/v1}
+# 本番環境のAPI URL
+PROD_API_URL="https://imane-api-654899417069.asia-northeast1.run.app/api/v1"
 
 echo "Production API URL: $PROD_API_URL"
 echo ""
 
-# 本番環境が設定されていない場合は警告
-if [[ $PROD_API_URL == *"api.imane.app"* ]]; then
-    echo "WARNING: Using placeholder production URL!"
-    echo "Set PROD_API_URL environment variable before building for production."
-    read -p "Continue anyway? (y/N) " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        exit 1
-    fi
-fi
-
 # 本番環境用ビルド
 fvm flutter build ios \
-  --dart-define=API_BASE_URL=$PROD_API_URL \
+  --dart-define=API_BASE_URL="$PROD_API_URL" \
   --dart-define=ENVIRONMENT=production \
-  --dart-define=GOOGLE_MAPS_API_KEY_PROD=$GOOGLE_MAPS_API_KEY_PROD \
+  --dart-define=GOOGLE_MAPS_API_KEY_PROD="$GOOGLE_MAPS_API_KEY_PROD" \
   --release
 
 echo ""
