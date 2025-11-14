@@ -32,25 +32,38 @@ class PopupNotificationService {
 
     print('[PopupNotificationService] Showing popup: $title');
 
-    _currentOverlay = OverlayEntry(
-      builder: (context) => Positioned(
-        top: 0,
-        left: 0,
-        right: 0,
-        child: PopupNotification(
-          title: title,
-          body: body,
-          type: type,
-          mapLink: mapLink,
-          onDismiss: dismiss,
-          onTap: onTap,
-        ),
-      ),
-    );
+    try {
+      // Check if overlay is available
+      final overlayState = Overlay.maybeOf(context, rootOverlay: true);
+      if (overlayState == null) {
+        print('[PopupNotificationService] Overlay not available (app may be in background or not fully initialized)');
+        return;
+      }
 
-    // Insert overlay using the root overlay (MaterialApp level)
-    final overlay = Overlay.of(context, rootOverlay: true);
-    overlay.insert(_currentOverlay!);
+      _currentOverlay = OverlayEntry(
+        builder: (context) => Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: PopupNotification(
+            title: title,
+            body: body,
+            type: type,
+            mapLink: mapLink,
+            onDismiss: dismiss,
+            onTap: onTap,
+          ),
+        ),
+      );
+
+      // Insert overlay using the root overlay (MaterialApp level)
+      overlayState.insert(_currentOverlay!);
+      print('[PopupNotificationService] ✓ Popup inserted into overlay');
+    } catch (e) {
+      print('[PopupNotificationService] ✗ Failed to show popup: $e');
+      print('[PopupNotificationService] This is expected when app is in background');
+      _currentOverlay = null;
+    }
   }
 
   /// Dismiss current popup
