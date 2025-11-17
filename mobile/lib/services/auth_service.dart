@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api_service.dart';
+import 'fcm_service.dart';
 
 /// 認証サービス
 class AuthService {
@@ -151,6 +152,10 @@ class AuthService {
   /// ログアウト
   Future<void> logout() async {
     try {
+      // FCMトークンをバックエンドから削除
+      final fcmService = FCMService();
+      await fcmService.unregisterToken();
+
       // Firebase Authからログアウト
       await _firebaseAuth.signOut();
 

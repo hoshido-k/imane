@@ -134,19 +134,31 @@ class NotificationService:
                 f"{response.failure_count} 失敗"
             )
 
-            # 失敗したトークンを削除
+            # 失敗したトークンを削除（無効なトークンのみ）
             if response.failure_count > 0:
                 failed_tokens = []
                 for idx, result in enumerate(response.responses):
                     if not result.success:
-                        failed_tokens.append(tokens[idx])
+                        error_str = str(result.exception) if result.exception else ""
                         logger.warning(
                             f"[通知送信] FCM送信失敗: トークン={tokens[idx][:20]}..., "
                             f"エラー: {result.exception}"
                         )
 
-                # 無効なトークンを削除
-                await self._remove_invalid_fcm_tokens(user_id, failed_tokens)
+                        # Auth errorはAPNs設定の問題なので、トークンは削除しない
+                        # トークンが無効な場合のみ削除（Unregistered, InvalidArgument等）
+                        if "Auth error" in error_str:
+                            logger.warning(
+                                f"[通知送信] APNs認証エラー: Firebase ConsoleのAPNs設定を確認してください。"
+                                f"トークンは削除しません。"
+                            )
+                        elif "Unregistered" in error_str or "InvalidArgument" in error_str or "NotFound" in error_str:
+                            failed_tokens.append(tokens[idx])
+                            logger.info(f"[通知送信] 無効なトークンとして削除対象に追加: {tokens[idx][:20]}...")
+
+                # 無効なトークンのみ削除
+                if failed_tokens:
+                    await self._remove_invalid_fcm_tokens(user_id, failed_tokens)
 
         except Exception as e:
             logger.error(f"[通知送信] FCM送信エラー: {type(e).__name__}: {str(e)}", exc_info=True)

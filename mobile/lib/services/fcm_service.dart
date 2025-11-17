@@ -266,30 +266,34 @@ class FCMService {
 
   /// Unregister FCM token from backend
   Future<void> unregisterToken() async {
-    if (_fcmToken == null) {
-      print('[FCMService] No token to unregister');
-      return;
-    }
-
     try {
-      // Backend API call to remove token
-      await _apiService.delete(
-        '/notifications/fcm-token',
-        body: {
-          'fcm_token': _fcmToken!,
-        },
-        requiresAuth: true,
-      );
-      print('[FCMService] Token unregistered from backend');
+      if (_fcmToken != null) {
+        // Backend API call to remove token
+        await _apiService.delete(
+          '/notifications/fcm-token',
+          body: {
+            'fcm_token': _fcmToken!,
+          },
+          requiresAuth: true,
+        );
+        print('[FCMService] Token unregistered from backend');
 
-      // Delete FCM token locally
-      await _firebaseMessaging.deleteToken();
+        // Delete FCM token locally
+        await _firebaseMessaging.deleteToken();
+        print('[FCMService] FCM token deleted');
+      } else {
+        print('[FCMService] No token to unregister');
+      }
+
+      // Reset initialization state
       _fcmToken = null;
       _isInitialized = false;
-
-      print('[FCMService] FCM token deleted');
+      print('[FCMService] FCM service reset');
     } catch (e) {
       print('[FCMService] Error unregistering token: $e');
+      // Even on error, reset the state
+      _fcmToken = null;
+      _isInitialized = false;
     }
   }
 
