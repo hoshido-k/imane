@@ -29,7 +29,18 @@ flutter pub get
 
 # Generate Flutter build files (this creates Generated.xcconfig)
 echo "Generating Flutter build files..."
-flutter build ios --config-only --release --no-codesign
+
+# Production API URL
+PROD_API_URL="https://imane-api-654899417069.asia-northeast1.run.app/api/v1"
+echo "Using production API URL: $PROD_API_URL"
+
+# Build with production configuration
+flutter build ios \
+  --dart-define=API_BASE_URL="$PROD_API_URL" \
+  --dart-define=ENVIRONMENT=production \
+  --config-only \
+  --release \
+  --no-codesign
 
 # Navigate to iOS directory
 cd ios
